@@ -19,11 +19,10 @@
 # Change the file extension to match the format (.xml for XML, etc...)
 #
 ###
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
+title: "Private Inexpensive Norm Enforcement (PINE) VDAF"
 category: info
 
-docname: draft-todo-yourname-protocol-latest
+docname: draft-chen-cfrg-vdaf-pine-latest
 submissiontype: IETF  # also: "independent", "IAB", or "IRTF"
 number:
 date:
