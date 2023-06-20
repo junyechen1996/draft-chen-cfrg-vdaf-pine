@@ -46,7 +46,7 @@ informative:
 
 --- abstract
 
-A new Verifiable Distributed Aggregation Function (VDAF) named
+A Verifiable Distributed Aggregation Function (VDAF) named
 Private Inexpensive Norm Enforcement (PINE) that supports aggregating
 high-dimensional real number vectors bounded by a configurable L2-norm bound,
 which is a fundamental primitive to support private federated learning.
@@ -57,13 +57,22 @@ which is a fundamental primitive to support private federated learning.
 # Introduction
 
 Aggregating high-dimensional real number vectors is a fundamental primitive
-to support federated learning. There have been various approaches that attempt
-to support such use cases with strong security and privacy guarantee, such as
-differential privacy (DP), secure aggregation, etc. In this document, we propose
-a protocol that attempts to achieve the following properties:
+to support private federated learning, that allows data scientists to train
+machine learning models with data from many users' devices. Each user's device
+will train the model with its local data and send the gradients
+(i.e. model updates) to the servers, which apply the aggregated gradients to
+the central model. This process repeats as the servers send the new model
+to the devices.
+There have been various approaches that attempt to support such use cases with
+strong security and privacy guarantee, such as differential privacy (DP),
+secure aggregation, etc. In this document, we propose a protocol that attempts
+to achieve the following properties:
 
 * Malicious Clients should be prevented from sending vectors with invalid
-  L2-norm and poisoning the final aggregated result with high probability.
+  L2-norm with high probability. The L2-norm of a vector is defined as the
+  square root of the sum of the squares of its coordinates. Rejecting vectors
+  with high L2-norm helps prevent Clients from poisoning the final aggregate
+  result obtained by the Aggregators.
 
 * Honest Clients should be accepted with high probability.
 
@@ -74,9 +83,8 @@ a protocol that attempts to achieve the following properties:
 Previous approaches that attempt to achieve these properties either only
 implement an approximate verification of Client measurements, or incur a high
 communication overhead between Client and Aggregators. This document outlines
-a proposal of a new VDAF that enables more efficient and accurate secure
-aggregation that conforms to the VDAF
-protocol {{!VDAF=I-D.draft-irtf-cfrg-vdaf-05}}.
+a proposal of a VDAF that enables more efficient and accurate secure aggregation
+that conforms to the VDAF interface {{!VDAF=I-D.draft-irtf-cfrg-vdaf-05}}.
 
 The VDAF protocol explicitly introduces a Prio3 scheme {{Section 7 of !VDAF}},
 which can support various types of aggregated statistics and can verify certain
@@ -88,8 +96,8 @@ from the following aspects:
   supports the computation of "wraparound protocol" in PINE VDAF. We denote it
   as "wraparound joint randomness".
 
-* A new "Fully Linear Proof (FLP)" system that incorporates the
-  "wraparound joint randomness" and supports PINE as a new VDAF.
+* A "Fully Linear Proof (FLP)" system that incorporates the
+  "wraparound joint randomness" and supports PINE as a VDAF.
 
 
 # Conventions and Definitions
