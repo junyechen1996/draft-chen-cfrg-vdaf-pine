@@ -547,7 +547,7 @@ when the number of Aggregators is `SHARES`.
 `WC_0` and `WC_2` only contain affine operations, so each Aggregator
 can compute its local outputs and exchange them with other Aggregators, but
 `WC_1` contains a non-affine operation, on two variables that are both
-secret-shared. We will again use the proof system in {{{Section 7.3.1 of !VDAF}}
+secret-shared. We will again use the proof system in {{Section 7.3.1 of !VDAF}}
 and {{Section 7.3.1.1 of !VDAF}} to construct a `Mul` gadget between `g_k` and
 `S_k`, and computes a random linear combination of all `Mul` gadget results.
 That is, with verification joint randomness `r_v` derived in
@@ -611,8 +611,8 @@ RC_0(inp) = r_v * Range2(inp[d]) + r_v^2 * Range2(inp[d + 1]) + ... +
             r_v^(2 * b0) * Range2(inp[d + 2 * b0 - 1]) +
             r_v^(2 * b0 + 1) * Range2(inp[d + 2 * b0]) +
             r_v^(2 * b0 + 2) * Range2(inp[d + 2 * b0 + 1]) + ... +
-            r_v^(2 * b0 + r * (b1 + 1) + 1) *
-            Range2(inp[d + 2 * b0 + r * (b1 + 1)])
+            r_v^(2 * b0 + r * (b1 + 1)) *
+            Range2(inp[d + 2 * b0 + r * (b1 + 1) - 1])
 ~~~
 
 Finally, we only consider a Client has passed the protocol if all the circuits
@@ -803,6 +803,294 @@ to derive its verification joint randomness seed part.
 
 The full derivation of joint randomness can also be found in
 {{pine-joint-randomness-derivation}}.
+
+## PINE FLP Instantiation {#pine-flp-instantiation}
+
+This section instantiates PINE FLP by defining the validity circuits and
+parameters used in the general-purpose FLP in Prio3 {{Section 7.3.2 of !VDAF}}.
+
+The encoding and decoding interface for PINE are defined as the following
+based on {{pine-flp-encoding}}:
+
+~~~
+def encode(Pine, measurement: Vec[f64]):
+    encoded_measurement = []
+    for x in measurement:
+        x_encoded = int(x * (2 ** Pine.f))
+        if x < 0:
+            x_field = Pine.Flp.Field(
+                Pine.Field.MODULUS + x_encoded
+            )
+        else:
+            x_field = Pine.Field(x_encoded)
+        encoded_measurement.append(x_encoded)
+    return encoded_measurement
+
+def sample_wraparound_joint_rand(Pine, prg: Prg):
+    # Since we generate field element by looking at the random byte
+    # array two bits at a time, the number of field elements we can
+    # generate from each byte is 4.
+    NUM_ELEMS_IN_ONE_BYTE = 4
+    # Number of wraparound protocol repetitions * dimension.
+    output_len = Pine.r * Pine.d
+    # We look at bytes from the PRG two bits at a time, so the
+    # number of bytes fed into PRG is `ceil(output_len / 4)`.
+    # `4` is the number of field elements we can sample from one byte.
+    prg_output_len = ceil(output_len / NUM_ELEMS_IN_ONE_BYTE)
+    rand_buf = prg.next(prg_output_len)
+
+    wraparound_joint_rand = []
+    for i in range(output_len):
+        rand_buf_index = i // NUM_ELEMS_IN_ONE_BYTE
+        offset = i % NUM_ELEMS_IN_ONE_BYTE
+        rand_bits = (rand_buf[rand_buf_index] >> offset) & 0b11
+        if rand_bits == 0b00:
+            rand_field = Pine.Field(Pine.Field.MODULUS - 1)
+        elif rand_bits == 0b01 or rand_bits == 0b10:
+            rand_field = Pine.Field(0)
+        else:
+            rand_field = Pine.Field(1)
+        wraparound_joint_rand.append(rand_field)
+    return wraparound_joint_rand
+
+def encode_protocol_results(Pine,
+                            encoded_measurement: Vec[Pine.Field],
+                            wraparound_joint_rand: Vec[Pine.Field]):
+    new_encoded_measurement = [Pine.Field(0)] * Pine.Flp.INPUT_LEN
+    new_encoded_measurement[:Pine.d] = encoded_measurement[:]
+    # Index offset in `new_encoded_measurement`.
+    offset = Pine.d
+
+    # Compute L2-norm sum-check protocol results.
+    V0 = Pine.Field(0)
+    for val in encoded_measurement:
+        V0 += val * val
+    U0 = Pine.Field(Pine.B) - V0
+    for b in range(Pine.b0):
+        new_encoded_measurement[offset + b] = Pine.Field(
+            (V0 >> b) & 1
+        )
+    offset += Pine.b0
+    for b in range(Pine.b0):
+        new_encoded_measurement[offset + b] = Pine.Field(
+            (U0 >> b) & 1
+        )
+    offset += Pine.b0
+
+    # Compute wraparound protocol results.
+    # Assume `abs_L` is the abs(L) in {{wraparound}}.
+    abs_L = Pine.ALPHA * sqrt(Pine.B)
+    H = abs_L + 1
+    wr_upper_bound = abs_L + H
+    # Number of bits for each wraparound protocol repetition,
+    # which includes the bits for `V1` and success bit `g`.
+    num_bits_per_rep = Pine.b1 + 1
+    # Index offset that contains the difference field element `s`.
+    diff_offset = offset + num_bits_per_rep * Pine.r
+    for rep in range(Pine.r):
+        # Compute `V1` in the current wraparound protocol repetition.
+        Z = wraparound_joint_rand[(rep*d):((rep+1)*d)]
+        V1 = Pine.Field(0)
+        for j in range(Pine.d):
+            V1 += Z[j] * encoded_measurement[j]
+        V1 += abs_L
+
+        if V1 <= wr_upper_bound:
+            # success case
+            g = 1
+            adj_V1 = V1
+            s = 0
+        else:
+            # failure case
+            g = 0
+            adj_V1 = wr_upper_bound
+            s = V1 - wr_upper_bound
+
+        for b in range(Pine.b1):
+            new_encoded_measurement[offset + b] = Pine.Field(
+                (adj_V1 >> b) & 1
+            )
+        new_encoded_measurement[offset + Pine.b1] = g
+        new_encoded_measurement[diff_offset + rep] = s
+        offset += num_bits_per_rep
+    return new_encoded_measurement
+
+def truncate(Pine, inp: Vec[Pine.Field]):
+    return inp[:Pine.d]
+
+def decode(Pine,
+           output: Vec[Pine.Field],
+           num_measurements: Unsigned):
+    # The upper bound in the field, below which we will think the
+    # aggregated field element indicates a positive value in
+    # floating point world.
+    positive_upper_bound = num_measurements * sqrt(Pine.B)
+    decoded_output = []
+    for val in output:
+        val_unsigned = val.as_unsigned()
+        if val <= positive_upper_bound:
+            decoded = val_unsigned
+        else:
+            decoded = -(Pine.Field.MODULUS - val_unsigned)
+        decoded_output.append(decoded / (2 ** Pine.f))
+    return decoded_output
+~~~
+
+The gadgets we will use to verify the degree-2 polynomials in PINE are:
+
+* `Range2(x) = x^2 - x` polynomial to verify the expected entries are bits
+  {{bit-check}}.
+
+* `Sq(x) = x^2` polynomial to compute the squared L2-norm sum in
+  {{l2-sum-check}}.
+
+* `Mul(g, s) = g * s` to verify the multiplication of success bit `g` and
+  difference field element `s` in each wraparound protocol repetition is 0,
+  as specified in {{wraparound}}.
+
+~~~
+def Range2(x):
+    return x ** 2 - x
+
+def Sq(x):
+    return x ** 2
+
+def Mul(g, s):
+    return g * s
+~~~
+
+Therefore, the validity circuits to verify are defined as the following:
+
+~~~
+def bit_check(Pine,
+              inp: Vec[Pine.Flp.Field],
+              verification_joint_rand_0: Pine.Field):
+    res = Pine.Field(0)
+    # Vector values between `[d, d + 2 * b0 + r * (b1 + 1))`
+    # are all expected to be bits.
+    for i in range(2 * Pine.b0 + Pine.r * (Pine.b1 + 1)):
+        res += (verification_joint_rand_0 ** (i+1)) * \
+               Range2(inp[Pine.d + i])
+    return res
+
+def l2_norm_sum_check(Pine,
+                      inp: Vec[Pine.Field],
+                      num_shares: Unsigned):
+    computed_V0 = Pine.Field(0)
+    for i in range(Pine.d):
+        computed_V0 += Sq(inp[i])
+    encoded_V0 = Pine.Field(0)
+    for j in range(Pine.b0):
+        encoded_V0 += (2 ** j) * inp[Pine.d + j]
+    encoded_U0 = Pine.Field(0)
+    for k in range(Pine.b0):
+        encoded_U0 += (2 ** k) * inp[Pine.d + Pine.b0 + k]
+    B_shares = Pine.Field(Pine.B) * Pine.Field(num_shares).inv()
+    return (
+        computed_V0 - encoded_V0,
+        encoded_V0 + encoded_U0 - B_shares
+    )
+
+# Index offset that contains bit-encoded wraparound protocol result
+# `V1` for the `k`-th wraparound protocol repetition.
+def offset_V1(Pine, k):
+    return Pine.d + 2 * Pine.b0 + k * (Pine.b1 + 1)
+
+# Index offset that contains the success bit `g` for the `k`-th
+# wraparound protocol repetition.
+def offset_g(Pine, k):
+    return Pine.d + 2 * Pine.b0 + k * (Pine.b1 + 1) + Pine.b1
+
+# Index offset that contains the "difference" field element `s`
+# for the `k`-th wraparound protocol repetition.
+def offset_s(Pine, k):
+    return Pine.d + 2 * Pine.b0 + r * (Pine.b1 + 1) + k
+
+def wraparound_check(Pine,
+                     inp: Vec[Pine.Field],
+                     wraparound_joint_rand: Vec[Pine.Field],
+                     verification_joint_rand_1: Pine.Field,
+                     num_shares: Unsigned):
+    checks = []
+    abs_L = Pine.Field(Pine.ALPHA * sqrt(Pine.B)) * \
+            Pine.Field(num_shares).inv()
+
+    # Check for sum of success bits.
+    g_check = -(floor(Pine.TAU * Pine.r) * \
+              Pine.Field(num_shares).inv())
+    # Degree-2 check of `g_j * s_j = 0` for all repetitions `j`.
+    degree_2_check = Pine.Field(0)
+
+    for i in range(Pine.r):
+        # Compute wraparound protcol result for the `i`-th repetition,
+        # i.e. the dot product of `X` and `Z` vector
+        # (`wraparound_joint_rand`).
+        Y1 = Pine.Field(0)
+        for j in range(Pine.d):
+            Y1 += inp[j] * wraparound_joint_rand[i * Pine.b1 + j]
+        # Recover bit-encoded wraparound protocol result for
+        # the `i`-th repetition.
+        V1 = Pine.Field(0)
+        for l in range(Pine.b1):
+            V1 += (2 ** l) * inp[Pine.offset_V1(i) + l]
+        # Difference field element `s` for the `i`-th repetition.
+        s = inp[Pine.offset_s(i)]
+        # This equation should be equal to 0.
+        check = Y1 + abs_L - V1 - s
+        checks.append(check)
+
+        # Success bit `g` for the `i`-th repetition.
+        g = inp[Pine.offset_g(i)]
+        g_check += g
+        # Degree-2 check accumulation.
+        degree_2_check += \
+            verification_joint_rand_1 ** (i+1) * Mul(g, s)
+    checks.append(g_check)
+    checks.append(degree_2_check)
+    return checks
+
+def pine_valid(Pine,
+               inp: Vec[Pine.Field],
+               joint_rand: Vec[Pine.Field],
+               num_shares: Unsigned):
+    wraparound_joint_rand = joint_rand[:(Pine.d * Pine.r)]
+    verification_joint_rand = joint_rand[(Pine.d * Pine.r):]
+
+    bit_check_res = bit_check(inp, verification_joint_rand[0])
+    (sum_check_res_0, sum_check_res_1) = \
+        Pine.l2_norm_sum_check(inp, num_shares)
+    wraparound_checks = \
+        Pine.wraparound_check(inp,
+                              wraparound_joint_rand,
+                              verification_joint_rand[1])
+
+    final_reduction_joint_rand = verification_joint_rand[2]
+    res = \
+        final_reduction_joint_rand * bit_check_res + \
+        final_reduction_joint_rand ** 2 * sum_check_res_0 + \
+        final_reduction_joint_rand ** 3 * sum_check_res_1
+    for i in range(len(wraparound_checks)):
+        res += final_reduction_joint_rand ** (4+i) * \
+               wraparound_checks[i]
+    return res
+~~~
+
+The parameters provided to the general-purpose FLP in Prio3 are therefore:
+
+| Parameter                     | Value                                                                                   |
+|:------------------------------|:----------------------------------------------------------------------------------------|
+| `GADGETS`                     | `[Range2, Sq, Mul]`                                                                     |
+| `GADGET_CALLS`                | `[ceil(sqrt(2 * b0 + r * (b1 + 1))), ceil(sqrt(d)), ceil(sqrt(r))]`                     |
+| `INPUT_LEN`                   | `d + 2 * b0 + r * (b1 + 1) + r`                                                         |
+| `OUTPUT_LEN`                  | `d`                                                                                     |
+| `WRAPAROUND_JOINT_RAND_LEN`   | `d * r`                                                                                 |
+| `VERIFICATION_JOINT_RAND_LEN` | 3                                                                                       |
+| `JOINT_RAND_LEN`              | total length of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN`           |
+| `Measurement`                 | `Vec[f64]`                                                                              |
+| `AggResult`                   | `Vec[f64]`                                                                              |
+| `Field`                       | Defined during instantiation of PINE, based on the parameters in {{Section 5 of !VDAF}} |
+{: title="Parameters of validity circuit in PINE FLP."}
+
 
 ## FLP Execution {#pine-flp-execution}
 
