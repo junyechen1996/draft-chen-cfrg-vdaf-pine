@@ -203,18 +203,16 @@ integer by `2^f`, specifically:
 
 * Otherwise, decode it as `-((q - agg) / 2^f)`.
 
-## Protocols in PINE
+## Validity Checks for PINE
 
-Now we will assume Clients and Aggregators can execute the protocols in PINE
-with field integers, after Clients has encoded their real number vectors
-into field integer vectors as specified in {{fp-encoding}}. There are three
-main protocols in PINE:
+Similar to Prio3, each Client's measurement (a vector of floating point
+numbers) is encoded as a vector over a finite field and secret-shared among the
+Aggregators. During preparation, the Aggregators verify the following
+properties of the encoded vector:
 
-* 0/1 bit check protocol
-
-* L2-norm sum-check protocol
-
-* Wraparound protocol
+1. L2-norm sum-check: TODO(junye) Describe this at a high level.
+1. 0/1 bit check: TODO(junye)
+1. Wraparound protocol: TODO(junye)
 
 ### 0/1 Bit Check Protocol {#bit-check}
 
