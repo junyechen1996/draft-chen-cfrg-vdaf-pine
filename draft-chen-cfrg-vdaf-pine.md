@@ -429,7 +429,7 @@ We ask Clients to repeat the procedure for `r` number of times, to reduce the
 overall soundness and completeness error of this protocol, with motivations
 described in Section 4.2 of {{PINE}}. We define a threshold `TAU`, so that
 the Clients are required to pass at least `TAU * r` repetitions. Otherwise,
-they SHOULD abort, and Aggregators MUST reject.
+Clients SHOULD retry, but Aggregators MUST reject.
 
 To be more specific about each repetition `k` of wraparound protocol, assuming
 the Client has computed `Y1_k`, if it passes that repetition, it then does the
@@ -696,12 +696,12 @@ Therefore, we have the following interfaces in `Pine.Flp`:
   elements. The output length of this function MUST be equal to the length of
   the input measurement, i.e. `d`.
 
-* `Pine.Flp.encode_protocol_results(encoded_measurement: Vec[Field],
-  wraparound_joint_rand: Vec[Field]) -> Vec[Field]` executes the protocols in
-  PINE, and appends the results at the end of `encoded_measurement`.
-  `encoded_measurement` is the output of `Pine.Flp.encode` function, and
-  `wraparound_joint_rand` is the wraparound joint randomness necessary to
-  execute wraparound protocol.
+* `Pine.Flp.finalize_encoding_with_wraparound_joint_rand(
+  partially_encoded: Vec[Field], wraparound_joint_rand: Vec[Field])
+  -> Vec[Field]` executes the checks in PINE, and appends the results at the
+  end of `partially_encoded`. `partially_encoded` is the output of
+  `Pine.Flp.encode` function, and `wraparound_joint_rand` is the wraparound
+  joint randomness necessary to execute wraparound check {{wraparound}}.
   The output length of this function MUST be `INPUT_LEN`.
 
 Wraparound protocol {{wraparound}} describes a process of sampling
@@ -806,14 +806,14 @@ The full derivation of joint randomness can also be found in
 
 ## PINE FLP Instantiation {#pine-flp-instantiation}
 
-This section instantiates PINE FLP by defining the validity circuits and
-parameters used in the general-purpose FLP in Prio3 {{Section 7.3.2 of !VDAF}}.
+This section instantiates `FlpGeneric` ({{Section 7.3.2 of !VDAF}}) for PINE
+by specifying the validity circuit and parameters.
 
 The encoding and decoding interface for PINE are defined as the following
 based on {{pine-flp-encoding}}:
 
 ~~~
-def encode(Pine, measurement: Vec[f64]):
+def encode(Pine, measurement: Vec[float]):
     encoded_measurement = []
     for x in measurement:
         x_encoded = int(x * (2 ** Pine.f))
@@ -853,67 +853,95 @@ def sample_wraparound_joint_rand(Pine, prg: Prg):
         wraparound_joint_rand.append(rand_field)
     return wraparound_joint_rand
 
-def encode_protocol_results(Pine,
-                            encoded_measurement: Vec[Pine.Field],
-                            wraparound_joint_rand: Vec[Pine.Field]):
-    new_encoded_measurement = [Pine.Field(0)] * Pine.Flp.INPUT_LEN
-    new_encoded_measurement[:Pine.d] = encoded_measurement[:]
-    # Index offset in `new_encoded_measurement`.
-    offset = Pine.d
+def finalize_encoding_with_wraparound_joint_rand(
+    Pine,
+    partially_encoded: Vec[Pine.Field],
+    wraparound_joint_rand: Vec[Pine.Field],
+):
+    encoded_measurement = partially_encoded[:]
 
-    # Compute L2-norm sum-check protocol results.
+    # Compute L2-norm sum-check results.
     V0 = Pine.Field(0)
-    for val in encoded_measurement:
+    for val in partially_encoded:
         V0 += val * val
     U0 = Pine.Field(Pine.B) - V0
+    # Append the bit representation of `U0` and `V0` to
+    # `encoded_measurement`.
     for b in range(Pine.b0):
-        new_encoded_measurement[offset + b] = Pine.Field(
+        encoded_measurement.append(Pine.Field(
             (V0 >> b) & 1
-        )
-    offset += Pine.b0
+        ))
     for b in range(Pine.b0):
-        new_encoded_measurement[offset + b] = Pine.Field(
+        encoded_measurement.append(Pine.Field(
             (U0 >> b) & 1
-        )
-    offset += Pine.b0
+        ))
 
-    # Compute wraparound protocol results.
+    # Compute wraparound check results.
     # Assume `abs_L` is the abs(L) in {{wraparound}}.
     abs_L = Pine.ALPHA * sqrt(Pine.B)
     H = abs_L + 1
     wr_upper_bound = abs_L + H
-    # Number of bits for each wraparound protocol repetition,
+    # Number of bits for each wraparound check repetition,
     # which includes the bits for `V1` and success bit `g`.
     num_bits_per_rep = Pine.b1 + 1
-    # Index offset that contains the difference field element `s`.
-    diff_offset = offset + num_bits_per_rep * Pine.r
+    # Keep track of the "difference" field elements for each
+    # repetition, i.e. the `s` parameter in the parameter table.
+    diff_field_elems = []
+    # Compute the minimum number of repetitions `min_r_pass` that
+    # the Client is expected to pass. Also keep track of the number
+    # of passing repetitions in `r_passed`. If the Client has passed
+    # more than `min_r_pass` , don't set success bit to be 1 anymore,
+    # because Aggregators are doing an equality check between the
+    # `r_passed` and `min_r_pass`. See guidance in {{wraparound}}.
+    min_r_pass = floor(Pine.TAU * Pine.r)
+    r_passed = 0
     for rep in range(Pine.r):
-        # Compute `V1` in the current wraparound protocol repetition.
+        # Compute `V1` in the current wraparound check repetition.
         Z = wraparound_joint_rand[(rep*d):((rep+1)*d)]
         V1 = Pine.Field(0)
         for j in range(Pine.d):
-            V1 += Z[j] * encoded_measurement[j]
+            V1 += Z[j] * partially_encoded[j]
         V1 += abs_L
 
         if V1 <= wr_upper_bound:
-            # success case
-            g = 1
-            adj_V1 = V1
+            # Successful repetition:
+            # - set success bit `g` to be 1, if `r_passed` hasn't
+            #   exceeded `min_r_pass`, otherwise set success bit to
+            #   to be 0.
+            # - set difference field element `s` to be 0.
+            if r_passed >= min_r_pass:
+                g = 0
+            else:
+                g = 1
+                r_passed += 1
             s = 0
+            adj_V1 = V1
         else:
-            # failure case
+            # Failing repetition:
+            # - set success bit `g` to be 0.
+            # - set `V1` and difference field element `s`
+            #   according to {{wraparound}}.
             g = 0
-            adj_V1 = wr_upper_bound
             s = V1 - wr_upper_bound
+            adj_V1 = wr_upper_bound
 
         for b in range(Pine.b1):
-            new_encoded_measurement[offset + b] = Pine.Field(
+            encoded_measurement.append(Pine.Field(
                 (adj_V1 >> b) & 1
-            )
-        new_encoded_measurement[offset + Pine.b1] = g
-        new_encoded_measurement[diff_offset + rep] = s
-        offset += num_bits_per_rep
-    return new_encoded_measurement
+            ))
+        encoded_measurement.append(g)
+        diff_field_elems.append(s)
+
+    # Sanity check the Client has passed `min_r_pass` number of
+    # repetitions, otherwise Client SHOULD retry as recommended
+    # in {{wraparound}}.
+    if r_passed != min_r_pass:
+        raise Exception(
+            "Client should retry encoding PINE check results with "
+            "a different wraparound joint randomness."
+        )
+    encoded_measurement.extend(diff_field_elems)
+    return encoded_measurement
 
 def truncate(Pine, inp: Vec[Pine.Field]):
     return inp[:Pine.d]
@@ -1086,8 +1114,8 @@ The parameters provided to the general-purpose FLP in Prio3 are therefore:
 | `WRAPAROUND_JOINT_RAND_LEN`   | `d * r`                                                                                 |
 | `VERIFICATION_JOINT_RAND_LEN` | 3                                                                                       |
 | `JOINT_RAND_LEN`              | total length of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN`           |
-| `Measurement`                 | `Vec[f64]`                                                                              |
-| `AggResult`                   | `Vec[f64]`                                                                              |
+| `Measurement`                 | `Vec[float]`                                                                              |
+| `AggResult`                   | `Vec[float]`                                                                              |
 | `Field`                       | Defined during instantiation of PINE, based on the parameters in {{Section 5 of !VDAF}} |
 {: title="Parameters of validity circuit in PINE FLP."}
 
@@ -1241,7 +1269,9 @@ def measurement_to_input_shares(Pine, measurement, nonce, rand):
     )
 
     # Now compute wraparound protocol.
-    inp = Pine.Flp.encode_protocol_results(inp, wraparound_joint_rand)
+    inp = Pine.Flp.finalize_encoding_with_wraparound_joint_rand(
+        inp, wraparound_joint_rand
+    )
 
     # Compute verification joint randomness parts, based on Client nonce,
     # secret shares of all field elements from the encoded vector,
