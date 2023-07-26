@@ -70,7 +70,7 @@ informative:
     title: "DivviUp LibPrio Rust"
     target: https://github.com/divviup/libprio-rs
 
-> TODO Update citations for PINE paper.
+# > TODO Update citations for PINE paper.
 
 --- abstract
 
