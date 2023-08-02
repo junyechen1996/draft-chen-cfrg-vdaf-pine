@@ -52,9 +52,12 @@ informative:
     date: 2017
     target: https://ai.googleblog.com/2017/04/federated-learning-collaborative.html
 
-  GradientWikipedia:
-    title: "Gradient"
-    target: https://en.wikipedia.org/wiki/Gradient
+  Lem12:
+    title: "Cauchy and the gradient method"
+    author:
+      - ins: C. Lemaréchal
+    date: 2012
+    target: https://www.elibm.org/article/10011456
 
   PINE:
     title: "[TODO: Add arxiv link when it's ready]"
@@ -70,7 +73,6 @@ informative:
     title: "DivviUp LibPrio Rust"
     target: https://github.com/divviup/libprio-rs
 
-# > TODO Update citations for PINE paper.
 
 --- abstract
 
@@ -88,8 +90,8 @@ Aggregating high-dimensional real number vectors is a fundamental primitive
 to support federated learning {{MR17}}, that allows data scientists to train
 machine learning models with data from many users' devices. Each user's device
 will train the model with its local data and send the model updates to the
-servers. The model updates are typically referred to as "gradients"
-{{GradientWikipedia}}, and are typically expressed as a vector of real numbers.
+servers. The model updates are typically referred to as "gradients" {{Lem12}},
+and are typically expressed as a vector of real numbers.
 The servers will obtain the aggregated model updates, and apply them to the
 central model. This process repeats as the servers send the new model
 to the devices.
@@ -100,7 +102,7 @@ approximate verification of Client measurements ({{Tal22}}), or incur a high
 communication overhead between Client and Aggregators, e.g.
 VDAF {{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}} proposes a Prio3 scheme as a
 multi-party computation (MPC) protocol to verify certain property of each
-Client measurement, and the proposed implementation in {{ISR23}} has to
+Client measurement, and the proposed implementation in {{DivviUpVDAF}} has to
 secret-share each bit of each vector dimension as a finite field element
 in the Client measurement.
 
