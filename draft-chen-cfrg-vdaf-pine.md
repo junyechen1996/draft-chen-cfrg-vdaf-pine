@@ -66,7 +66,7 @@ informative:
     date: 2022
     target: https://arxiv.org/abs/2202.10618
 
-  ISR23:
+  DivviUpVDAF:
     title: "DivviUp LibPrio Rust"
     target: https://github.com/divviup/libprio-rs
 
