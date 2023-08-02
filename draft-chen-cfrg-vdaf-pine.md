@@ -57,7 +57,7 @@ informative:
     target: https://en.wikipedia.org/wiki/Gradient
 
   PINE:
-    title: "PINE"
+    title: "[TODO: Add arxiv link when it's ready]"
 
   Tal22:
     title: "Differential Secrecy for Distributed Data and Applications to Robust Differentially Secure Vector Summation"
