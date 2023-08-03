@@ -44,9 +44,39 @@ informative:
     seriesinfo: CRYPTO 2019
     target: https://ia.cr/2019/188
 
+  MR17:
+    title: "Federated Learning: Collaborative Machine Learning without Centralized Training Data"
+    author:
+      - ins: B. McMahan
+      - ins: D. Ramage
+    date: 2017
+    target: https://ai.googleblog.com/2017/04/federated-learning-collaborative.html
+
+  Lem12:
+    title: "Cauchy and the gradient method"
+    author:
+      - ins: C. Lemaréchal
+    date: 2012
+    target: https://www.elibm.org/article/10011456
+
+  PINE:
+    title: "[TODO: Add arxiv link when it's ready]"
+
+  Tal22:
+    title: "Differential Secrecy for Distributed Data and Applications to Robust Differentially Secure Vector Summation"
+    author:
+      - ins: K. Talwar
+    date: 2022
+    target: https://arxiv.org/abs/2202.10618
+
+  DivviUpVDAF:
+    title: "DivviUp LibPrio Rust"
+    target: https://github.com/divviup/libprio-rs
+
+
 --- abstract
 
-A new Verifiable Distributed Aggregation Function (VDAF) named
+A Verifiable Distributed Aggregation Function (VDAF) named
 Private Inexpensive Norm Enforcement (PINE) that supports aggregating
 high-dimensional real number vectors bounded by a configurable L2-norm bound,
 which is a fundamental primitive to support private federated learning.
@@ -57,13 +87,35 @@ which is a fundamental primitive to support private federated learning.
 # Introduction
 
 Aggregating high-dimensional real number vectors is a fundamental primitive
-to support federated learning. There have been various approaches that attempt
-to support such use cases with strong security and privacy guarantee, such as
-differential privacy (DP), secure aggregation, etc. In this document, we propose
-a protocol that attempts to achieve the following properties:
+to support federated learning {{MR17}}, that allows data scientists to train
+machine learning models with data from many users' devices. Each user's device
+will train the model with its local data and send the model updates to the
+servers. The model updates are typically referred to as "gradients" {{Lem12}},
+and are typically expressed as a vector of real numbers.
+The servers will obtain the aggregated model updates, and apply them to the
+central model. This process repeats as the servers send the new model
+to the devices.
+
+There have been various approaches discussed in the Introduction section of
+{{PINE}} to support such use cases, but they either only implement an
+approximate verification of Client measurements ({{Tal22}}), or incur a high
+communication overhead between Client and Aggregators, e.g.
+VDAF {{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}} proposes a Prio3 scheme as a
+multi-party computation (MPC) protocol to verify certain property of each
+Client measurement, and the proposed implementation in {{DivviUpVDAF}} has to
+secret-share each bit of each vector dimension as a finite field element
+in the Client measurement.
+
+In this document, we propose a VDAF that enables more efficient and accurate
+secure aggregation that conforms to the VDAF interface {{!VDAF}}. We want to
+achieve the following properties in our VDAF:
 
 * Malicious Clients should be prevented from sending vectors with invalid
-  L2-norm and poisoning the final aggregated result with high probability.
+  L2-norm with high probability. The L2-norm of a vector is defined as the
+  square root of the sum of squares of values at all vector dimensions.
+  Rejecting vectors with high L2-norm helps prevent Clients from poisoning the
+  final aggregate result obtained by the Aggregators and minimizes the risk of
+  training a bad machine learning model.
 
 * Honest Clients should be accepted with high probability.
 
@@ -71,25 +123,16 @@ a protocol that attempts to achieve the following properties:
   Aggregators, learns statistically close to nothing about the measurements of
   honest Clients.
 
-Previous approaches that attempt to achieve these properties either only
-implement an approximate verification of Client measurements, or incur a high
-communication overhead between Client and Aggregators. This document outlines
-a proposal of a new VDAF that enables more efficient and accurate secure
-aggregation that conforms to the VDAF
-protocol {{!VDAF=I-D.draft-irtf-cfrg-vdaf-05}}.
-
-The VDAF protocol explicitly introduces a Prio3 scheme {{Section 7 of !VDAF}},
-which can support various types of aggregated statistics and can verify certain
-properties of Client measurements. This document aims to extend the Prio3 scheme
-to support aggregating real number vectors with bounded L2-norm, specifically
+This document aims to extend the Prio3 scheme {{Section 7 of !VDAF}} to support
+aggregating real number vectors with bounded L2-norm, specifically
 from the following aspects:
 
 * A new type of joint randomness agreed between Client and Aggregators, that
   supports the computation of "wraparound protocol" in PINE VDAF. We denote it
   as "wraparound joint randomness".
 
-* A new "Fully Linear Proof (FLP)" system that incorporates the
-  "wraparound joint randomness" and supports PINE as a new VDAF.
+* A "Fully Linear Proof (FLP)" system that incorporates the
+  "wraparound joint randomness" and supports PINE as a VDAF.
 
 
 # Conventions and Definitions
@@ -143,9 +186,7 @@ PINE supports aggregating real number vectors bounded by a configured L2-norm.
 It asks each Client to compute results needed by protocols in PINE to verify
 the L2-norm, and then send the results in the submitted vector. In this draft,
 we are specifically interested in the implementation of the statistical
-zero-knowledge protocol in section 4 of the PINE paper, in the VDAF setting.
-
-> TODO Add citations for PINE paper once the public link is available.
+zero-knowledge protocol in section 4 of {{PINE}}, in the VDAF setting.
 
 The Clients are expected to first encode their real number vectors into a
 vector of field integers, because all the protocols in PINE are computed and
@@ -252,7 +293,7 @@ L2-norm) of values in `X` modulo field size `q` is at most `B`, which is the
 squared L2-norm bound in field integer.
 
 To verify this inequality, we will first turn this inequality check into an
-equality check, per Section 4.1 of the PINE paper, with `\beta_1` equal to 0,
+equality check, per Section 4.1 of {{PINE}}, with `\beta_1` equal to 0,
 and `\beta_2` equal to `B`. Additionally, the minimum field size requirement for
 this protocol MUST be at least `3 * B + 2`.
 
@@ -272,11 +313,10 @@ Aggregators then collectively verify the following:
    achieved by 0/1 bit check protocol {{bit-check}}.
 
 1. The computed squared L2-norm from the secret shares of `X` matches the
-   secret-shared bit representation of `V0`, as per Section 4.3 of the
-   PINE paper.
+   secret-shared bit representation of `V0`, as per Section 4.3 of {{PINE}}.
 
 1. `V0 + U0 = B`, based on the secret-shared bit representation of `V0`
-   and `U0`, as per Section 4.1 of the PINE paper.
+   and `U0`, as per Section 4.1 of {{PINE}}.
 
 It's important to recognize that verifying property 2 involves a
 non-affine operation, that is a degree-2 polynomial to square each value in `X`,
@@ -363,7 +403,7 @@ repetition, and fails otherwise.
 
 We ask Clients to repeat the procedure for `r` number of times, to reduce the
 overall soundness and completeness error of this protocol, with motivations
-described in Section 4.2 of the PINE paper. We define a threshold `TAU`, so that
+described in Section 4.2 of {{PINE}}. We define a threshold `TAU`, so that
 the Clients are required to pass at least `TAU * r` repetitions. Otherwise,
 they SHOULD abort, and Aggregators MUST reject.
 
@@ -375,7 +415,7 @@ following:
    encodes its bit representation. Now `V1_k` MUST be in `[0, H + abs(L)]`.
    In order for Aggregators to verify `V1_k` doesn't exceed `H + abs(L)`, the
    Client also computes `U1_k = H + abs(L) - V1_k`, so Aggregators can run the
-   protocol in Section 4.1 of the PINE paper to turn this inequality check into
+   protocol in Section 4.1 of {{PINE}} to turn this inequality check into
    equality check.
 1. It records a success bit `g_k` of 1, indicating it has passed.
 1. It sets `S_k = 0`. This is a single field element being secret-shared.
@@ -394,7 +434,7 @@ Aggregators then collectively verify the following properties:
    achieved by {{bit-check}}.
 
 1. For each repetition `k`, verify the linear equality
-   `V1_k + U1_k = H + abs(L)`, per Section 4.1 of the PINE paper.
+   `V1_k + U1_k = H + abs(L)`, per Section 4.1 of {{PINE}}.
    This verifies `V1_k` doesn't exceed `H + abs(L)`.
 
 1. For each repetition `k`, verify the linear equality
@@ -408,8 +448,8 @@ Aggregators then collectively verify the following properties:
 
 1. `\SUM_k g_k = TAU * r`, the Client has passed at least `TAU * r` repetitions.
 
-It is important to notice an optimization proposed in Remark 4.12 of the
-PINE paper, that if we can come up with wraparound protocol bounds
+It is important to notice an optimization proposed in Remark 4.12 of {{PINE}},
+that if we can come up with wraparound protocol bounds
 `L >= -ALPHA * sqrt(B)` and `H <= ALPHA * sqrt(B)`, such that `H + L + 1` is a
 power of 2, we can avoid asking Clients to send `U1_k` for each repetition, and
 Aggregators don't have to verify property 2 above, because the maximum number of
@@ -500,7 +540,7 @@ characterized from the following aspects:
 
 * Soundness: The soundness error of one repetition of wraparound protocol is
   1/2. Over `r` repetitions, the soundness error is therefore
-  `Bin((TAU * r); r, 1/2)`, see Lemma 4.3 and also Claim 4.9 in PINE paper.
+  `Bin((TAU * r); r, 1/2)`, see Lemma 4.3 and also Claim 4.9 in {{PINE}}.
   There is also a soundness error when we verify the degree-2 polynomial in
   `WC_1` over all `r` repetitions. The soundness error is computed based on
   Corollary 4.7 and Remark 4.8 of {{BBCGGI19}},
@@ -510,16 +550,16 @@ characterized from the following aspects:
 
 * Completeness: The completeness error of one repetition of wraparound protocol
   is `ETA`, or `2 / e^(ALPHA' ^ 2)`, where `ALPHA'` is the actual parameter used
-  after applying optimization in Remark 4.12 in the PINE paper.
+  after applying optimization in Remark 4.12 in {{PINE}}.
   Therefore, the completeness error over all repetitions is
   `1 - Bin((TAU * r); r, 1 - ETA)`, see Lemma 4.3 and also Claim 4.9 in
-  PINE paper. This is the probability that a Client fails more than
+  {{PINE}}. This is the probability that a Client fails more than
   `(1 - TAU) * r` repetitions.
 
 * `rho`-Statistical Zero-Knowledge: Aggregators learn close to nothing about
   an honest Client. The zero knowledge leakage is quantified by the
   completeness error `rho` from above, which is negligible. See discussion in
-  Lemma 4.3 of the PINE paper.
+  Lemma 4.3 of {{PINE}}.
 
 ### Summary of PINE Protocols {#summary-protocols}
 
