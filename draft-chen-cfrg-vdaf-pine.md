@@ -73,6 +73,10 @@ informative:
     title: "DivviUp LibPrio Rust"
     target: https://github.com/divviup/libprio-rs
 
+  IEEE754-2019:
+    title: "IEEE Standard for Floating-Point Arithmetic"
+    date: 2019
+    target: https://ieeexplore.ieee.org/document/8766229
 
 --- abstract
 
@@ -156,7 +160,7 @@ The computation parameters used in the protocols of PINE are listed in
 |:----------|:---------------|
 | `b`       | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
 | `d`       | Client vector dimension. |
-| `f`       | Number of fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. |
+| `f`       | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
 | `B`       | Squared L2-norm bound in field integer. It is equal to `(floor(b * 2^f))^2`. This is an inclusive upper bound. |
 | `xs`      | Original Client vector. |
 | `X`       | Client vector after the original real number vector is encoded into a vector of field integers. |
@@ -196,24 +200,47 @@ and decoded into a vector of IEEE-754 compatible float64 values.
 ## Encoding Real Numbers into Field Integers {#fp-encoding}
 
 To keep the necessary number of precision bits `f` configured in PINE VDAF,
-the high-level idea is to multiply the real numbers by `2^f`.
+the high-level idea is to multiply a real number by `2^f`, and provide a 1-1
+mapping between the multiplied value and a field integer. In order to represent
+real numbers with sufficient precision and also allow implementations to
+represent `2^f` in common integer representations, we require `f < 128`, which
+is precise enough to represent 127 binary fractional bits, or equivalently,
+approximately 38 decimal bits.
 
-For L2-norm bound `b`, the field integer value is `floor(b * 2^f)`. To compute
-the parameter `B`, we square the encoded field integer directly,
-i.e. `(floor(b * 2^f))^2`.
+We don't recommend a specific real number representation during encoding,
+but a common choice is to use some fixed-point precision representation or
+IEEE-754 compatible float64 representation {{IEEE754-2019}}. In this draft,
+we will use IEEE-754 float64 as an example, because it's commonly available
+in most hardwares.
 
-For each value `x` in Client vector `xs`:
+We consider the following float64 values as invalid inputs during encoding:
 
-* If `x >= 0`, encode the value as `floor(x * 2^f)`, i.e. positive real numbers
-  are encoded into the front end of the field integer range,
-  i.e. `[0, floor(b * 2^f)]`, or `[0, sqrt(B)]`.
+* NaN, which can be obtained by dividing 0.0 by 0.0.
+* Positive and negative infinity, which can be obtained by dividing any non-zero
+  value by 0.0.
+* Subnormal numbers, whose absolute values are less than `2.225e-308`. Since
+  we require `f < 128`, it's not possible to use unique field integers to
+  represent subnormal numbers.
 
-* If `x < 0`, encode the value as `q - floor(|x| * 2^f)`, i.e. negative real
-  numbers are encoded into the tail end of the field integer range,
-  i.e. `[q - floor(b * 2^f), q)`, or `[q - sqrt(B), q)`.
+Otherwise, for a float64 value `x`, we will encode the result of
+`floor(x * 2^f)` into a field integer. We will reserve the first half of the
+field size `[1, floor(q/2)]` to encode positive values, and the second half of
+the field size `[ceil(q/2), q)` to encode negative values. Specifically:
 
-This effectively maps each possible value `x` in the range `[-b, b]` into
-the field integer range `[-sqrt(B), sqrt(B)]`.
+* A positive or negative 0.0 in float64 will be encoded into a field integer
+  of 0. IEEE-754 float64 has the notion of both positive and negative 0, but
+  their values are equal for our purposes.
+* If `x` is positive, encode it as `floor(x * 2^f)`.
+* If `x` is negative, encode it as `q - floor(|x| * 2^f)`.
+
+Since field size `q` is a prime number, the number of unique values in both
+ranges should be equal. This encoding will effectively map the negative values
+in `[-b, 0)` to `[q-sqrt(B), q)`, and map the positive values in `[0, b]` to
+`[0, sqrt(B)]`, where `b` is the L2-norm bound and also the maximum value of
+any vector element, `B` is the squared L2-norm bound in field integer,
+computed via `(floor(b * 2^f))^2`. We must make sure the two ranges don't
+overlap with each other, i.e. the chosen values of `b` and `f` must satisfy
+`floor(b * 2^f) <= floor(q/2)`.
 
 ## Aggregation {#agg}
 
@@ -225,24 +252,21 @@ integers.
 
 To decode a (aggregated) field integer `agg` back to float, assuming there are
 `c` clients, the aggregated field integer should fall in the range of
-`[-c * sqrt(B), c * sqrt(B)]`. That is:
+`[-c * sqrt(B), c * sqrt(B)]`. Based on the encoding mechanisms in
+{{fp-encoding}}, we decode the aggregated field integer into float64 as the
+following:
 
-* If the aggregated value is negative, we expect the field integer to be in
-the range `[q - c * sqrt(B), q)`.
+* If the field integer is 0, the aggregated float64 value should be 0.0.
+* If the field integer `agg` is in `[q - c * sqrt(B), q)`, the aggregated
+  float64 value should be negative. We will decode `agg` as
+  `-((q - agg) / 2^f)`.
+* If the field integer `agg` is in `(0, c * sqrt(B)]`, the aggregated
+  float64 value should be positive. We will decode `agg` as `agg / 2^f`.
 
-* If the aggregated value is positive, we expect the field integer to be in
-the range `[0, c * sqrt(B)]`.
-
-We will first check that the two ranges don't collapse, which happens when
-the number of clients `c` is too big. We verify that
-`2 * c * sqrt(B) < q`.
-
-Then in order to decode, the basic idea is to divide the aggregated field
-integer by `2^f`, specifically:
-
-* When `0 <= agg <= c * sqrt(B)`, we will decode it as `agg / 2^f`.
-
-* Otherwise, decode it as `-((q - agg) / 2^f)`.
+Similar to how we require field integer ranges for positive and negative
+float64 values to not overlap, we also need to make sure the number of Clients
+`c` is not so big that it causes the two ranges after aggregation to overlap.
+Therefore, we must check that `c * sqrt(B) <= floor(q/2)`.
 
 ## Validity Checks for PINE
 
