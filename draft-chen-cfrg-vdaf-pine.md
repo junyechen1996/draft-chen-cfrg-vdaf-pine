@@ -482,7 +482,7 @@ bits to encode `V1_k` naturally limits the upper bound.
 One way to achieve this is to come up with an `ALPHA' < ALPHA`, such that it
 fulfills the following conditions:
 
-* `2 * ALPHA' * sqrt(B) + 2` is a power of 2.
+* `ALPHA' * sqrt(B) + 1` is a power of 2.
 
 * `L = -ALPHA' * sqrt(B)` and `H = ALPHA' * sqrt(B) + 1`.
 
@@ -813,16 +813,10 @@ The encoding and decoding interface for PINE are defined as the following
 based on {{pine-flp-encoding}}:
 
 ~~~
-def encode(Pine, measurement: Vec[float]):
+def encode(Pine, measurement: list[float]):
     encoded_measurement = []
     for x in measurement:
-        x_encoded = int(x * (2 ** Pine.f))
-        if x < 0:
-            x_field = Pine.Flp.Field(
-                Pine.Field.MODULUS + x_encoded
-            )
-        else:
-            x_field = Pine.Field(x_encoded)
+        x_encoded = Pine.encode_f64_into_field(x)
         encoded_measurement.append(x_encoded)
     return encoded_measurement
 
@@ -836,7 +830,7 @@ def sample_wraparound_joint_rand(Pine, prg: Prg):
     # We look at bytes from the PRG two bits at a time, so the
     # number of bytes fed into PRG is `ceil(output_len / 4)`.
     # `4` is the number of field elements we can sample from one byte.
-    prg_output_len = ceil(output_len / NUM_ELEMS_IN_ONE_BYTE)
+    prg_output_len = math.ceil(output_len / NUM_ELEMS_IN_ONE_BYTE)
     rand_buf = prg.next(prg_output_len)
 
     wraparound_joint_rand = []
@@ -855,87 +849,93 @@ def sample_wraparound_joint_rand(Pine, prg: Prg):
 
 def finalize_encoding_with_wraparound_joint_rand(
     Pine,
-    partially_encoded: Vec[Pine.Field],
-    wraparound_joint_rand: Vec[Pine.Field],
+    partially_encoded: list[Pine.Field],
+    wraparound_joint_rand: list[Pine.Field],
 ):
+    b0 = Pine.num_bits_for_sq_l2_norm()
     encoded_measurement = partially_encoded[:]
 
     # Compute L2-norm sum-check results.
-    V0 = Pine.Field(0)
+    sq_l2_norm = Pine.Field(0)
     for val in partially_encoded:
-        V0 += val * val
-    U0 = Pine.Field(Pine.B) - V0
-    # Append the bit representation of `U0` and `V0` to
-    # `encoded_measurement`.
-    for b in range(Pine.b0):
-        encoded_measurement.append(Pine.Field(
-            (V0 >> b) & 1
-        ))
-    for b in range(Pine.b0):
-        encoded_measurement.append(Pine.Field(
-            (U0 >> b) & 1
-        ))
+        sq_l2_norm += val * val
+    sq_l2_norm_diff = Pine.Field(Pine.B) - sq_l2_norm
+    # Append the bit representation of `sq_l2_norm` and
+    # `sq_l2_norm_diff` to `encoded_measurement`.
+    encoded_measurement.extend(
+        Pine.Field.encode_into_bit_vector(sq_l2_norm, b0)
+    )
+    encoded_measurement.extend(
+        Pine.Field.encode_into_bit_vector(sq_l2_norm_diff, b0)
+    )
 
     # Compute wraparound check results.
-    # Assume `abs_L` is the abs(L) in {{wraparound}}.
-    abs_L = Pine.ALPHA * sqrt(Pine.B)
-    H = abs_L + 1
-    wr_upper_bound = abs_L + H
-    # Number of bits for each wraparound check repetition,
-    # which includes the bits for `V1` and success bit `g`.
-    num_bits_per_rep = Pine.b1 + 1
+    # Infer the bounds based on the PINE parameters.
+    (abs_wr_lower_bound, abs_wr_upper_bound, wr_shifted_bound) = \
+        Pine.wr_bounds()
+    # Number of bits to represent shifted wraparound check result.
+    b1 = math.ceil(math.log2(wr_shifted_bound.as_unsigned() + 1))
+
     # Keep track of the "difference" field elements for each
-    # repetition, i.e. the `s` parameter in the parameter table.
+    # repetition, i.e. the difference between the shifted wraparound
+    # check result and the shifted upper bound.
+    # This is also the `s` parameter in the parameter table.
     diff_field_elems = []
-    # Compute the minimum number of repetitions `min_r_pass` that
-    # the Client is expected to pass. Also keep track of the number
-    # of passing repetitions in `r_passed`. If the Client has passed
-    # more than `min_r_pass` , don't set success bit to be 1 anymore,
+    # Compute the number of repetitions `r_pass` that the Client
+    # is expected to pass. Also keep track of the number of passing
+    # repetitions in `r_passed`. If the Client has passed more than
+    # `r_pass`, don't set success bit to be 1 anymore,
     # because Aggregators are doing an equality check between the
-    # `r_passed` and `min_r_pass`. See guidance in {{wraparound}}.
-    min_r_pass = floor(Pine.TAU * Pine.r)
+    # `r_passed` and `r_pass`. See guidance in {{wraparound}}.
+    r_pass = Pine.r_pass()
     r_passed = 0
     for rep in range(Pine.r):
-        # Compute `V1` in the current wraparound check repetition.
+        # Compute shifted wraparound check result in the current
+        # wraparound check repetition.
         Z = wraparound_joint_rand[(rep*d):((rep+1)*d)]
-        V1 = Pine.Field(0)
-        for j in range(Pine.d):
-            V1 += Z[j] * partially_encoded[j]
-        V1 += abs_L
+        shifted_wr_res = Pine.compute_dot_prod(
+            partially_encoded, Z
+        )
+        shifted_wr_res += abs_wr_lower_bound
 
-        if V1 <= wr_upper_bound:
+        if shifted_wr_res <= wr_shifted_bound:
             # Successful repetition:
-            # - set success bit `g` to be 1, if `r_passed` hasn't
-            #   exceeded `min_r_pass`, otherwise set success bit to
+            # - set success bit to be 1, if `r_passed` hasn't
+            #   exceeded `r_pass`, otherwise set success bit to
             #   to be 0.
-            # - set difference field element `s` to be 0.
-            if r_passed >= min_r_pass:
-                g = 0
+            # - set difference field element to be 0, because
+            #   Client has passed this repetition.
+            if r_passed >= r_pass:
+                success_bit = 0
             else:
-                g = 1
+                success_bit = 1
                 r_passed += 1
-            s = 0
-            adj_V1 = V1
+            diff_field_elem = 0
+            adj_shifted_wr_res = shifted_wr_res
         else:
             # Failing repetition:
-            # - set success bit `g` to be 0.
-            # - set `V1` and difference field element `s`
-            #   according to {{wraparound}}.
-            g = 0
-            s = V1 - wr_upper_bound
-            adj_V1 = wr_upper_bound
+            # - set success bit to be 0.
+            # - set the shifted wraparound check result and the
+            #   difference field element according to {{wraparound}}.
+            success_bit = 0
+            diff_field_elem = shifted_wr_res - wr_shifted_bound
+            adj_shifted_wr_res = wr_shifted_bound
 
-        for b in range(Pine.b1):
-            encoded_measurement.append(Pine.Field(
-                (adj_V1 >> b) & 1
-            ))
-        encoded_measurement.append(g)
-        diff_field_elems.append(s)
+        # Append bit-encoded `adj_shifted_wr_res` into
+        # `encoded_measurement`.
+        encoded_measurement.extend(
+            Field.encode_into_bit_vector(adj_shifted_wr_res, b1)
+        )
+        # Append success bit right after the bits for shifted
+        # wraparound check result.
+        encoded_measurement.append(success_bit)
+        # Append difference field element.
+        diff_field_elems.append(diff_field_elem)
 
-    # Sanity check the Client has passed `min_r_pass` number of
+    # Sanity check the Client has passed `r_pass` number of
     # repetitions, otherwise Client SHOULD retry as recommended
     # in {{wraparound}}.
-    if r_passed != min_r_pass:
+    if r_passed != r_pass:
         raise Exception(
             "Client should retry encoding PINE check results with "
             "a different wraparound joint randomness."
@@ -949,18 +949,11 @@ def truncate(Pine, inp: Vec[Pine.Field]):
 def decode(Pine,
            output: Vec[Pine.Field],
            num_measurements: Unsigned):
-    # The upper bound in the field, below which we will think the
-    # aggregated field element indicates a positive value in
-    # floating point world.
-    positive_upper_bound = num_measurements * sqrt(Pine.B)
     decoded_output = []
     for val in output:
-        val_unsigned = val.as_unsigned()
-        if val <= positive_upper_bound:
-            decoded = val_unsigned
-        else:
-            decoded = -(Pine.Field.MODULUS - val_unsigned)
-        decoded_output.append(decoded / (2 ** Pine.f))
+        decoded_output.append(
+            Pine.decode_f64_from_field(val, num_measurements)
+        )
     return decoded_output
 ~~~
 
@@ -991,89 +984,116 @@ Therefore, the validity circuits to verify are defined as the following:
 
 ~~~
 def bit_check(Pine,
-              inp: Vec[Pine.Flp.Field],
+              inp: list[Pine.Flp.Field],
               verification_joint_rand_0: Pine.Field):
+    # Compute a random linear combination of the `Range2` polynomial
+    # evaluated at all entries that are expected to be bits.
     res = Pine.Field(0)
+    b0 = Pine.num_bits_for_sq_l2_norm()
+    b1 = Pine.num_bits_for_shifted_wr_res()
     # Vector values between `[d, d + 2 * b0 + r * (b1 + 1))`
     # are all expected to be bits.
-    for i in range(2 * Pine.b0 + Pine.r * (Pine.b1 + 1)):
+    for i in range(2 * b0 + Pine.r * (b1 + 1)):
         res += (verification_joint_rand_0 ** (i+1)) * \
                Range2(inp[Pine.d + i])
     return res
 
 def l2_norm_sum_check(Pine,
-                      inp: Vec[Pine.Field],
+                      inp: list[Pine.Field],
                       num_shares: Unsigned):
-    computed_V0 = Pine.Field(0)
+    computed_sq_l2_norm = Pine.Field(0)
     for i in range(Pine.d):
-        computed_V0 += Sq(inp[i])
-    encoded_V0 = Pine.Field(0)
-    for j in range(Pine.b0):
-        encoded_V0 += (2 ** j) * inp[Pine.d + j]
-    encoded_U0 = Pine.Field(0)
-    for k in range(Pine.b0):
-        encoded_U0 += (2 ** k) * inp[Pine.d + Pine.b0 + k]
-    B_shares = Pine.Field(Pine.B) * Pine.Field(num_shares).inv()
+        computed_sq_l2_norm += Sq(inp[i])
+    b0 = Pine.num_bits_for_sq_l2_norm()
+    encoded_sq_l2_norm = Field.decode_from_bit_vector(
+        inp[Pine.d : (Pine.d + b0)]
+    )
+    encoded_sq_l2_norm_diff = Field.decode_from_bit_vector(
+        inp[(Pine.d + b0) : (Pine.d + 2 * b0)]
+    )
+    B_shares = Pine.B * Pine.Field(num_shares).inv()
     return (
-        computed_V0 - encoded_V0,
-        encoded_V0 + encoded_U0 - B_shares
+        computed_sq_l2_norm - encoded_sq_l2_norm,
+        encoded_sq_l2_norm + encoded_sq_l2_norm_diff - B_shares
     )
 
-# Index offset that contains bit-encoded wraparound protocol result
-# `V1` for the `k`-th wraparound protocol repetition.
-def offset_V1(Pine, k):
-    return Pine.d + 2 * Pine.b0 + k * (Pine.b1 + 1)
+# Index offset that contains bit-encoded shifted wraparound check
+# result for the `k`-th wraparound protocol repetition.
+def offset_shifted_wr_res(Pine, k):
+    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
+        k * (Pine.num_bits_for_shifted_wr_res() + 1)
 
-# Index offset that contains the success bit `g` for the `k`-th
-# wraparound protocol repetition.
-def offset_g(Pine, k):
-    return Pine.d + 2 * Pine.b0 + k * (Pine.b1 + 1) + Pine.b1
+# Index offset that contains the success bit for the `k`-th
+# wraparound check repetition.
+def offset_success_bit(Pine, k):
+    # Skipping over the L2-norm sum-check results,
+    # and the bits for the shifted wraparound check results
+    # for the first `k + 1` repetitions (+1 to include the current
+    # repetition), and the success bits of the first `k` repetitions.
+    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
+        (k + 1) * Pine.num_bits_for_shifted_wr_res() + k
 
-# Index offset that contains the "difference" field element `s`
-# for the `k`-th wraparound protocol repetition.
-def offset_s(Pine, k):
-    return Pine.d + 2 * Pine.b0 + r * (Pine.b1 + 1) + k
+# Index offset that contains the "difference" field element between
+# the shifted wraparound check result and shifted upper bound for
+# the `k`-th wraparound protocol repetition.
+def offset_diff_field_elem(Pine, k):
+    # Skipping over all bits, and the difference field elements
+    # for the first `k` repetitions.
+    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
+        Pine.r * (Pine.num_bits_for_shifted_wr_res() + 1) + k
 
 def wraparound_check(Pine,
-                     inp: Vec[Pine.Field],
-                     wraparound_joint_rand: Vec[Pine.Field],
+                     inp: list[Pine.Field],
+                     wraparound_joint_rand: list[Pine.Field],
                      verification_joint_rand_1: Pine.Field,
                      num_shares: Unsigned):
     checks = []
-    abs_L = Pine.Field(Pine.ALPHA * sqrt(Pine.B)) * \
-            Pine.Field(num_shares).inv()
+    (abs_wr_lower_bound, abs_wr_upper_bound, wr_shifted_bound) = \
+        Pine.wr_bounds()
+    abs_wr_lower_bound_shares = \
+        abs_wr_lower_bound * Pine.Field(num_shares).inv()
+    # Number of bits to represent shifted wraparound check result.
+    b1 = Pine.num_bits_for_shifted_wr_res()
 
     # Check for sum of success bits.
-    g_check = -(floor(Pine.TAU * Pine.r) * \
-              Pine.Field(num_shares).inv())
-    # Degree-2 check of `g_j * s_j = 0` for all repetitions `j`.
+    success_bit_check = -(
+        Pine.Field(Pine.r_pass()) * \
+        Pine.Field(num_shares).inv()
+    )
+    # Degree-2 check of `g_k * s_k = 0` for all repetitions `k`.
     degree_2_check = Pine.Field(0)
 
-    for i in range(Pine.r):
-        # Compute wraparound protcol result for the `i`-th repetition,
+    for k in range(Pine.r):
+        # Compute wraparound protcol result for the `k`-th repetition,
         # i.e. the dot product of `X` and `Z` vector
         # (`wraparound_joint_rand`).
-        Y1 = Pine.Field(0)
-        for j in range(Pine.d):
-            Y1 += inp[j] * wraparound_joint_rand[i * Pine.b1 + j]
+        dot_prod_res = Pine.compute_dot_prod(
+            inp,
+            wraparound_joint_rand[(k * d) : ((k + 1) * d)],
+        )
         # Recover bit-encoded wraparound protocol result for
-        # the `i`-th repetition.
-        V1 = Pine.Field(0)
-        for l in range(Pine.b1):
-            V1 += (2 ** l) * inp[Pine.offset_V1(i) + l]
-        # Difference field element `s` for the `i`-th repetition.
-        s = inp[Pine.offset_s(i)]
+        # the `k`-th repetition.
+        shifted_wr_res_start = Pine.offset_shifted_wr_res(k)
+        shifted_wr_res = Pine.Field.decode_from_bit_vector(
+            inp[shifted_wr_res_start : (shifted_wr_res_start + b1)]
+        )
+        # Difference field element between the shifted wraparound
+        # check result and the shifted upper bound for the `k`-th
+        # repetition.
+        diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
         # This equation should be equal to 0.
-        check = Y1 + abs_L - V1 - s
+        check = dot_prod_res + abs_wr_lower_bound_shares - \
+            shifted_wr_res - diff_field_elem
         checks.append(check)
 
-        # Success bit `g` for the `i`-th repetition.
-        g = inp[Pine.offset_g(i)]
-        g_check += g
+        # Success bit for the `k`-th repetition.
+        success_bit = inp[Pine.offset_success_bit(k)]
+        success_bit_check += success_bit
         # Degree-2 check accumulation.
         degree_2_check += \
-            verification_joint_rand_1 ** (i+1) * Mul(g, s)
-    checks.append(g_check)
+            (verification_joint_rand_1 ** (k + 1)) * \
+            Mul(success_bit, diff_field_elem)
+    checks.append(success_bit_check)
     checks.append(degree_2_check)
     return checks
 
@@ -1084,7 +1104,7 @@ def pine_valid(Pine,
     wraparound_joint_rand = joint_rand[:(Pine.d * Pine.r)]
     verification_joint_rand = joint_rand[(Pine.d * Pine.r):]
 
-    bit_check_res = bit_check(inp, verification_joint_rand[0])
+    bit_check_res = Pine.bit_check(inp, verification_joint_rand[0])
     (sum_check_res_0, sum_check_res_1) = \
         Pine.l2_norm_sum_check(inp, num_shares)
     wraparound_checks = \
@@ -1532,6 +1552,162 @@ def agg_shares_to_result(Pine, _agg_param,
 
 This section defines a number of auxiliary functions referenced by the main
 algorithms for PINE in the preceding sections.
+
+### Conversion Between Float64 and Field Element {#f64-field-util}
+
+~~~
+def encode_f64_into_field(Pine, x: float) -> Pine.Field:
+    if math.isnan(x) or math.isfinite(x) or abs(x) < sys.float_info.min:
+        # Reject NAN, infinity, and subnormal floats.
+        raise ERR_ENCODE
+    x_encoded = int(x * (2 ** Pine.f))
+    if x >= 0:
+        return Pine.Field(x_encoded)
+    return Pine.Flp.Field(Pine.Field.MODULUS + x_encoded)
+
+def decode_f64_from_field(
+    Pine,
+    field_elem: Pine.Field,
+    num_measurements: Unsigned,
+) -> float:
+    # The upper bound in the field, below which we will think the
+    # aggregated field element indicates a positive value in
+    # floating point world, otherwise the result should be negative.
+    positive_upper_bound = \
+        num_measurements * math.sqrt(Pine.B.as_unsigned())
+    decoded = field_elem.as_unsigned()
+    if field_elem_unsigned > positive_upper_bound:
+        # We need to take the difference between the result
+        # and the field modulus, and return the result as negative.
+        decoded = -(Pine.Field.MODULUS - decoded)
+    # Divide by 2^f and we will get a float back.
+    decoded_float = decoded / (2 ** Pine.f)
+    return decoded_float
+~~~
+
+### Conversion Between Field Element And Its Bit Representation {#field-repr}
+
+A common subroutine in PINE is to encode a field element into its bit
+representation, as an array of field elements, and vice versa.
+So we define two new methods on `Field`.
+
+~~~
+def is_valid_bit_length(
+    Field,
+    bits: Unsigned,
+) -> bool:
+    if bits >= 8 * Field.ENCODED_SIZE:
+        # If number of bits is already more than the maximum number of
+        # bits to represent this field type.
+        return False
+    # Check if 2^{bits} - 1 <= Field.MODULUS.
+    return Field.MODULUS >> bits != 0
+
+def encode_into_bit_vector(
+    Field,
+    field_elem: Field,
+    bits: Unsigned,
+) -> list[Field]:
+    result = []
+    for i in range(bits):
+        # Take the least significant bit and right shift.
+        result.append(Field(field_elem & 1))
+        field_elem >>= 1
+    if field_elem != 0:
+        # The bit vector representation should be longer than `bits`.
+        raise ERR_ENCODE
+    return result
+
+def decode_from_bit_vector(
+    Field,
+    vec: list[Field],
+) -> Field:
+    if not Field.is_valid_bit_length(len(vec)):
+        # Field modulus cannot represent this bit vector
+        # representation.
+        raise ERR_DECODE
+    result = Field(0)
+    for (l, bit) in enumerate(vec):
+        result += Field(1 << l) * bit
+    return result
+~~~
+
+### Wraparound Check Utility Functions {#wraparound-utility}
+
+There are some common subroutines that wraparound checks use, such as computing
+the parameters for wraparound check, and computing dot product of field element
+vectors `X` and `Z`.
+
+~~~
+def wr_bounds(Pine) -> tuple[
+    Pine.Field, Pine.Field, Pine.Field
+]:
+    # Compute the wraparound check bounds to optimize for
+    # communication cost mentioned in {{wraparound}}.
+    alpha: float = Pine.ALPHA
+    b: float = Pine.b
+    f: Unsigned = Pine.f
+
+    # {{wraparound}} mentions talking about optimizing communication
+    # cost by finding an `alpha' <= alpha`, such that
+    # `alpha' * sqrt(B) + 1` is a power of 2.
+    # Note `sqrt(B)` is the L2-norm bound in field integer, by
+    # encoding float64 `b` into a field integer, with number of
+    # fractional bits `f`.
+    alpha_times_b = alpha * b
+    # This is the absolute value of the wraparound check lower bound
+    # in field integer.
+    abs_wr_lower_bound = Pine.encode_f64_into_field(alpha_times_b)
+    # The upper bound is always one more than the absolute
+    # lower bound.
+    abs_wr_upper_bound = abs_wr_lower_bound + 1
+    # Our goal is to round down `abs_wr_upper_bound`, so it is a
+    # power of 2.
+    optim_abs_wr_upper_bound = Pine.Field(
+        1 << (int(math.log2(abs_wr_upper_bound)))
+    )
+    optim_abs_wr_lower_bound = optim_abs_wr_upper_bound - 1
+    # Client sends the shifted wraparound check result, by shifting
+    # the negative results to positive, so the shifted bound is simply
+    # the sum of the absolute lower bound and upper bound.
+    # Note this is an inclusive bound, thus the maximum shifted result
+    # that allows the Client to pass a particular repetition.
+    shifted_bound = \
+        optim_abs_wr_lower_bound + optim_abs_wr_upper_bound
+    return (
+        optim_abs_wr_lower_bound, optim_abs_wr_upper_bound,
+        shifted_bound,
+    )
+
+def num_bits_for_sq_l2_norm(Pine):
+    # Compute the number of bits to represent squared L2-norm.
+    # This is an inclusive bound, so +1 before taking the log2.
+    return math.ceil(math.log2(Pine.B.as_unsigned() + 1))
+
+def num_bits_for_shifted_wr_res(Pine):
+    # Compute the number of bits to represent the shifted wraparound
+    # check result sent by the Clients.
+    (_, _, wr_shifted_bound) = Pine.wr_bounds()
+    # This is an inclusive bound, so +1 before taking the log2.
+    return math.ceil(math.log2(wr_shifted_bound.unsigned() + 1))
+
+def r_pass(Pine):
+    # Compute the number of wraparound check repetitions that the
+    # Client is expected to pass.
+    return math.floor(Pine.r * Pine.TAU)
+
+def compute_dot_prod(
+    Pine,
+    vec1: list[Pine.Field],
+    vec2: list[Pine.Field],
+) -> Pine.Field:
+    # Compute the dot product of two field element vectors.
+    result = Pine.Field(0)
+    for val1, val2 in zip(vec1, vec2):
+        result += val1 * val2
+    return result
+~~~
+
 
 ### Joint Randomness Derivation {#pine-joint-randomness-derivation}
 
