@@ -156,11 +156,19 @@ This document uses the same parameters and conventions specified for:
 The computation parameters used in the protocols of PINE are listed in
 {{pine-comp-param}}:
 
-| Parameter | Description    |
-|:----------|:---------------|
-| `b`       | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
-| `d`       | Client vector dimension. |
-| `f`       | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
+| Parameter | Type | Description    |
+|:----------|:-----|----------------|
+| `l2_norm_bound` | float | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
+| `dimension`     | Unsigned | Client vector dimension. |
+| `num_frac_bits` | Unsigned | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
+{: #pine-comp-param title="User parameters for PINE."}
+
+> TODO: Figure out which of these are needed to describe the algorithm. For
+> those that are not needed, remove them. For those that are needed, describe
+> them as fucntions of `l2_norm_bound`, etc.
+
+| Parameter | Description |
+|:----------|:------------|
 | `B`       | Squared L2-norm bound in field integer. It is equal to `(floor(b * 2^f))^2`. This is an inclusive upper bound. |
 | `xs`      | Original Client vector. |
 | `X`       | Client vector after the original real number vector is encoded into a vector of field integers. |
