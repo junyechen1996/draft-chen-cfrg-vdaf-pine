@@ -284,8 +284,8 @@ high level.]
 > describe the end-to-end FLP, including the wraparound check, the bit checks,
 > and the norm check.
 >
-> Say up front that we're describing an instance of FlpGeneric {{Section 7.3,
-> !VDAF}}, i.e., we're describing an arithmetic circuit.
+> Say up front that we're describing an instance of FlpGeneric
+> {{Section 7.3 of !VDAF}}, i.e., we're describing an arithmetic circuit.
 >
 > Assume you get the wraparound randomness and joint randomness from the sky.
 > (We'll describe how it's derived in the next section.) Then put them together
