@@ -90,25 +90,75 @@ which is a fundamental primitive to support private federated learning.
 
 # Introduction
 
+
+> CP: Here is a proposed rewrite. (This is a skeleton, some bits still need to
+> be filled out.)
+
+The goal of federated learning {{MR17}} is to enable training of machine
+learning models from data stored on user' devices. The bulk of the computation
+is carried out on-device: each user trains the model on its data locally, then
+sends a model update to a central server. These model updates are commonly
+referred to as a "gradients" {{Lem12}}. The server then aggregates the
+gradients, applies them to the central model, and sends the updated model to
+the users to repeat the process.
+
+> CP: A diagram showing how this works would be helpful here.
+
+Federated learning improves user privacy by ensuring the training data never
+leaves the device. However, the gradients themselves reveal a significant
+amount of information about each user's input. [CP: 1-2 sentences describing
+the risk here would be useful.] One way to mitigate this risk is to distribute
+the aggregation step across multiple servers such that no server sees any
+gradient in the clear.
+
+In a Verifiable Distributed Aggregation Function
+{{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}}, this is achieved by having each user
+shard their gradient into a number of secret shares, one for each aggregation
+server. Each server aggregates their shares locally, then combines their share
+of the aggregate with the other servers to get the aggregate result.
+
+Along with keeping the gradients privacy, it is also desirable to ensure
+robustness of the overall computation. In particular, to prevent clients from
+"posioning" the model, federated learning systems typically reject gradients
+whose L2-norm exceed a certain threeshold. [CP: Say that the gradients are
+vectors of real numbers, define L2-norm, and say why this bound is significant.
+Is it just that this is what federated learning people have decided is
+sufficient to get reasonable performance?]
+
+This dcoument describes Pine {{PINE}} ("P"rivate "I"nexpensive "N"orm
+"E"forcement"), a VDAF for secure aggregation of gradients for federated
+learning. Pine shares many of the same techniques as Prio3 {{Section 7 of
+!VDAF}}, including the use of Fully Linear Proofs {{Section 7.1 of !VDAF}} for
+validating the gradients. However, Pine introduces a new technique and
+supporting analysis that, for high-dimensonal data, significantly improves
+communication cost compared to what appears to be possible for Prio3.
+
+We given an overview of this technique in {{wraparound-overview}}. In {{flp}}
+we describe our FLP for bounded L2 norm. In {{vdaf}} we describe the complete
+Pine VDAF.
+
+> CP: BELOW HERE IS THE ORIGINAL INTRO, WITH SOME INLINE COMMENTS.
+
 Aggregating high-dimensional real number vectors is a fundamental primitive
 to support federated learning {{MR17}}, that allows data scientists to train
 machine learning models with data from many users' devices. Each user's device
 will train the model with its local data and send the model updates to the
 servers. The model updates are typically referred to as "gradients" {{Lem12}},
-and are typically expressed as a vector of real numbers.
-The servers will obtain the aggregated model updates, and apply them to the
-central model. This process repeats as the servers send the new model
-to the devices.
+and are typically expressed as a vector of real numbers. [CP: The data type of
+the gradient is not relevant (yet!)] The servers will obtain the aggregated
+model updates, and apply them to the central model. This process repeats as the
+servers send the new model to the devices.
 
 There have been various approaches discussed in the Introduction section of
-{{PINE}} to support such use cases, but they either only implement an
+{{PINE}} to support such use cases, [CP: Don't assume the reader has read the
+paper. You need to sell it here, too.] but they either only implement an
 approximate verification of Client measurements ({{Tal22}}), or incur a high
-communication overhead between Client and Aggregators, e.g.
-VDAF {{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}} proposes a Prio3 scheme as a
-multi-party computation (MPC) protocol to verify certain property of each
-Client measurement, and the proposed implementation in {{DivviUpVDAF}} has to
-secret-share each bit of each vector dimension as a finite field element
-in the Client measurement.
+communication overhead between Client and Aggregators, e.g. VDAF
+{{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}} proposes a Prio3 scheme as a multi-party
+computation (MPC) protocol to verify certain property of each Client
+measurement, and the proposed implementation in {{DivviUpVDAF}} has to
+secret-share each bit of each vector dimension as a finite field element in the
+Client measurement.
 
 In this document, we propose a VDAF that enables more efficient and accurate
 secure aggregation that conforms to the VDAF interface {{!VDAF}}. We want to
@@ -121,7 +171,16 @@ achieve the following properties in our VDAF:
   final aggregate result obtained by the Aggregators and minimizes the risk of
   training a bad machine learning model.
 
+  > CP: Minimizes the risk or eliminates it? What do you mean by "bad"? The
+  > abstract of the paper mentions "poisoning attacks"; I'd suggest defining
+  > this here in the intro.
+
 * Honest Clients should be accepted with high probability.
+
+  > CP: Do you mean the measurements generated by honest Clients?
+
+  > CP: Prio3 always accepts honest measurements. It's worth nothing here that
+  > PINE trades non-zero completeness error for reduced proof size.
 
 * An attacker that controls the Collector, a subset of Clients, and all but one
   Aggregators, learns statistically close to nothing about the measurements of
@@ -137,6 +196,8 @@ from the following aspects:
 
 * A "Fully Linear Proof (FLP)" system that incorporates the
   "wraparound joint randomness" and supports PINE as a VDAF.
+
+
 
 
 # Conventions and Definitions
@@ -161,7 +222,7 @@ The computation parameters used in the protocols of PINE are listed in
 | `l2_norm_bound` | float | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
 | `dimension`     | Unsigned | Client vector dimension. |
 | `num_frac_bits` | Unsigned | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
-{: #pine-comp-param title="User parameters for PINE."}
+{: #pine-user-param title="User parameters for PINE."}
 
 > TODO: Figure out which of these are needed to describe the algorithm. For
 > those that are not needed, remove them. For those that are needed, describe
@@ -191,6 +252,52 @@ The computation parameters used in the protocols of PINE are listed in
 | `t`       | Repetitions of verifying degree-2 polynomial checks with the techniques in Corollary 4.7 and Remark 4.8 of {{BBCGGI19}}, in order to reduce soundness error of verification exponentially with `t`. |
 {: #pine-comp-param title="Computation Parameters Used in PINE."}
 
+# Overview of the "Wraparound Check" in Pine {#wraparound-overview}
+
+> CP: Describe a circuit for verifying that the L2-norm (modulo q) is in the
+> desired range.
+
+This simple computation is sufficient as long as the sum of squares does not
+"wrap around" the field modulus. But when evaluated over secret shares of data
+represented in a finite field, there is no way for the Aggregators to determine
+if this has happened.
+
+One way to mitigate this issue is to encode the gradient so that wrap around is
+impossible. [CP: Summarize what's going on in the SumVecBoundedL2Norm type in
+llibprio.] However this results in a signficant amount of communication
+overhead, since [CP. why?].
+
+The key technical idea underlying Pine is a stastical test carried out by the
+verifier (with assistance by the prover). [CP: Describe how this works at a
+high level.]
+
+> CP: End this section with the headlines from the analysis. Namely:
+>
+> * Pine admits a small completeness error, resulting from false negative
+>   wraparound tests (is this the right way to describe this?)
+> * The FLP is statistical zero-knowledge rather than perfect zero-knowledge
+>   (this is not a big deal but is worth mentioning)
+
+# An FLP for Pine {#flp}
+
+> CP: Here is where the most of the technical meat goes. The goal here is to
+> describe the end-to-end FLP, including the wraparound check, the bit checks,
+> and the norm check.
+>
+> Say up front that we're describing an instance of FlpGeneric {{Section 7.3,
+> !VDAF}}, i.e., we're describing an arithmetic circuit.
+>
+> Assume you get the wraparound randomness and joint randomness from the sky.
+> (We'll describe how it's derived in the next section.) Then put them together
+> into an implementation of the Flp interface.
+
+# The Pine VDAF {#vdaf}
+
+> CP: Here's where you define the end-to-end protocol as an implementation of
+> the Vdaf interface. Here you'll use the Flp described in the previous section
+> and derive the wraparound and joint randomness.
+
+# BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE SECTIONS ABOVE.
 
 # Private Inexpensive Norm Enforcement (PINE) VDAF {#pine}
 
