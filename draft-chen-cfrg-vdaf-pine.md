@@ -90,23 +90,20 @@ which is a fundamental primitive to support private federated learning.
 
 # Introduction
 
-
-> CP: Here is a proposed rewrite. (This is a skeleton, some bits still need to
-> be filled out.)
-
 The goal of federated learning {{MR17}} is to enable training of machine
-learning models from data stored on user' devices. The bulk of the computation
+learning models from data stored on users' devices. The bulk of the computation
 is carried out on-device: each user trains the model on its data locally, then
 sends a model update to a central server. These model updates are commonly
-referred to as a "gradients" {{Lem12}}. The server then aggregates the
+referred to as "gradients" {{Lem12}}. The server then aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.
 
 > CP: A diagram showing how this works would be helpful here.
 
 Federated learning improves user privacy by ensuring the training data never
-leaves the device. However, the gradients themselves reveal a significant
-amount of information about each user's input. [CP: 1-2 sentences describing
+leaves users' devices. However, it requires computing an aggregate of the
+gradients sent from devices, which may still reveal a significant amount of
+information about each user's input. [CP: 1-2 sentences describing
 the risk here would be useful.] One way to mitigate this risk is to distribute
 the aggregation step across multiple servers such that no server sees any
 gradient in the clear.
@@ -117,88 +114,56 @@ shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
 of the aggregate with the other servers to get the aggregate result.
 
-Along with keeping the gradients privacy, it is also desirable to ensure
-robustness of the overall computation. In particular, to prevent clients from
-"posioning" the model, federated learning systems typically reject gradients
-whose L2-norm exceed a certain threeshold. [CP: Say that the gradients are
-vectors of real numbers, define L2-norm, and say why this bound is significant.
-Is it just that this is what federated learning people have decided is
-sufficient to get reasonable performance?]
+Along with keeping the gradients' privacy, it is also desirable to ensure
+robustness of the overall computation by preventing Clients from "poisoning"
+the aggregate and corrupting the trained machine learning model. A Client's
+gradient is typically expressed a vector of real numbers. A common goal is to
+ensure each gradient has a bounded Euclidean norm, also known as L2-norm,
+which is defined as the square root of the sum of squares of values at all
+vector dimensions. L2-norm bound allows limiting the contribution from each
+Client across all dimensions, without imposing a limit on each dimension,
+or the distribution of the Client vector.
+> TODO(issue #22) add a formal reference about why using L2-norm.
 
-This dcoument describes Pine {{PINE}} ("P"rivate "I"nexpensive "N"orm
-"E"forcement"), a VDAF for secure aggregation of gradients for federated
-learning. Pine shares many of the same techniques as Prio3 {{Section 7 of
-!VDAF}}, including the use of Fully Linear Proofs {{Section 7.1 of !VDAF}} for
-validating the gradients. However, Pine introduces a new technique and
-supporting analysis that, for high-dimensonal data, significantly improves
-communication cost compared to what appears to be possible for Prio3.
+There have been various prior approaches to support secure aggregation systems
+for federated learning with the desired privacy and robustness guarantee,
+but they have various tradeoffs and limitations.
+For example, a proposed VDAF implementation in {{DivviUpVDAF}} requires Clients
+to secret-share each bit of each vector value as a finite field element,
+which incurs a high communication overhead between Client and servers.
+The work of {{Tal22}} explores a more communication-efficient approach by
+secret sharing the real number directly to implement an approximate verification
+with differential privacy guarantee. However, the robustness guarantee is weak,
+and is ineffective in preventing malicious Clients in some use cases.
+> TODO(issue #23) The proposed VDAF implementation in libprio-rs that achieves
+> the same goal as PINE is not standardized. Is it better to just sketch
+> out the approach, or mention some other prior work?
 
-We given an overview of this technique in {{wraparound-overview}}. In {{flp}}
+This dcoument describes PINE ("P"rivate "I"nexpensive "N"orm
+"E"forcement"), a VDAF for secure aggregation of gradients with bounded
+L2-norm for federated learning. It achieves the above-mentioned privacy and
+robustness guarantees, by using many of the same techniques as
+Prio3 {{Section 7 of !VDAF}}, including the use of Fully Linear Proofs (FLP)
+{{Section 7.1 of !VDAF}} for validating the gradients. However, PINE introduces
+a new technique and supporting analysis {{PINE}} that, for high-dimensional
+data, significantly improves communication cost compared to what appears to be
+possible for Prio3. The cost of this improvement is a modest loss in
+completeness: there is a non-zero, but negligible chance that Aggregators
+reject an honestly generated measurement.
+
+We give an overview of this technique in {{wraparound-overview}}. In {{flp}}
 we describe our FLP for bounded L2 norm. In {{vdaf}} we describe the complete
-Pine VDAF.
+PINE VDAF. We aim to achieve the following properties in our VDAF:
 
-> CP: BELOW HERE IS THE ORIGINAL INTRO, WITH SOME INLINE COMMENTS.
+* Gradients with invalid L2-norm from malicious Clients should be rejected with
+  overwhelming probability.
 
-Aggregating high-dimensional real number vectors is a fundamental primitive
-to support federated learning {{MR17}}, that allows data scientists to train
-machine learning models with data from many users' devices. Each user's device
-will train the model with its local data and send the model updates to the
-servers. The model updates are typically referred to as "gradients" {{Lem12}},
-and are typically expressed as a vector of real numbers. [CP: The data type of
-the gradient is not relevant (yet!)] The servers will obtain the aggregated
-model updates, and apply them to the central model. This process repeats as the
-servers send the new model to the devices.
-
-There have been various approaches discussed in the Introduction section of
-{{PINE}} to support such use cases, [CP: Don't assume the reader has read the
-paper. You need to sell it here, too.] but they either only implement an
-approximate verification of Client measurements ({{Tal22}}), or incur a high
-communication overhead between Client and Aggregators, e.g. VDAF
-{{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}} proposes a Prio3 scheme as a multi-party
-computation (MPC) protocol to verify certain property of each Client
-measurement, and the proposed implementation in {{DivviUpVDAF}} has to
-secret-share each bit of each vector dimension as a finite field element in the
-Client measurement.
-
-In this document, we propose a VDAF that enables more efficient and accurate
-secure aggregation that conforms to the VDAF interface {{!VDAF}}. We want to
-achieve the following properties in our VDAF:
-
-* Malicious Clients should be prevented from sending vectors with invalid
-  L2-norm with high probability. The L2-norm of a vector is defined as the
-  square root of the sum of squares of values at all vector dimensions.
-  Rejecting vectors with high L2-norm helps prevent Clients from poisoning the
-  final aggregate result obtained by the Aggregators and minimizes the risk of
-  training a bad machine learning model.
-
-  > CP: Minimizes the risk or eliminates it? What do you mean by "bad"? The
-  > abstract of the paper mentions "poisoning attacks"; I'd suggest defining
-  > this here in the intro.
-
-* Honest Clients should be accepted with high probability.
-
-  > CP: Do you mean the measurements generated by honest Clients?
-
-  > CP: Prio3 always accepts honest measurements. It's worth nothing here that
-  > PINE trades non-zero completeness error for reduced proof size.
+* Gradients generated by honest Clients should be accepted with overwhelming
+  probability.
 
 * An attacker that controls the Collector, a subset of Clients, and all but one
   Aggregators, learns statistically close to nothing about the measurements of
   honest Clients.
-
-This document aims to extend the Prio3 scheme {{Section 7 of !VDAF}} to support
-aggregating real number vectors with bounded L2-norm, specifically
-from the following aspects:
-
-* A new type of joint randomness agreed between Client and Aggregators, that
-  supports the computation of "wraparound protocol" in PINE VDAF. We denote it
-  as "wraparound joint randomness".
-
-* A "Fully Linear Proof (FLP)" system that incorporates the
-  "wraparound joint randomness" and supports PINE as a VDAF.
-
-
-
 
 # Conventions and Definitions
 
