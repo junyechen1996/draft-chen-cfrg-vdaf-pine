@@ -179,43 +179,15 @@ This document uses the same parameters and conventions specified for:
 
 * Prio3 FLP system in {{Section 7 of !VDAF}}, with some extensions.
 
-The computation parameters used in the protocols of PINE are listed in
-{{pine-comp-param}}:
+The user-specified parameters to initialize PINE are defined in
+{{pine-user-param}}.
 
-| Parameter | Type | Description    |
-|:----------|:-----|----------------|
-| `l2_norm_bound` | float | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
+| Parameter       | Type     | Description    |
+|:----------------|:---------|:---------------|
+| `l2_norm_bound` | float    | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
 | `dimension`     | Unsigned | Client vector dimension. |
 | `num_frac_bits` | Unsigned | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
 {: #pine-user-param title="User parameters for PINE."}
-
-> TODO: Figure out which of these are needed to describe the algorithm. For
-> those that are not needed, remove them. For those that are needed, describe
-> them as fucntions of `l2_norm_bound`, etc.
-
-| Parameter | Description |
-|:----------|:------------|
-| `B`       | Squared L2-norm bound in field integer. It is equal to `(floor(b * 2^f))^2`. This is an inclusive upper bound. |
-| `xs`      | Original Client vector. |
-| `X`       | Client vector after the original real number vector is encoded into a vector of field integers. |
-| `V0`      | Computed squared L2-norm of X, i.e. `SUM_i X_i^2`. |
-| `U0`      | Difference between `V0` and `B`. |
-| `b0`      | Number of bits to represent `B`, `V0`, and `U0`. It should be equal to `ceil(log_2(B + 1))`. The `+ 1` is to support the inclusive squared L2-norm upper bound `B`. |
-| `r`       | Number of wraparound protocol repetitions. |
-| `TAU`     | Minimum proportion of `r` wraparound protocol repetitions that Clients are required to pass. |
-| `Z`       | Random vector in wraparound protocol, each element of which is -1, 0, or 1. |
-| `ETA`     | Completeness error in one repetition of wraparound protocol. |
-| `ALPHA`   | Parameter in wraparound protocol, equal to `sqrt(ln(2 / ETA))`. |
-| `Y1`      | Computed wraparound protocol result. |
-| `V1`      | Shifted wraparound protocol result, which is always non-negative. It is computed as `Y1 + ALPHA * sqrt(B)`. |
-| `U1`      | Difference between shifted wraparound protocol result and the shifted upper bound (`2 * ALPHA * sqrt(B)`). |
-| `g`       | Success bit, one bit for each wraparound protocol repetition. |
-| `S`       | Difference between computed shifted wraparound protocol result, and client-encoded shifted result. This is a single field element for each repetition of wraparound protocol, and is only non-zero when the Client has failed that repetition. |
-| `b1`      | Number of bits to represent `V1` and `U1` in one repetition of wraparound protocol. It should be equal to `ceil(log_2(2 * ALPHA * sqrt(B) + 1))`. The `+ 1` is to support the inclusive bound in wraparound protocol. |
-| `F`       | Field element type, could be `Field64` (8 bytes), `Field128` (16 bytes). |
-| `q`       | Field modulus. |
-| `t`       | Repetitions of verifying degree-2 polynomial checks with the techniques in Corollary 4.7 and Remark 4.8 of {{BBCGGI19}}, in order to reduce soundness error of verification exponentially with `t`. |
-{: #pine-comp-param title="Computation Parameters Used in PINE."}
 
 # Overview of the "Wraparound Check" in Pine {#wraparound-overview}
 
@@ -245,6 +217,44 @@ high level.]
 
 # An FLP for Pine {#flp}
 
+## Operational Parameters for FLP {#flp-op-param}
+
+The operational parameters needed to compute the validity circuit for PINE are
+defined in {{pine-circuit-param}}, and should be initialized based on the
+user-specified parameters, and the soundness and completeness error target.
+
+| Parameter                     | Type                               | Description |
+|:------------------------------|:-----------------------------------|:------------|
+| `Field`                       | Type in {{Section 6.1.3 of !VDAF}} | Field element type chosen for an instantiation of PINE. Field modulus is referred to as `q` in {{PINE}} paper. |
+| `encoded_l2_norm_bound`       | Field                              | Inclusive, L2-norm bound in field integer, encoded from `floor(l2_norm_bound * (2 ** num_frac_bits)` per {{fp-encoding}}. |
+| `encoded_sq_l2_norm_bound`    | Field                              | Equal to `encoded_l2_norm_bound * encoded_l2_norm_bound`. It is referred to as `B` in {{PINE}} paper. |
+| `num_bits_for_sq_l2_norm`     | Unsigned                           | Maximum number of bits to represent the squared L2-norm, i.e. `ceil(log2(encoded_sq_l2_norm_bound.as_unsigned() + 1))`. |
+| `num_wr_reps`                 | Unsigned                           | Number of wraparound check repetitions. It is referred to as `r` in {{PINE}} paper. |
+| `tau`                         | float                              | Proportion of `num_wr_reps` that the Clients are required to pass. |
+| `num_pass_wr_reps`            | Unsigned                           | Number of wraparound check repetitions that the Clients are required to pass. This is equal to `floor(num_wr_reps * tau)`. |
+| `eta`                         | float                              | Completeness error in one repetition of wraparound check, i.e. the probability of a valid Client measurement failing a wraparound check repetition. |
+| `alpha`                       | float                              | Parameter in wraparound check that is expressed as a function of completeness error `eta`: `sqrt(ln(2 / eta))`. |
+| `abs_wr_lower_bound`          | Field                              | Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of `L` in Remark 4.11 of {{PINE}} paper. |
+| `abs_wr_upper_bound`          | Field                              | Absolute value of the inclusive upper bound of wraparound check result. It is referred to as `H` in Remark 4.11 of {{PINE}} paper. |
+| `shifted_wr_upper_bound`      | Field                              | Inclusive upper bound of the shifted wraparound check result. This is equal to `abs_wr_lower_bound + abs_wr_upper_bound`. |
+| `num_bits_for_shifted_wr_res` | Unsigned                           | Maximum number of bits to represent the shifted wraparound check result, for one repetition, i.e. `ceil(log2(shifted_wr_upper_bound.as_unsigned() + 1))`. |
+{: #pine-circuit-param title="Operational Parameters in Validity Circuit for PINE."}
+
+The operational parameters to instantiate an FLP for PINE include all the FLP
+parameters in {{Section 7.1 of !VDAF}}, except for `JOINT_RAND_LEN`, which now
+includes the number of field elements for both wraparound joint randomness
+needed to compute wraparound check {{wraparound}} and verification joint
+randomness to reduce over multiple circuit outputs. The new operational
+parameters for PINE FLP are listed in {{pine-flp-param}}:
+
+| Parameter                     | Description               |
+|:------------------------------|:--------------------------|
+| `WRAPAROUND_JOINT_RAND_LEN`   | Length of the joint randomness needed during computation of wraparound check {{wraparound}} in PINE. This length should be equal to `dimension * num_wr_reps`. |
+| `VERIFICATION_JOINT_RAND_LEN` | Length of joint randomness used to reduce over multiple circuit outputs in {{Section 7.3.1.1 of !VDAF}}, to trade a small soundness error for a shorter proof, as described in Remark 4.8 of {{BBCGGI19}}. |
+| `JOINT_RAND_LEN`              | Length of the total joint randomness of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN` |
+{: #pine-flp-param title="Operational Parameters for PINE FLP."}
+
+
 > CP: Here is where the most of the technical meat goes. The goal here is to
 > describe the end-to-end FLP, including the wraparound check, the bit checks,
 > and the norm check.
@@ -257,6 +267,15 @@ high level.]
 > into an implementation of the Flp interface.
 
 # The Pine VDAF {#vdaf}
+
+## Operational Parameters for VDAF {#vdaf-op-param}
+
+| Parameter               | Type     | Description |
+|:------------------------|:---------|:------------|
+| `num_gadget_proof_reps` | Unsigned | Number of proof repetitions of using gadgets {{Section 7.3.1 of !VDAF}} in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as `t` in {{PINE}} paper. |
+
+> TODO Assume `num_gadget_proof_reps` is always 1 for now until we are ready
+to work on multiple proof repetitions in gadgets.
 
 > CP: Here's where you define the end-to-end protocol as an implementation of
 > the Vdaf interface. Here you'll use the Flp described in the previous section
@@ -714,27 +733,6 @@ We aim to define a FLP for PINE that reuses most of Prio3 FLP components in
 "wraparound joint randomness" to support wraparound protocol {{wraparound}}
 in PINE.
 
-We reuse all the FLP parameters in {{Section 7.1 of !VDAF}}, and add the
-parameters used for wraparound joint randomness. All the parameters are listed
-in {{pine-flp-param}}:
-
-| Parameter                     | Description               |
-|:------------------------------|:--------------------------|
-| `PROVE_RAND_LEN`              | Length of the prover randomness, the number of random field elements consumed by the prover when generating a proof |
-| `QUERY_RAND_LEN`              | Length of the query randomness, the number of random field elements consumed by the verifier |
-| `WRAPAROUND_JOINT_RAND_LEN`   | Length of the joint randomness needed during computation of wraparound protocol {{wraparound}} in PINE. This length should be equal to `d * r`, with `d` elements for each run of wraparound protocol. |
-| `VERIFICATION_JOINT_RAND_LEN` | Length of joint randomness used to reduce over multiple circuit outputs in {{Section 7.3.1.1 of !VDAF}}, to trade a small soundness error for a shorter proof, as described in Remark 4.8 of {{BBCGGI19}}. |
-| `JOINT_RAND_LEN`              | Length of the total joint randomness of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN` |
-| `INPUT_LEN`                   | Length of the encoded measurement ({{pine-flp-encoding}}). The encoded measurement is treated as the input into the FLP. |
-| `OUTPUT_LEN`                  | Length of the aggregatable output ({{pine-flp-encoding}}) necessary to perform aggregation |
-| `PROOF_LEN`                   | Length of the proof     |
-| `VERIFIER_LEN`                | Length of the verifier message generated by querying the input and proof |
-| `Measurement`                 | Type of the measurement. For PINE, this is a vector of floating point numbers.  |
-| `AggResult`                   | Type of the aggregate result. For PINE, this is a vector of IEEE-754 compatible floating point numbers. |
-| `Field`                       | As defined in {{Section 6.1 of !VDAF}} |
-{: #pine-flp-param title="Constants and types used in PINE FLP."}
-
-
 We will introduce PINE FLP in the following steps:
 
 * The prover encodes its measurement into a vector of field integers as
@@ -906,7 +904,7 @@ def sample_wraparound_joint_rand(Pine, prg: Prg):
     # generate from each byte is 4.
     NUM_ELEMS_IN_ONE_BYTE = 4
     # Number of wraparound protocol repetitions * dimension.
-    output_len = Pine.r * Pine.d
+    output_len = Pine.num_wr_reps * Pine.dimension
     # We look at bytes from the PRG two bits at a time, so the
     # number of bytes fed into PRG is `ceil(output_len / 4)`.
     # `4` is the number of field elements we can sample from one byte.
@@ -932,64 +930,59 @@ def finalize_encoding_with_wraparound_joint_rand(
     partially_encoded: list[Pine.Field],
     wraparound_joint_rand: list[Pine.Field],
 ):
-    b0 = Pine.num_bits_for_sq_l2_norm()
     encoded_measurement = partially_encoded[:]
 
     # Compute L2-norm sum-check results.
     sq_l2_norm = Pine.Field(0)
     for val in partially_encoded:
         sq_l2_norm += val * val
-    sq_l2_norm_diff = Pine.Field(Pine.B) - sq_l2_norm
+    sq_l2_norm_diff = Pine.encoded_sq_l2_norm_bound - sq_l2_norm
     # Append the bit representation of `sq_l2_norm` and
     # `sq_l2_norm_diff` to `encoded_measurement`.
     encoded_measurement.extend(
-        Pine.Field.encode_into_bit_vector(sq_l2_norm, b0)
+        Pine.Field.encode_into_bit_vector(
+            sq_l2_norm, Pine.num_bits_for_sq_l2_norm
+        )
     )
     encoded_measurement.extend(
-        Pine.Field.encode_into_bit_vector(sq_l2_norm_diff, b0)
+        Pine.Field.encode_into_bit_vector(
+            sq_l2_norm_diff, Pine.num_bits_for_sq_l2_norm
+        )
     )
-
-    # Compute wraparound check results.
-    # Infer the bounds based on the PINE parameters.
-    (abs_wr_lower_bound, abs_wr_upper_bound, wr_shifted_bound) = \
-        Pine.wr_bounds()
-    # Number of bits to represent shifted wraparound check result.
-    b1 = math.ceil(math.log2(wr_shifted_bound.as_unsigned() + 1))
 
     # Keep track of the "difference" field elements for each
     # repetition, i.e. the difference between the shifted wraparound
     # check result and the shifted upper bound.
-    # This is also the `s` parameter in the parameter table.
+    # It is referred to as `s` in {{PINE}} paper.
     diff_field_elems = []
-    # Compute the number of repetitions `r_pass` that the Client
-    # is expected to pass. Also keep track of the number of passing
-    # repetitions in `r_passed`. If the Client has passed more than
-    # `r_pass`, don't set success bit to be 1 anymore,
+    # Keep track of the number of passing repetitions in
+    # `num_passed_wr_reps`. If the Client has passed more than
+    # `Pine.num_pass_wr_reps`, don't set success bit to be 1 anymore,
     # because Aggregators are doing an equality check between the
-    # `r_passed` and `r_pass`. See guidance in {{wraparound}}.
-    r_pass = Pine.r_pass()
-    r_passed = 0
-    for rep in range(Pine.r):
+    # `num_passed_wr_reps` and `Pine.num_pass_wr_reps`.
+    # See guidance in {{wraparound}}.
+    num_passed_wr_reps = 0
+    for rep in range(Pine.num_wr_reps):
         # Compute shifted wraparound check result in the current
         # wraparound check repetition.
         Z = wraparound_joint_rand[(rep*d):((rep+1)*d)]
         shifted_wr_res = Pine.compute_dot_prod(
             partially_encoded, Z
         )
-        shifted_wr_res += abs_wr_lower_bound
+        shifted_wr_res += Pine.abs_wr_lower_bound
 
-        if shifted_wr_res <= wr_shifted_bound:
+        if shifted_wr_res <= Pine.shifted_wr_upper_bound:
             # Successful repetition:
-            # - set success bit to be 1, if `r_passed` hasn't
-            #   exceeded `r_pass`, otherwise set success bit to
-            #   to be 0.
+            # - set success bit to be 1, if `num_passed_wr_reps`
+            #   hasn't exceeded `Pine.num_pass_wr_reps`, otherwise
+            #   set success bit to to be 0.
             # - set difference field element to be 0, because
             #   Client has passed this repetition.
-            if r_passed >= r_pass:
+            if num_passed_wr_reps >= Pine.num_pass_wr_reps:
                 success_bit = 0
             else:
                 success_bit = 1
-                r_passed += 1
+                num_passed_wr_reps += 1
             diff_field_elem = 0
             adj_shifted_wr_res = shifted_wr_res
         else:
@@ -998,13 +991,16 @@ def finalize_encoding_with_wraparound_joint_rand(
             # - set the shifted wraparound check result and the
             #   difference field element according to {{wraparound}}.
             success_bit = 0
-            diff_field_elem = shifted_wr_res - wr_shifted_bound
-            adj_shifted_wr_res = wr_shifted_bound
+            diff_field_elem = \
+                shifted_wr_res - Pine.shifted_wr_upper_bound
+            adj_shifted_wr_res = Pine.shifted_wr_upper_bound
 
         # Append bit-encoded `adj_shifted_wr_res` into
         # `encoded_measurement`.
         encoded_measurement.extend(
-            Field.encode_into_bit_vector(adj_shifted_wr_res, b1)
+            Field.encode_into_bit_vector(
+                adj_shifted_wr_res, Pine.num_bits_for_shifted_wr_res
+            )
         )
         # Append success bit right after the bits for shifted
         # wraparound check result.
@@ -1012,10 +1008,10 @@ def finalize_encoding_with_wraparound_joint_rand(
         # Append difference field element.
         diff_field_elems.append(diff_field_elem)
 
-    # Sanity check the Client has passed `r_pass` number of
-    # repetitions, otherwise Client SHOULD retry as recommended
-    # in {{wraparound}}.
-    if r_passed != r_pass:
+    # Sanity check the Client has passed `Pine.num_pass_wr_reps`
+    # number of repetitions, otherwise Client SHOULD retry as
+    # recommended in {{wraparound}}.
+    if num_passed_wr_reps != Pine.num_pass_wr_reps:
         raise Exception(
             "Client should retry encoding PINE check results with "
             "a different wraparound joint randomness."
@@ -1024,7 +1020,7 @@ def finalize_encoding_with_wraparound_joint_rand(
     return encoded_measurement
 
 def truncate(Pine, inp: Vec[Pine.Field]):
-    return inp[:Pine.d]
+    return inp[:Pine.dimension]
 
 def decode(Pine,
            output: Vec[Pine.Field],
@@ -1069,29 +1065,33 @@ def bit_check(Pine,
     # Compute a random linear combination of the `Range2` polynomial
     # evaluated at all entries that are expected to be bits.
     res = Pine.Field(0)
-    b0 = Pine.num_bits_for_sq_l2_norm()
-    b1 = Pine.num_bits_for_shifted_wr_res()
-    # Vector values between `[d, d + 2 * b0 + r * (b1 + 1))`
-    # are all expected to be bits.
-    for i in range(2 * b0 + Pine.r * (b1 + 1)):
+    num_bit_entries = \
+        2 * Pine.num_bits_for_sq_l2_norm + \
+        Pine.num_pass_wr_reps * \
+        (Pine.num_bits_for_shifted_wr_res + 1)
+    # `[Pine.dimension, Pine.dimension + num_bit_entries)` are all
+    # expected to be bits.
+    for i in range(num_bit_entries):
         res += (verification_joint_rand_0 ** (i+1)) * \
-               Range2(inp[Pine.d + i])
+               Range2(inp[Pine.dimension + i])
     return res
 
 def l2_norm_sum_check(Pine,
                       inp: list[Pine.Field],
                       num_shares: Unsigned):
     computed_sq_l2_norm = Pine.Field(0)
-    for i in range(Pine.d):
+    for i in range(Pine.dimension):
         computed_sq_l2_norm += Sq(inp[i])
-    b0 = Pine.num_bits_for_sq_l2_norm()
     encoded_sq_l2_norm = Field.decode_from_bit_vector(
-        inp[Pine.d : (Pine.d + b0)]
+        inp[Pine.dimension :
+            (Pine.dimension + Pine.num_bits_for_sq_l2_norm)]
     )
     encoded_sq_l2_norm_diff = Field.decode_from_bit_vector(
-        inp[(Pine.d + b0) : (Pine.d + 2 * b0)]
+        inp[(Pine.dimension + Pine.num_bits_for_sq_l2_norm) :
+            (Pine.dimension + 2 * Pine.num_bits_for_sq_l2_norm)]
     )
-    B_shares = Pine.B * Pine.Field(num_shares).inv()
+    B_shares = Pine.encoded_sq_l2_norm_bound * \
+               Pine.Field(num_shares).inv()
     return (
         computed_sq_l2_norm - encoded_sq_l2_norm,
         encoded_sq_l2_norm + encoded_sq_l2_norm_diff - B_shares
@@ -1100,8 +1100,8 @@ def l2_norm_sum_check(Pine,
 # Index offset that contains bit-encoded shifted wraparound check
 # result for the `k`-th wraparound protocol repetition.
 def offset_shifted_wr_res(Pine, k):
-    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
-        k * (Pine.num_bits_for_shifted_wr_res() + 1)
+    return Pine.dimension + 2 * Pine.num_bits_for_sq_l2_norm + \
+        k * (Pine.num_bits_for_shifted_wr_res + 1)
 
 # Index offset that contains the success bit for the `k`-th
 # wraparound check repetition.
@@ -1110,8 +1110,8 @@ def offset_success_bit(Pine, k):
     # and the bits for the shifted wraparound check results
     # for the first `k + 1` repetitions (+1 to include the current
     # repetition), and the success bits of the first `k` repetitions.
-    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
-        (k + 1) * Pine.num_bits_for_shifted_wr_res() + k
+    return Pine.dimension + 2 * Pine.num_bits_for_sq_l2_norm + \
+        (k + 1) * Pine.num_bits_for_shifted_wr_res + k
 
 # Index offset that contains the "difference" field element between
 # the shifted wraparound check result and shifted upper bound for
@@ -1119,8 +1119,9 @@ def offset_success_bit(Pine, k):
 def offset_diff_field_elem(Pine, k):
     # Skipping over all bits, and the difference field elements
     # for the first `k` repetitions.
-    return Pine.d + 2 * Pine.num_bits_for_sq_l2_norm() + \
-        Pine.r * (Pine.num_bits_for_shifted_wr_res() + 1) + k
+    return Pine.dimension + 2 * Pine.num_bits_for_sq_l2_norm + \
+        Pine.num_wr_reps * (Pine.num_bits_for_shifted_wr_res + 1) \
+        + k
 
 def wraparound_check(Pine,
                      inp: list[Pine.Field],
@@ -1128,40 +1129,39 @@ def wraparound_check(Pine,
                      verification_joint_rand_1: Pine.Field,
                      num_shares: Unsigned):
     checks = []
-    (abs_wr_lower_bound, abs_wr_upper_bound, wr_shifted_bound) = \
-        Pine.wr_bounds()
     abs_wr_lower_bound_shares = \
-        abs_wr_lower_bound * Pine.Field(num_shares).inv()
-    # Number of bits to represent shifted wraparound check result.
-    b1 = Pine.num_bits_for_shifted_wr_res()
+        Pine.abs_wr_lower_bound * Pine.Field(num_shares).inv()
 
     # Check for sum of success bits.
     success_bit_check = -(
-        Pine.Field(Pine.r_pass()) * \
+        Pine.Field(Pine.num_pass_wr_reps) *
         Pine.Field(num_shares).inv()
     )
     # Degree-2 check of `g_k * s_k = 0` for all repetitions `k`.
     degree_2_check = Pine.Field(0)
 
-    for k in range(Pine.r):
-        # Compute wraparound protcol result for the `k`-th repetition,
+    for k in range(Pine.num_wr_reps):
+        # Compute wraparound check result for the `k`-th repetition,
         # i.e. the dot product of `X` and `Z` vector
         # (`wraparound_joint_rand`).
         dot_prod_res = Pine.compute_dot_prod(
             inp,
             wraparound_joint_rand[(k * d) : ((k + 1) * d)],
         )
-        # Recover bit-encoded wraparound protocol result for
+        # Recover bit-encoded wraparound check result for
         # the `k`-th repetition.
         shifted_wr_res_start = Pine.offset_shifted_wr_res(k)
         shifted_wr_res = Pine.Field.decode_from_bit_vector(
-            inp[shifted_wr_res_start : (shifted_wr_res_start + b1)]
+            inp[shifted_wr_res_start :
+                (shifted_wr_res_start +
+                 Pine.num_bits_for_shifted_wr_res)]
         )
         # Difference field element between the shifted wraparound
         # check result and the shifted upper bound for the `k`-th
         # repetition.
         diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
-        # This equation should be equal to 0.
+        # This equation should be equal to 0, i.e. bullet point 3
+        # in Figure 2 in {{PINE}} paper.
         check = dot_prod_res + abs_wr_lower_bound_shares - \
             shifted_wr_res - diff_field_elem
         checks.append(check)
@@ -1181,8 +1181,12 @@ def pine_valid(Pine,
                inp: Vec[Pine.Field],
                joint_rand: Vec[Pine.Field],
                num_shares: Unsigned):
-    wraparound_joint_rand = joint_rand[:(Pine.d * Pine.r)]
-    verification_joint_rand = joint_rand[(Pine.d * Pine.r):]
+    wraparound_joint_rand = joint_rand[
+        :(Pine.dimension * Pine.num_wr_reps)
+    ]
+    verification_joint_rand = joint_rand[
+        (Pine.dimension * Pine.num_wr_reps):
+    ]
 
     bit_check_res = Pine.bit_check(inp, verification_joint_rand[0])
     (sum_check_res_0, sum_check_res_1) = \
@@ -1208,14 +1212,14 @@ The parameters provided to the general-purpose FLP in Prio3 are therefore:
 | Parameter                     | Value                                                                                   |
 |:------------------------------|:----------------------------------------------------------------------------------------|
 | `GADGETS`                     | `[Range2, Sq, Mul]`                                                                     |
-| `GADGET_CALLS`                | `[ceil(sqrt(2 * b0 + r * (b1 + 1))), ceil(sqrt(d)), ceil(sqrt(r))]`                     |
-| `INPUT_LEN`                   | `d + 2 * b0 + r * (b1 + 1) + r`                                                         |
-| `OUTPUT_LEN`                  | `d`                                                                                     |
-| `WRAPAROUND_JOINT_RAND_LEN`   | `d * r`                                                                                 |
+| `GADGET_CALLS`                | `[ceil(sqrt(2 * num_bits_for_sq_l2_norm + num_wr_reps * (num_bits_for_shifted_wr_res + 1))), ceil(sqrt(dimension)), ceil(sqrt(num_wr_reps))]` |
+| `INPUT_LEN`                   | `dimension + 2 * num_bits_for_sq_l2_norm + r * (num_bits_for_shifted_wr_res + 1) + num_wr_reps` |
+| `OUTPUT_LEN`                  | `dimension`                                                                             |
+| `WRAPAROUND_JOINT_RAND_LEN`   | `dimension * num_wr_reps`                                                              |
 | `VERIFICATION_JOINT_RAND_LEN` | 3                                                                                       |
 | `JOINT_RAND_LEN`              | total length of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN`           |
-| `Measurement`                 | `Vec[float]`                                                                              |
-| `AggResult`                   | `Vec[float]`                                                                              |
+| `Measurement`                 | `Vec[float]`                                                                            |
+| `AggResult`                   | `Vec[float]`                                                                            |
 | `Field`                       | Defined during instantiation of PINE, based on the parameters in {{Section 5 of !VDAF}} |
 {: title="Parameters of validity circuit in PINE FLP."}
 
@@ -1466,7 +1470,7 @@ The definitions of constants and a few auxiliary functions are defined in
 ~~~
 def prep_init(Pine, verify_key, agg_id, _agg_param,
               nonce, public_share, input_share):
-    d = Pine.d # Client measurement length, `d` is a parameter for PINE.
+    d = Pine.dimension
 
     k_wraparound_joint_rand_parts, k_verification_joint_rand_parts = \
         Pine.decode_public_share(public_share)
@@ -1640,7 +1644,7 @@ def encode_f64_into_field(Pine, x: float) -> Pine.Field:
     if math.isnan(x) or math.isfinite(x) or abs(x) < sys.float_info.min:
         # Reject NAN, infinity, and subnormal floats.
         raise ERR_ENCODE
-    x_encoded = int(x * (2 ** Pine.f))
+    x_encoded = int(x * (2 ** Pine.num_frac_bits))
     if x >= 0:
         return Pine.Field(x_encoded)
     return Pine.Flp.Field(Pine.Field.MODULUS + x_encoded)
@@ -1661,7 +1665,7 @@ def decode_f64_from_field(
         # and the field modulus, and return the result as negative.
         decoded = -(Pine.Field.MODULUS - decoded)
     # Divide by 2^f and we will get a float back.
-    decoded_float = decoded / (2 ** Pine.f)
+    decoded_float = decoded / (2 ** Pine.num_frac_bits)
     return decoded_float
 ~~~
 
@@ -1712,70 +1716,84 @@ def decode_from_bit_vector(
     return result
 ~~~
 
+### Operational Parameters Initialization {#param-init}
+
+We define functions that initialize the operational parameters in
+{{pine-circuit-param}} needed to compute the validity circuit for PINE.
+
+> TODO(junye): Check with Guy on whether it's ok to round up the
+default alpha to perform the optimization in wraparound check, so it
+doesn't negatively impact completeness error.
+
+~~~
+def compute_optimized_alpha_and_wr_bounds(
+    Pine,
+    alpha: float,
+) -> tuple[
+    float, Pine.Field, Pine.Field, Pine.Field
+]:
+    # Round up `alpha` to be `alpha'`, such that
+    # `alpha' * encoded_l2_norm_bound + 1` is a power of 2.
+    abs_wr_lower_bound = Pine.encode_f64_into_field(
+        alpha * Pine.l2_norm_bound
+    )
+    # The upper bound is always one more than the absolute
+    # lower bound, in the optimized setting.
+    abs_wr_upper_bound = abs_wr_lower_bound + Pine.Field(1)
+    # Round `abs_wr_upper_bound` to the next power of 2.
+    optim_abs_wr_upper_bound = Pine.Field(
+        1 << math.ceil(math.log2(abs_wr_upper_bound.as_unsigned()))
+    )
+    optim_abs_wr_lower_bound = \
+        optim_abs_wr_upper_bound - Pine.Field(1)
+    shifted_wr_upper_bound = \
+        optim_abs_wr_lower_bound + optim_abs_wr_upper_bound
+    # Computed `alpha'` from `optim_abs_wr_lower_bound`, which
+    # is equal to `alpha' * Pine.encoded_l2_norm_bound`.
+    # Note `/` outputs a float.
+    optim_alpha = (optim_abs_wr_lower_bound.as_unsigned() /
+        Pine.encoded_l2_norm_bound.as_unsigned())
+    return (
+        optim_alpha,
+        optim_abs_wr_lower_bound,
+        optim_abs_wr_upper_bound,
+        shifted_wr_upper_bound,
+    )
+
+def init_parameters(Pine):
+    # Parameters for L2-norm sum-check.
+    Pine.encoded_l2_norm_bound = Pine.encode_f64_into_field(
+        Pine.l2_norm_bound
+    )
+    Pine.encoded_sq_l2_norm_bound = \
+        Pine.encoded_l2_norm_bound * Pine.encoded_l2_norm_bound
+    Pine.num_bits_for_sq_l2_norm = math.ceil(math.log2(
+        Pine.encoded_sq_l2_norm_bound.as_unsigned() + 1
+    ))
+
+    # Default parameters for wraparound check.
+    Pine.tau = 0.75
+    Pine.num_wr_reps = 135
+    Pine.num_pass_wr_reps = int(Pine.num_wr_reps * Pine.tau)
+
+    # Find alpha.
+    DEFAULT_ALPHA = 8
+    (Pine.alpha,
+     Pine.abs_wr_lower_bound,
+     Pine.abs_wr_upper_bound,
+     Pine.shifted_wr_upper_bound) = \
+        Pine.compute_optimized_alpha_and_wr_bounds(DEFAULT_ALPHA)
+    Pine.num_bits_for_shifted_wr_res = math.ceil(math.log2(
+        Pine.shifted_wr_upper_bound.as_unsigned() + 1
+    ))
+~~~
+
 ### Wraparound Check Utility Functions {#wraparound-utility}
 
 There are some common subroutines that wraparound checks use, such as computing
-the parameters for wraparound check, and computing dot product of field element
-vectors `X` and `Z`.
+dot product of field element vectors.
 
 ~~~
-def wr_bounds(Pine) -> tuple[
-    Pine.Field, Pine.Field, Pine.Field
-]:
-    # Compute the wraparound check bounds to optimize for
-    # communication cost mentioned in {{wraparound}}.
-    alpha: float = Pine.ALPHA
-    b: float = Pine.b
-    f: Unsigned = Pine.f
-
-    # {{wraparound}} mentions talking about optimizing communication
-    # cost by finding an `alpha' <= alpha`, such that
-    # `alpha' * sqrt(B) + 1` is a power of 2.
-    # Note `sqrt(B)` is the L2-norm bound in field integer, by
-    # encoding float64 `b` into a field integer, with number of
-    # fractional bits `f`.
-    alpha_times_b = alpha * b
-    # This is the absolute value of the wraparound check lower bound
-    # in field integer.
-    abs_wr_lower_bound = Pine.encode_f64_into_field(alpha_times_b)
-    # The upper bound is always one more than the absolute
-    # lower bound.
-    abs_wr_upper_bound = abs_wr_lower_bound + 1
-    # Our goal is to round down `abs_wr_upper_bound`, so it is a
-    # power of 2.
-    optim_abs_wr_upper_bound = Pine.Field(
-        1 << (int(math.log2(abs_wr_upper_bound)))
-    )
-    optim_abs_wr_lower_bound = optim_abs_wr_upper_bound - 1
-    # Client sends the shifted wraparound check result, by shifting
-    # the negative results to positive, so the shifted bound is simply
-    # the sum of the absolute lower bound and upper bound.
-    # Note this is an inclusive bound, thus the maximum shifted result
-    # that allows the Client to pass a particular repetition.
-    shifted_bound = \
-        optim_abs_wr_lower_bound + optim_abs_wr_upper_bound
-    return (
-        optim_abs_wr_lower_bound, optim_abs_wr_upper_bound,
-        shifted_bound,
-    )
-
-def num_bits_for_sq_l2_norm(Pine):
-    # Compute the number of bits to represent squared L2-norm.
-    # This is an inclusive bound, so +1 before taking the log2.
-    return math.ceil(math.log2(Pine.B.as_unsigned() + 1))
-
-def num_bits_for_shifted_wr_res(Pine):
-    # Compute the number of bits to represent the shifted wraparound
-    # check result sent by the Clients.
-    (_, _, wr_shifted_bound) = Pine.wr_bounds()
-    # This is an inclusive bound, so +1 before taking the log2.
-    return math.ceil(math.log2(wr_shifted_bound.unsigned() + 1))
-
-def r_pass(Pine):
-    # Compute the number of wraparound check repetitions that the
-    # Client is expected to pass.
-    return math.floor(Pine.r * Pine.TAU)
-
 def compute_dot_prod(
     Pine,
     vec1: list[Pine.Field],
