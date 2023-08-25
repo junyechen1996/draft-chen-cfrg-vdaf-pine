@@ -119,9 +119,9 @@ robustness of the overall computation by preventing Clients from "poisoning"
 the aggregate and corrupting the trained machine learning model. A Client's
 gradient is typically expressed a vector of real numbers. A common goal is to
 ensure each gradient has a bounded Euclidean norm, also known as L2-norm,
-which is defined as the square root of the sum of squares of values at all
-vector dimensions. L2-norm bound allows limiting the contribution from each
-Client across all dimensions, without imposing a limit on each dimension,
+which is defined as the square root of the sum of square of all vector
+entries. L2-norm bound allows limiting the contribution from each Client
+across all entries, without imposing a limit on each entry,
 or the distribution of the Client vector.
 > TODO(issue #22) add a formal reference about why using L2-norm.
 
@@ -151,7 +151,7 @@ possible for Prio3. The cost of this improvement is a modest loss in
 completeness: there is a non-zero, but negligible chance that Aggregators
 reject an honestly generated measurement.
 
-We give an overview of this technique in {{wraparound-overview}}. In {{flp}}
+We give an overview of this technique in {{overview}}. In {{flp}}
 we describe our FLP for bounded L2 norm. In {{vdaf}} we describe the complete
 PINE VDAF. We aim to achieve the following properties in our VDAF:
 
@@ -189,31 +189,79 @@ The user-specified parameters to initialize PINE are defined in
 | `num_frac_bits` | Unsigned | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
 {: #pine-user-param title="User parameters for PINE."}
 
-# Overview of the "Wraparound Check" in Pine {#wraparound-overview}
+# PINE Overview {#overview}
 
-> CP: Describe a circuit for verifying that the L2-norm (modulo q) is in the
-> desired range.
+In this section, we will give an overview of the main technical contribution of
+{{PINE}} that allows the Aggregators holding secret shares of the Client
+measurement (e.g. gradient in federated learning) to verify it has a bounded
+L2-norm, which is the square root of the sum of square of all vector entries.
 
-This simple computation is sufficient as long as the sum of squares does not
-"wrap around" the field modulus. But when evaluated over secret shares of data
-represented in a finite field, there is no way for the Aggregators to determine
-if this has happened.
+One way to achieve this is to use a Fully Linear Proof (FLP)
+{{Section 7.1 of !VDAF}}. An FLP is an assertion about the validity of some
+input that can be checked by the Aggregator (or jointly by the Aggregators
+in our case) without learning the input. Validity is typically expressed as a
+circuit evaluated on the input over a finite field, denoted by `Field` in
+{{Section 6.1 of !VDAF}}. Let `q` denote the field size. In our case, the
+circuit would compute the sum of square of all entries, i.e. squared L2-norm,
+modulo field size `q`, and check the result is in the desired range.
+Note we don't take the square root, because it's more efficient and
+mathematically equivalent to verify the result in squared L2-norm.
 
-One way to mitigate this issue is to encode the gradient so that wrap around is
-impossible. [CP: Summarize what's going on in the SumVecBoundedL2Norm type in
-llibprio.] However this results in a signficant amount of communication
-overhead, since [CP. why?].
+However, it is challenging to bound each field element in the vector, which
+allows a malicious Client to send a vector that causes the computation of sum
+of squares to overflow, or "wrap around" field size. When Aggregators evaluate
+this computation over secret shares of field integer vector, there is no way
+for the Aggregators to determine if wraparound has happened, and Aggregators
+may accept the vector from the malicious Client, which causes the final
+aggregate to be corrupted.
 
-The key technical idea underlying Pine is a stastical test carried out by the
-verifier (with assistance by the prover). [CP: Describe how this works at a
-high level.]
+One way to resolve this issue is to encode each coordinate of the vector
+as its binary representation, send each bit as an individual field element,
+and enforce a dimension limit on the Client vector.
+By checking each field element is indeed a bit, the Aggregators can naturally
+bound each vector entry, and with a dimension limit, Aggregators can ensure
+that computing sum of squares won't wrap around field size `q`. However,
+this approach results in a significant amount of communication overhead
+between Client and Aggregators, because the Client needs to send at least
+`num_frac_bits * dimension` field elements, with `num_frac_bits` and
+`dimension` specified by users in {{pine-user-param}}.
 
-> CP: End this section with the headlines from the analysis. Namely:
->
-> * Pine admits a small completeness error, resulting from false negative
->   wraparound tests (is this the right way to describe this?)
-> * The FLP is statistical zero-knowledge rather than perfect zero-knowledge
->   (this is not a big deal but is worth mentioning)
+PINE takes a different approach. Instead of encoding the coordinates of a
+vector in their binary representation, we devise a randomized test that can
+detect whether there is a wraparound when computing the sum of squares over
+a finite field. After Aggregators have carried out L2-norm check on the
+secret-shared field integer vector, we know either the Client vector is
+bounded by the desired L2-norm, or the L2-norm is at least `q`.
+Then we test for this wraparound by taking a dot product of the Client's
+vector, with a random vector, each element of which is -1 (or `q-1`), `0`,
+or `1` with respective probability. In {{PINE}} it is demonstrated
+that if there is wraparound, the dot product is likely to be large. On the
+other hand, if the sum of the squared entries was small to begin with, then
+the dot product will be small with high probability.
+
+It's worth noting that each wraparound check has a probability of a false
+negative that the measurement from a malicious Client is accepted, and the
+probability of a false positive that the measurement from an honest Client
+is rejected. Therefore, in order to make both probabilities negligible, we
+run the wraparound checks multiple times.
+
+It's also worth noting the following differences between PINE and other
+standardized VDAFs like Prio3:
+
+* There is a negligible probability of false positives that a valid Client
+  measurement is rejected by the Aggregators, while Prio3 VDAFs always
+  accept valid Client measurements.
+* Due to the negligible probability of false positives, PINE provides a
+  strong, statistical zero-knowledge guarantee, instead of the perfect
+  zero-knowledge guarantee provided by Prio3 VDAFs, because a false
+  positive case can leak "some" information about the measurement from an
+  honest Client. The internal parameters in PINE are thus chosen to make
+  the probability of false positives negligible.
+* The random vectors in wraparound check need to be generated in a
+  non-interactive way and agreed by both the Client and Aggregators.
+  The randomness generation technique is very similar to the technique
+  used for joint randomness in Prio3 (Fiat-Shamir heuristic), and we
+  refer to it as "wraparound joint randomness".
 
 # An FLP for Pine {#flp}
 
@@ -266,6 +314,92 @@ parameters for PINE FLP are listed in {{pine-flp-param}}:
 > (We'll describe how it's derived in the next section.) Then put them together
 > into an implementation of the Flp interface.
 
+## From Real Number to Field Integer {#real-to-field}
+
+The Client measurement in PINE is expressed as a vector of real numbers, but
+the computations required to verify L2-norm and perform aggregation are carried
+out in field integers {{Section 6.1 of !VDAF}}. Therefore, Clients are expected
+to encode their vectors of real numbers into vectors of field integers, and the
+final aggregation is presented as a vector of IEEE-754 compatible float64
+{{IEEE754-2019}} values.
+
+### Encoding Real Numbers Into Field Integers {#fp-encoding}
+
+To keep the necessary number of binary fractional bits `num_frac_bits`
+configured in PINE, the high-level idea is to multiply a real number by
+`2^num_frac_bits`, and provide a 1-1 mapping between the multiplied value
+and a field integer.
+In order to represent real numbers with sufficient precision and also avoid
+unrealistically large `num_frac_bits`, we require `num_frac_bits < 128`, which
+is precise enough to represent 127 binary fractional bits, or equivalently,
+approximately 38 decimal bits.
+
+We don't recommend a specific real number representation during encoding,
+but a common choice is to use some fixed-point precision representation or
+IEEE-754 compatible float64 representation {{IEEE754-2019}}. In this draft,
+we will use IEEE-754 float64 as an example, because it's commonly available
+in most hardwares.
+
+We consider the following float64 values as invalid inputs during encoding:
+
+* NaN, which can be obtained by dividing 0.0 by 0.0.
+* Positive and negative infinity, which can be obtained by dividing any non-zero
+  value by 0.0.
+* Subnormal numbers, whose absolute values are less than `2.225e-308`. Since
+  we require `num_frac_bits < 128`, it's not possible to use unique field
+  integers to represent subnormal numbers.
+
+Otherwise, for a float64 value `x`, we will encode the result of
+`floor(x * (2 ** num_frac_bits))` into a field integer. We will reserve the
+first half of the field size `[1, floor(Field.MODULUS / 2)]` to encode positive
+values, and the second half of the field size
+`[ceil(Field.MODULUS / 2), Field.MODULUS)` to encode negative values.
+Specifically:
+
+* A positive or negative 0.0 in float64 will be encoded into a field integer
+  of 0. IEEE-754 float64 has the notion of both positive and negative 0, but
+  their values are equal for our purposes.
+* If `x` is positive, encode it as `floor(x * (2 ** num_frac_bits))`.
+* If `x` is negative, encode it as
+  `Field.MODULUS - floor(abs(x) * (2 ** num_frac_bits))`.
+
+As an example, we can obtain `encoded_l2_norm_bound` by computing
+`Field(floor(l2_norm_bound * (2 ** num_frac_bits)))`.
+
+Since `Field.MODULUS` is a prime number, the number of unique values in both
+ranges should be equal. This encoding will effectively map the negative values
+in `[-l2_norm_bound, 0.0)` to
+`[Field.MODULUS - encoded_l2_norm_bound.as_unsigned(), Field.MODULUS)`,
+and map the non-negative values in `[0.0, l2_norm_bound]` to
+`[0, encoded_l2_norm_bound.as_unsigned()]`.
+We must make sure the two ranges don't overlap with each other, i.e.
+`encoded_l2_norm_bound.as_unsigned() <= floor(Field.MODULUS / 2)`.
+
+### Decoding Field Integers into IEEE-754 Compatible Float64 {#fi-decoding}
+
+To decode a (aggregated) field integer `agg` back to float, assuming there are
+`c` clients, the aggregated field integer should fall in either the negative
+range
+`[Field.MODULUS - c * encoded_l2_norm_bound.as_unsigned(), Field.MODULUS)`, or
+the non-negative range `[0, c * encoded_l2_norm_bound.as_unsigned()]`.
+Based on the encoding mechanisms in {{fp-encoding}}, we decode the aggregated
+field integer into float64 as the following:
+
+* If the field integer is 0, the aggregated float64 value should be 0.0.
+* If the field integer `agg` is in
+  `[Field.MODULUS - c * encoded_l2_norm_bound.as_unsigned(), Field.MODULUS)`,
+  the aggregated float64 value should be negative. We will decode `agg` as
+  `-((Field.MODULUS - agg.as_unsigned()) / (2 ** num_frac_bits))`.
+* If the field integer `agg` is in
+  `[0, c * encoded_l2_norm_bound.as_unsigned()]`, the aggregated float64
+  value should be positive. We will decode `agg` as
+  `agg.as_unsigned() / (2 ** num_frac_bits)`.
+
+We also need to make sure the number of Clients `c` is not so big that it
+causes the positive and negative field integer ranges to overlap.
+Therefore, we must check that
+`c * encoded_l2_norm_bound.as_unsigned() <= floor(Field.MODULUS / 2)`.
+
 # The Pine VDAF {#vdaf}
 
 ## Operational Parameters for VDAF {#vdaf-op-param}
@@ -284,88 +418,6 @@ to work on multiple proof repetitions in gadgets.
 # BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE SECTIONS ABOVE.
 
 # Private Inexpensive Norm Enforcement (PINE) VDAF {#pine}
-
-PINE supports aggregating real number vectors bounded by a configured L2-norm.
-It asks each Client to compute results needed by protocols in PINE to verify
-the L2-norm, and then send the results in the submitted vector. In this draft,
-we are specifically interested in the implementation of the statistical
-zero-knowledge protocol in section 4 of {{PINE}}, in the VDAF setting.
-
-The Clients are expected to first encode their real number vectors into a
-vector of field integers, because all the protocols in PINE are computed and
-verified with field integers. The vectors of field integers are then aggregated
-and decoded into a vector of IEEE-754 compatible float64 values.
-
-## Encoding Real Numbers into Field Integers {#fp-encoding}
-
-To keep the necessary number of precision bits `f` configured in PINE VDAF,
-the high-level idea is to multiply a real number by `2^f`, and provide a 1-1
-mapping between the multiplied value and a field integer. In order to represent
-real numbers with sufficient precision and also allow implementations to
-represent `2^f` in common integer representations, we require `f < 128`, which
-is precise enough to represent 127 binary fractional bits, or equivalently,
-approximately 38 decimal bits.
-
-We don't recommend a specific real number representation during encoding,
-but a common choice is to use some fixed-point precision representation or
-IEEE-754 compatible float64 representation {{IEEE754-2019}}. In this draft,
-we will use IEEE-754 float64 as an example, because it's commonly available
-in most hardwares.
-
-We consider the following float64 values as invalid inputs during encoding:
-
-* NaN, which can be obtained by dividing 0.0 by 0.0.
-* Positive and negative infinity, which can be obtained by dividing any non-zero
-  value by 0.0.
-* Subnormal numbers, whose absolute values are less than `2.225e-308`. Since
-  we require `f < 128`, it's not possible to use unique field integers to
-  represent subnormal numbers.
-
-Otherwise, for a float64 value `x`, we will encode the result of
-`floor(x * 2^f)` into a field integer. We will reserve the first half of the
-field size `[1, floor(q/2)]` to encode positive values, and the second half of
-the field size `[ceil(q/2), q)` to encode negative values. Specifically:
-
-* A positive or negative 0.0 in float64 will be encoded into a field integer
-  of 0. IEEE-754 float64 has the notion of both positive and negative 0, but
-  their values are equal for our purposes.
-* If `x` is positive, encode it as `floor(x * 2^f)`.
-* If `x` is negative, encode it as `q - floor(|x| * 2^f)`.
-
-Since field size `q` is a prime number, the number of unique values in both
-ranges should be equal. This encoding will effectively map the negative values
-in `[-b, 0)` to `[q-sqrt(B), q)`, and map the positive values in `[0, b]` to
-`[0, sqrt(B)]`, where `b` is the L2-norm bound and also the maximum value of
-any vector element, `B` is the squared L2-norm bound in field integer,
-computed via `(floor(b * 2^f))^2`. We must make sure the two ranges don't
-overlap with each other, i.e. the chosen values of `b` and `f` must satisfy
-`floor(b * 2^f) <= floor(q/2)`.
-
-## Aggregation {#agg}
-
-The aggregation of the real number vectors is therefore done in field integers
-as well, after each original Client vector is encoded into a vector of field
-integers.
-
-## Decoding Field Integers into IEEE-754 Compatible Float64 {#fi-decoding}
-
-To decode a (aggregated) field integer `agg` back to float, assuming there are
-`c` clients, the aggregated field integer should fall in the range of
-`[-c * sqrt(B), c * sqrt(B)]`. Based on the encoding mechanisms in
-{{fp-encoding}}, we decode the aggregated field integer into float64 as the
-following:
-
-* If the field integer is 0, the aggregated float64 value should be 0.0.
-* If the field integer `agg` is in `[q - c * sqrt(B), q)`, the aggregated
-  float64 value should be negative. We will decode `agg` as
-  `-((q - agg) / 2^f)`.
-* If the field integer `agg` is in `(0, c * sqrt(B)]`, the aggregated
-  float64 value should be positive. We will decode `agg` as `agg / 2^f`.
-
-Similar to how we require field integer ranges for positive and negative
-float64 values to not overlap, we also need to make sure the number of Clients
-`c` is not so big that it causes the two ranges after aggregation to overlap.
-Therefore, we must check that `c * sqrt(B) <= floor(q/2)`.
 
 ## Validity Checks for PINE
 
