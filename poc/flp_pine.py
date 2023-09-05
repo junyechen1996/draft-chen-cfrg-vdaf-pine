@@ -7,10 +7,10 @@ import sys
 # Access poc folder in submoduled VDAF draft.
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-import field
-from common import ERR_INPUT, Unsigned, Vec
-from flp_generic import FlpGeneric, Valid, test_flp_generic
+from common import Unsigned, Vec
+from field import Field128
 from float_field_encoder import encode_f64_into_field, decode_f64_from_field
+from flp_generic import FlpGeneric, Valid, test_flp_generic
 
 
 class PineValid(Valid):
@@ -22,14 +22,14 @@ class PineValid(Valid):
     # Associated types
     Measurement = Vec[float]
     AggResult = Vec[float]
-    Field = field.Field128
+    Field = Field128
 
     # Default internal operational parameters, may be changed by constructor.
     # Figure out how to fix them safely, so it doesn't negatively impact
     # soundness and completeness error. (#24)
-    alpha: float = 7
-    num_wr_reps: Unsigned = 135
-    tau: float = 0.75
+    ALPHA: float = 7
+    NUM_WR_REPS: Unsigned = 135
+    TAU: float = 0.75
     # Other internal operational parameters, set by constructor.
     encoded_l2_norm_bound: Field = None
     encoded_sq_l2_norm_bound: Field = None
@@ -46,8 +46,8 @@ class PineValid(Valid):
                  num_frac_bits: Unsigned,
                  dimension: Unsigned):
         """
-        Instantiate the `PineValid` circuit for measurements with `dimension`
-        elements. Each element will be kept with `num_frac_bits` binary
+        Instantiate the `PineValid` circuit for gradients with `dimension`
+        elements. Each element will be truncated to `num_frac_bits` binary
         fractional bits, and the L2-norm bound of each measurement is bounded
         by `l2_norm_bound`.
         """
@@ -69,8 +69,7 @@ class PineValid(Valid):
         if (self.Field.MODULUS / self.encoded_l2_norm_bound.as_unsigned()
             < self.encoded_l2_norm_bound.as_unsigned()):
             # Squaring encoded norm bound overflows field size, reject.
-            raise ValueError("User-specified norm bound and number of "
-                             "fractional bits are too big.")
+            raise ValueError("Encoded norm bound is larger than field modulus.")
         self.encoded_sq_l2_norm_bound = \
             self.encoded_l2_norm_bound * self.encoded_l2_norm_bound
 
@@ -86,11 +85,11 @@ class PineValid(Valid):
              num_shares: Unsigned) -> Field:
         self.check_valid_eval(meas, joint_rand)
         # TODO(junyec): implement actual validity circuits.
-        return self.Field(0)
+        raise NotImplementedError()
 
     def encode(self, measurement: Measurement) -> Vec[Field]:
         if len(measurement) != self.dimension:
-            raise ERR_INPUT
+            raise ValueError("Unexpected gradient dimension.")
         return [encode_f64_into_field(self.Field, x, self.num_frac_bits)
                 for x in measurement]
 
@@ -101,7 +100,7 @@ class PineValid(Valid):
                output: Vec[Field],
                num_measurements: Unsigned) -> AggResult:
         return [
-            decode_f64_from_field(x, num_measurements, self.num_frac_bits)
+            decode_f64_from_field(x, self.num_frac_bits)
             for x in output
         ]
 

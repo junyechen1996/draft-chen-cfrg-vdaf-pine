@@ -377,17 +377,13 @@ We must make sure the two ranges don't overlap with each other, i.e.
 
 ### Decoding Field Integers into IEEE-754 Compatible Float64 {#fi-decoding}
 
-To decode a (aggregated) field integer `agg` back to float, assuming there are
-`c` clients:
+To decode a (aggregated) field integer `agg` back to float:
 
-* If the field integer is 0, the aggregated float64 value should be 0.0.
-* If the field integer `agg` is in the first half of the field size,
-  `[1, floor(Field.MODULUS / 2)]`, the aggregated float64 value should be
-  positive. We decode `agg` as `agg.as_unsigned() / (2 ** num_frac_bits)`.
-* If the field integer `agg` is in the second half of the field size,
-  `[ceil(Field.MODULUS / 2), Field.MODULUS)`, the aggregated float64 value
-  should be negative. We decode `agg` as
-  `-((Field.MODULUS - agg.as_unsigned()) / (2 ** num_frac_bits))`.
+* Let `agg_int` be the integer representation of `agg`, i.e.
+  `agg_int = agg.as_unsigned()`.
+* If `agg_int > floor(Field.MODULUS / 2)`, then set `agg_int` to
+  `-(Field.MODULUS - agg_int)`.
+* Divide `agg_int` by `2**num_frac_bits`.
 
 We also need to make sure the number of Clients `c` is not so big that it
 causes the positive and negative field integer ranges to overlap.
@@ -939,7 +935,7 @@ based on {{pine-flp-encoding}}:
 ~~~
 def encode(self, measurement: Measurement) -> Vec[Field]:
     if len(measurement) != self.dimension:
-        raise ERR_INPUT
+        raise ValueError("Unexpected gradient dimension.")
     return [encode_f64_into_field(self.Field, x, self.num_frac_bits)
             for x in measurement]
 
@@ -1071,7 +1067,7 @@ def decode(self,
            output: Vec[Field],
            num_measurements: Unsigned) -> AggResult:
     return [
-        decode_f64_from_field(x, num_measurements, self.num_frac_bits)
+        decode_f64_from_field(x, self.num_frac_bits)
         for x in output
     ]
 ~~~
@@ -1690,20 +1686,19 @@ def encode_f64_into_field(Field,
         (x != 0.0 and abs(x) < sys.float_info.min)):
         # Reject NAN, infinity, and subnormal floats,
         # per {{fp-encoding}}.
-        raise ERR_INPUT
+        raise ValueError("f64 encoding doesn't accept NAN, "
+                         "infinite, or subnormal floats.")
     x_encoded = math.floor(x * (2 ** num_frac_bits))
     if x >= 0:
         return Field(x_encoded)
     return Field(Field.MODULUS + x_encoded)
 
 def decode_f64_from_field(field_elem: Field,
-                          num_measurements: Unsigned,
                           num_frac_bits: Unsigned) -> float:
-    # The first half of the field size is reserved for
-    # positive values.
-    positive_upper_bound = math.floor(field_elem.MODULUS / 2)
     decoded = field_elem.as_unsigned()
-    if decoded > positive_upper_bound:
+    # If the aggregated field is larger than half of the field
+    # size, the decoded result should be negative.
+    if decoded > math.floor(field_elem.MODULUS / 2):
         # We need to take the difference between the result
         # and the field modulus, and return the result as negative.
         decoded = -(field_elem.MODULUS - decoded)
