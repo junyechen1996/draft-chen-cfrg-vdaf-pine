@@ -377,23 +377,13 @@ We must make sure the two ranges don't overlap with each other, i.e.
 
 ### Decoding Field Integers into IEEE-754 Compatible Float64 {#fi-decoding}
 
-To decode a (aggregated) field integer `agg` back to float, assuming there are
-`c` clients, the aggregated field integer should fall in either the negative
-range
-`[Field.MODULUS - c * encoded_l2_norm_bound.as_unsigned(), Field.MODULUS)`, or
-the non-negative range `[0, c * encoded_l2_norm_bound.as_unsigned()]`.
-Based on the encoding mechanisms in {{fp-encoding}}, we decode the aggregated
-field integer into float64 as the following:
+To decode a (aggregated) field integer `agg` back to float:
 
-* If the field integer is 0, the aggregated float64 value should be 0.0.
-* If the field integer `agg` is in
-  `[Field.MODULUS - c * encoded_l2_norm_bound.as_unsigned(), Field.MODULUS)`,
-  the aggregated float64 value should be negative. We will decode `agg` as
-  `-((Field.MODULUS - agg.as_unsigned()) / (2 ** num_frac_bits))`.
-* If the field integer `agg` is in
-  `[0, c * encoded_l2_norm_bound.as_unsigned()]`, the aggregated float64
-  value should be positive. We will decode `agg` as
-  `agg.as_unsigned() / (2 ** num_frac_bits)`.
+* Let `agg_int` be the integer representation of `agg`, i.e.
+  `agg_int = agg.as_unsigned()`.
+* If `agg_int > floor(Field.MODULUS / 2)`, then set `agg_int` to
+  `-(Field.MODULUS - agg_int)`.
+* Divide `agg_int` by `2**num_frac_bits`.
 
 We also need to make sure the number of Clients `c` is not so big that it
 causes the positive and negative field integer ranges to overlap.
@@ -943,12 +933,11 @@ The encoding and decoding interface for PINE are defined as the following
 based on {{pine-flp-encoding}}:
 
 ~~~
-def encode(Pine, measurement: list[float]):
-    encoded_measurement = []
-    for x in measurement:
-        x_encoded = Pine.encode_f64_into_field(x)
-        encoded_measurement.append(x_encoded)
-    return encoded_measurement
+def encode(self, measurement: Measurement) -> Vec[Field]:
+    if len(measurement) != self.dimension:
+        raise ValueError("Unexpected gradient dimension.")
+    return [encode_f64_into_field(self.Field, x, self.num_frac_bits)
+            for x in measurement]
 
 def sample_wraparound_joint_rand(Pine, prg: Prg):
     # Since we generate field element by looking at the random byte
@@ -1071,18 +1060,16 @@ def finalize_encoding_with_wraparound_joint_rand(
     encoded_measurement.extend(diff_field_elems)
     return encoded_measurement
 
-def truncate(Pine, inp: Vec[Pine.Field]):
-    return inp[:Pine.dimension]
+def truncate(self, meas: Vec[Field]):
+    return meas[:self.dimension]
 
-def decode(Pine,
-           output: Vec[Pine.Field],
-           num_measurements: Unsigned):
-    decoded_output = []
-    for val in output:
-        decoded_output.append(
-            Pine.decode_f64_from_field(val, num_measurements)
-        )
-    return decoded_output
+def decode(self,
+           output: Vec[Field],
+           num_measurements: Unsigned) -> AggResult:
+    return [
+        decode_f64_from_field(x, self.num_frac_bits)
+        for x in output
+    ]
 ~~~
 
 The gadgets we will use to verify the degree-2 polynomials in PINE are:
@@ -1692,32 +1679,31 @@ algorithms for PINE in the preceding sections.
 ### Conversion Between Float64 and Field Element {#f64-field-util}
 
 ~~~
-def encode_f64_into_field(Pine, x: float) -> Pine.Field:
-    if math.isnan(x) or math.isfinite(x) or abs(x) < sys.float_info.min:
-        # Reject NAN, infinity, and subnormal floats.
-        raise ERR_ENCODE
-    x_encoded = int(x * (2 ** Pine.num_frac_bits))
+def encode_f64_into_field(Field,
+                          x: float,
+                          num_frac_bits: Unsigned) -> Field:
+    if (math.isnan(x) or not math.isfinite(x) or
+        (x != 0.0 and abs(x) < sys.float_info.min)):
+        # Reject NAN, infinity, and subnormal floats,
+        # per {{fp-encoding}}.
+        raise ValueError("f64 encoding doesn't accept NAN, "
+                         "infinite, or subnormal floats.")
+    x_encoded = math.floor(x * (2 ** num_frac_bits))
     if x >= 0:
-        return Pine.Field(x_encoded)
-    return Pine.Flp.Field(Pine.Field.MODULUS + x_encoded)
+        return Field(x_encoded)
+    return Field(Field.MODULUS + x_encoded)
 
-def decode_f64_from_field(
-    Pine,
-    field_elem: Pine.Field,
-    num_measurements: Unsigned,
-) -> float:
-    # The upper bound in the field, below which we will think the
-    # aggregated field element indicates a positive value in
-    # floating point world, otherwise the result should be negative.
-    positive_upper_bound = \
-        num_measurements * math.sqrt(Pine.B.as_unsigned())
+def decode_f64_from_field(field_elem: Field,
+                          num_frac_bits: Unsigned) -> float:
     decoded = field_elem.as_unsigned()
-    if field_elem_unsigned > positive_upper_bound:
+    # If the aggregated field is larger than half of the field
+    # size, the decoded result should be negative.
+    if decoded > math.floor(field_elem.MODULUS / 2):
         # We need to take the difference between the result
         # and the field modulus, and return the result as negative.
-        decoded = -(Pine.Field.MODULUS - decoded)
-    # Divide by 2^f and we will get a float back.
-    decoded_float = decoded / (2 ** Pine.num_frac_bits)
+        decoded = -(field_elem.MODULUS - decoded)
+    # Divide by 2^num_frac_bits and we will get a float back.
+    decoded_float = decoded / (2 ** num_frac_bits)
     return decoded_float
 ~~~
 
