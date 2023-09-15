@@ -11,7 +11,7 @@ from common import (Unsigned, byte, concat, front, to_be_bytes,
                     vec_add, vec_sub, zeros)
 from field import Field, Field128, Field64
 from flp_generic import FlpGeneric
-from flp_pine import PineValid, NUM_WR_CHECKS, NUM_WR_SUCCESSES
+from flp_pine import PineValid, ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES
 from vdaf import Vdaf
 from vdaf_prio3 import (
     USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
@@ -100,12 +100,21 @@ class Pine(Vdaf):
                     chunk_length: Unsigned,
                     num_shares: Unsigned,
                     field: Field,
-                    num_proofs: Unsigned):
+                    num_proofs: Unsigned,
+                    alpha: float = ALPHA,
+                    num_wr_checks: Unsigned = NUM_WR_CHECKS,
+                    num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
         class PineWithParams(Pine):
             # TODO(issue#39) Decide how many proofs to use and enforce
             # robustness.
             Flp = FlpGeneric(PineValid.with_field(field)(
-                l2_norm_bound, num_frac_bits, dimension, chunk_length
+                l2_norm_bound = l2_norm_bound,
+                num_frac_bits = num_frac_bits,
+                dimension = dimension,
+                chunk_length = chunk_length,
+                alpha = alpha,
+                num_wr_checks = num_wr_checks,
+                num_wr_successes = num_wr_successes
             ))
             PROOFS = num_proofs
             MEAS_LEN = Flp.MEAS_LEN - NUM_WR_CHECKS
@@ -677,14 +686,20 @@ class Pine128(Pine):
                     num_frac_bits: Unsigned,
                     dimension: Unsigned,
                     chunk_length: Unsigned,
-                    num_shares: Unsigned):
+                    num_shares: Unsigned,
+                    alpha: float = ALPHA,
+                    num_wr_checks: Unsigned = NUM_WR_CHECKS,
+                    num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
         return super().with_params(l2_norm_bound = l2_norm_bound,
                                    num_frac_bits = num_frac_bits,
                                    dimension = dimension,
                                    chunk_length = chunk_length,
                                    num_shares = num_shares,
                                    field = Field128,
-                                   num_proofs = 1)
+                                   num_proofs = 1,
+                                   alpha = alpha,
+                                   num_wr_checks = num_wr_checks,
+                                   num_wr_successes = num_wr_successes)
 
 
 # `Pine` with `Field64` and three proofs.
@@ -695,11 +710,17 @@ class Pine64(Pine):
                     num_frac_bits: Unsigned,
                     dimension: Unsigned,
                     chunk_length: Unsigned,
-                    num_shares: Unsigned):
+                    num_shares: Unsigned,
+                    alpha: float = ALPHA,
+                    num_wr_checks: Unsigned = NUM_WR_CHECKS,
+                    num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
         return super().with_params(l2_norm_bound = l2_norm_bound,
                                    num_frac_bits = num_frac_bits,
                                    dimension = dimension,
                                    chunk_length = chunk_length,
                                    num_shares = num_shares,
                                    field = Field64,
-                                   num_proofs = 3)
+                                   num_proofs = 3,
+                                   alpha = alpha,
+                                   num_wr_checks = num_wr_checks,
+                                   num_wr_successes = num_wr_successes)

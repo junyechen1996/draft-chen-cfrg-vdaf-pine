@@ -37,7 +37,10 @@ class PineValid(Valid):
                  l2_norm_bound: float,
                  num_frac_bits: Unsigned,
                  dimension: Unsigned,
-                 chunk_length: Unsigned):
+                 chunk_length: Unsigned,
+                 alpha: float = ALPHA,
+                 num_wr_checks: Unsigned = NUM_WR_CHECKS,
+                 num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
         """
         Instantiate the `PineValid` circuit for gradients with `dimension`
         elements. Each element will be truncated to `num_frac_bits` binary
@@ -56,6 +59,9 @@ class PineValid(Valid):
         self.l2_norm_bound = l2_norm_bound
         self.num_frac_bits = num_frac_bits
         self.dimension = dimension
+        self.alpha = alpha
+        self.num_wr_checks = num_wr_checks
+        self.num_wr_successes = num_wr_successes
         encoded_norm_bound_unsigned = \
             self.encode_f64_into_field(l2_norm_bound).as_unsigned()
         if (self.Field.MODULUS / encoded_norm_bound_unsigned
@@ -79,12 +85,12 @@ class PineValid(Valid):
         # in the PINE paper.
 
         # Wraparound check bound, equal to the smallest power of two
-        # larger than or equal to `ALPHA * encoded_norm_bound_unsigned
+        # larger than or equal to `alpha * encoded_norm_bound_unsigned
         # + 1` is a power of 2. Using a power of 2 allows us to use
         # the optimization of Remark 3.2 without degrading
         # completeness.
         self.wr_check_bound = self.Field(
-            next_power_of_2(ALPHA * encoded_norm_bound_unsigned + 1) - 1
+            next_power_of_2(alpha * encoded_norm_bound_unsigned + 1) - 1
         )
 
         # Number of bits to represent each wraparound check result, which
@@ -106,13 +112,13 @@ class PineValid(Valid):
         # - The success bit for each wraparound check
         self.bit_checked_len = \
             2 * self.num_bits_for_sq_norm + \
-            (self.num_bits_for_wr_check + 1) * NUM_WR_CHECKS
+            (self.num_bits_for_wr_check + 1) * num_wr_checks
 
         # Set `Valid` parameters.
         # The measurement length expected by `Flp.eval()` contains the encoded
         # gradient, the expected bits, and the dot products in wraparound
         # checks.
-        self.MEAS_LEN = dimension + self.bit_checked_len + NUM_WR_CHECKS
+        self.MEAS_LEN = dimension + self.bit_checked_len + num_wr_checks
         # 1 for bit check, 1 for wraparound check, 1 for final reduction.
         # Note we don't include the number of wraparound joint randomness field
         # elements in `JOINT_RAND_LEN`.
@@ -123,7 +129,7 @@ class PineValid(Valid):
         self.GADGET_CALLS = [
             chunk_count(chunk_length, self.bit_checked_len) + \
             chunk_count(chunk_length, dimension) + \
-            chunk_count(chunk_length, NUM_WR_CHECKS)
+            chunk_count(chunk_length, num_wr_checks)
         ]
         self.GADGETS = [ParallelSum(Mul(), chunk_length)]
 
@@ -166,7 +172,7 @@ class PineValid(Valid):
         rest = meas
         (encoded_gradient, rest) = front(self.dimension, rest)
         (bit_checked, rest) = front(self.bit_checked_len, rest)
-        (wr_check_results, rest) = front(NUM_WR_CHECKS, rest)
+        (wr_check_results, rest) = front(self.num_wr_checks, rest)
         assert len(rest) == 0
 
         rest = bit_checked
@@ -282,7 +288,7 @@ class PineValid(Valid):
         wr_success_count = self.Field(0)
         r_power = self.Field(1)
 
-        for i in range(NUM_WR_CHECKS):
+        for i in range(self.num_wr_checks):
             wr_check_v = self.Field.decode_from_bit_vector(wr_check_v_bits[i])
             computed_result = wr_check_v - self.wr_check_bound * shares_inv
 
@@ -306,7 +312,7 @@ class PineValid(Valid):
 
         return (
             self.parallel_sum(mul_inputs),
-            wr_success_count - self.Field(NUM_WR_SUCCESSES) * shares_inv
+            wr_success_count - self.Field(self.num_wr_successes) * shares_inv
         )
 
     def parallel_sum(self, mul_inputs):
@@ -370,9 +376,9 @@ class PineValid(Valid):
         a time rather than pre-compute the entire bufferr.
         """
         xof_output = wr_joint_rand_xof.next(
-            chunk_count(4, NUM_WR_CHECKS * self.dimension))
+            chunk_count(4, self.num_wr_checks * self.dimension))
 
-        wr_check_results = [self.Field(0)] * NUM_WR_CHECKS
+        wr_check_results = [self.Field(0)] * self.num_wr_checks
         for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
             wr_check_index = i // self.dimension
             x = encoded_gradient[i % self.dimension]
@@ -402,12 +408,12 @@ class PineValid(Valid):
         wr_check_bits = []
 
         # Number of successful checks. If the prover has passed more than
-        # `NUM_WR_SUCCESSES`, don't set the success bit to be 1 anymore,
-        # because verifier will check that exactly `NUM_WR_SUCCESSES` checks
-        # passed.
+        # `self.num_wr_successes`, don't set the success bit to be 1 anymore,
+        # because verifier will check that exactly `self.num_wr_successes`
+        # checks passed.
         wr_success_count = 0
 
-        for i in range(NUM_WR_CHECKS):
+        for i in range(self.num_wr_checks):
             # This wraparound check passes if the current dot product is in
             # range `[-wr_check_bound, wr_check_bound+1]`. To prove this, the
             # prover sends the bit-encoding of `wr_check_v =
@@ -420,10 +426,10 @@ class PineValid(Valid):
                 self.wr_check_bound + self.Field(1),
             )
 
-            if is_in_range and wr_success_count < NUM_WR_SUCCESSES:
+            if is_in_range and wr_success_count < self.num_wr_successes:
                 # If the result of the current wraparound check is
                 # in range, and the number of passing checks hasn't
-                # reached `NUM_WR_SUCCESSES`. Set the success bit
+                # reached `self.num_wr_successes`. Set the success bit
                 # to be 1.
                 wr_success_count += 1
                 wr_check_g = self.Field(1)
@@ -437,9 +443,9 @@ class PineValid(Valid):
             )
             wr_check_bits.append(wr_check_g)
 
-        # Sanity check the Client has passed `NUM_WR_SUCCESSES`
+        # Sanity check the Client has passed `self.num_wr_successes`
         # number of checks, otherwise Client SHOULD retry.
-        if wr_success_count != NUM_WR_SUCCESSES:
+        if wr_success_count != self.num_wr_successes:
             raise Exception(
                 "Client should retry wraparound check with "
                 "different wraparound joint randomness."
@@ -482,9 +488,9 @@ class PineValid(Valid):
         test_vec["dimension"] = self.dimension
         test_vec["chunk_length"] = self.chunk_length
         test_vec["field"] = self.Field.__name__
-        test_vec["num_wr_checks"] = NUM_WR_CHECKS
-        test_vec["num_wr_successes"] = NUM_WR_SUCCESSES
-        test_vec["alpha"] = ALPHA
+        test_vec["num_wr_checks"] = self.num_wr_checks
+        test_vec["num_wr_successes"] = self.num_wr_successes
+        test_vec["alpha"] = self.alpha
         return ["l2_norm_bound", "num_frac_bits", "dimension", "field",
                 "num_wr_checks", "num_wr_successes", "alpha"]
 
