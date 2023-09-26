@@ -122,13 +122,15 @@ class PineValid(Valid):
             self.wraparound_joint_rand_len + self.verification_joint_rand_len
         self.OUTPUT_LEN = dimension
 
+        self.mul_chunk_length = 2 * self.NUM_WR_CHECKS
         self.poly_eval_chunk_length = chunk_length
         self.GADGET_CALLS = [
-            total_num_bits + self.NUM_WR_CHECKS,
+            chunk_count(self.mul_chunk_length // 2,
+                        total_num_bits + self.NUM_WR_CHECKS),
             chunk_count(self.poly_eval_chunk_length, dimension),
         ]
         self.GADGETS = [
-            Mul(),
+            ParallelSum(Mul(), self.mul_chunk_length // 2),
             ParallelSum(PolyEval([0, 0, 1]), self.poly_eval_chunk_length),
         ]
 
@@ -138,6 +140,7 @@ class PineValid(Valid):
              num_shares: Unsigned) -> Field:
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
+        mul_inputs = []
 
         wr_joint_rand, joint_rand = front(self.wraparound_joint_rand_len,
                                           joint_rand)
@@ -149,11 +152,8 @@ class PineValid(Valid):
         # 0/1 bit check:
         x, bit_checked = front(self.dimension, meas)
         r_power = self.Field(1)
-        bit_check_res = self.Field(0)
         for bit in bit_checked:
-            bit_check_res += self.GADGETS[0].eval(
-                self.Field, [r_power * bit, bit - shares_inv]
-            )
+            mul_inputs += [r_power * bit, bit - shares_inv]
             r_power *= bit_check_red_joint_rand
 
         # L2-norm check:
@@ -195,21 +195,24 @@ class PineValid(Valid):
             # - success bit is 1, the current check passed.
             #   Then the difference must be 0, i.e., the bits of `wr_res`
             #   must match `computed_wr_res`.
-            mul_check = self.GADGETS[0].eval(
-                self.Field, [computed_wr_res - wr_res, success_bit]
-            )
-            # Compute a reduction over all multiplication checks.
-            wr_mul_check_res += r_power * mul_check
+            mul_inputs += [r_power * (computed_wr_res - wr_res), success_bit]
             r_power *= wr_check_red_joint_rand
         assert(len(wr_joint_rand) == 0)
         assert(len(bit_checked) == 0)
 
+        mul_sum = self.Field(0)
+        for i in range(0, len(mul_inputs), self.mul_chunk_length):
+            chunk = self.Field.zeros(self.mul_chunk_length)
+            for j in range(self.mul_chunk_length):
+                if i+j < len(mul_inputs):
+                    chunk[j] = mul_inputs[i+j]
+            mul_sum += self.GADGETS[0].eval(self.Field, chunk)
+
         # Reduce over all circuits.
-        return bit_check_res + \
+        return mul_sum + \
             final_red_joint_rand * norm_equality_check_res + \
-            final_red_joint_rand ** 2 * norm_range_check_res + \
-            final_red_joint_rand ** 3 * wr_mul_check_res + \
-            final_red_joint_rand ** 4 * wr_success_count_check_res
+            final_red_joint_rand**2 * norm_range_check_res + \
+            final_red_joint_rand**3 * wr_success_count_check_res
 
     def norm_check(self,
                    x: Vec[Field],
