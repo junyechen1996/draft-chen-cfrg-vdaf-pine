@@ -200,16 +200,8 @@ class PineValid(Valid):
         assert(len(wr_joint_rand) == 0)
         assert(len(bit_checked) == 0)
 
-        mul_sum = self.Field(0)
-        for i in range(0, len(mul_inputs), self.mul_chunk_length):
-            chunk = self.Field.zeros(self.mul_chunk_length)
-            for j in range(self.mul_chunk_length):
-                if i+j < len(mul_inputs):
-                    chunk[j] = mul_inputs[i+j]
-            mul_sum += self.GADGETS[0].eval(self.Field, chunk)
-
         # Reduce over all circuits.
-        return mul_sum + \
+        return self.parallel_sum(0, mul_inputs, self.mul_chunk_length) + \
             final_red_joint_rand * norm_equality_check_res + \
             final_red_joint_rand**2 * norm_range_check_res + \
             final_red_joint_rand**3 * wr_success_count_check_res
@@ -219,13 +211,7 @@ class PineValid(Valid):
                    norm_bits: Vec[Field],
                    shares_inv: Field) -> tuple[Field, Field]:
         # Compute the squared L2-norm of the gradient.
-        computed_sq_norm = self.Field(0)
-        for i in range(0, self.dimension, self.poly_eval_chunk_length):
-            chunk = self.Field.zeros(self.poly_eval_chunk_length)
-            for j in range(self.poly_eval_chunk_length):
-                if i+j < self.dimension:
-                    chunk[j] = x[i+j]
-            computed_sq_norm += self.GADGETS[1].eval(self.Field, chunk)
+        computed_sq_norm = self.parallel_sum(1, x, self.poly_eval_chunk_length)
 
         # The `v` bits (difference between squared L2-norm and lower bound)
         # and `u` bits (difference between squared L2-norm and upper bound)
@@ -363,6 +349,17 @@ class PineValid(Valid):
                output: Vec[Field],
                num_measurements: Unsigned) -> AggResult:
         return [self.decode_f64_from_field(x) for x in output]
+
+    def parallel_sum(self, gadget, inputs, chunk_length):
+        s = self.Field(0)
+        while len(inputs) >= chunk_length:
+            chunk, inputs = front(chunk_length, inputs)
+            s += self.GADGETS[gadget].eval(self.Field, chunk)
+        chunk = self.Field.zeros(chunk_length)
+        for i in range(len(inputs)):
+            chunk[i] = inputs[i]
+        s += self.GADGETS[gadget].eval(self.Field, chunk)
+        return s
 
     def encode_f64_into_field(self, x: float) -> Field:
         if (math.isnan(x) or not math.isfinite(x) or
