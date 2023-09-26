@@ -11,7 +11,7 @@ sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import Unsigned, Vec, front, gen_rand, next_power_of_2, vec_add
 from field import Field, Field128
 from flp import additive_secret_share
-from flp_generic import FlpGeneric, Mul, PolyEval, Valid
+from flp_generic import FlpGeneric, Mul, ParallelSum, PolyEval, Valid
 from xof import Xof, XofShake128
 
 
@@ -40,21 +40,11 @@ class PineValid(Valid):
     AggResult = Vec[float]
     Field = Field128
 
-    # Associated parameters for `Valid`.
-    MEAS_LEN = None # Set by constructor
-    JOINT_RAND_LEN = None # Set by constructor
-    OUTPUT_LEN = None # Set by constructor
-    # Use `Mul` gadget for bit check and wraparound check, and
-    # `PolyEval` gadget with polynomial x^2 for norm check,
-    # which can allows us to save prover randomness.
-    # TODO(junyechen1996): update after #25
-    GADGETS = [Mul(), PolyEval([0, 0, 1])]
-    GADGET_CALLS = None # Set by constructor
-
     def __init__(self,
                  l2_norm_bound: float,
                  num_frac_bits: Unsigned,
-                 dimension: Unsigned):
+                 dimension: Unsigned,
+                 chunk_length: Unsigned):
         """
         Instantiate the `PineValid` circuit for gradients with `dimension`
         elements. Each element will be truncated to `num_frac_bits` binary
@@ -131,13 +121,15 @@ class PineValid(Valid):
         self.JOINT_RAND_LEN = \
             self.wraparound_joint_rand_len + self.verification_joint_rand_len
         self.OUTPUT_LEN = dimension
-        # TODO(junyechen1996): update after ParallelSum Mul (#25).
-        # The number of calls to the `Mul` gadget should be the
-        # number of bit entries, plus the multiplication between
-        # success bit and differentiator in each wraparound check.
-        # The number of calls to the `PolyEval` gadget is `dimension`.
+
+        self.poly_eval_chunk_length = chunk_length
         self.GADGET_CALLS = [
-            total_num_bits + self.NUM_WR_CHECKS, self.dimension
+            total_num_bits + self.NUM_WR_CHECKS,
+            chunk_count(self.poly_eval_chunk_length, dimension),
+        ]
+        self.GADGETS = [
+            Mul(),
+            ParallelSum(PolyEval([0, 0, 1]), self.poly_eval_chunk_length),
         ]
 
     def eval(self,
@@ -200,10 +192,14 @@ class PineValid(Valid):
                    norm_bits: Vec[Field],
                    shares_inv: Field) -> tuple[Field, Field]:
         # Compute the squared L2-norm of the gradient.
-        computed_sq_norm = sum(
-            [self.GADGETS[1].eval(self.Field, [val]) for val in x],
-            self.Field(0),
-        )
+        computed_sq_norm = self.Field(0)
+        for i in range(0, self.dimension, self.poly_eval_chunk_length):
+            chunk = self.Field.zeros(self.poly_eval_chunk_length)
+            for j in range(self.poly_eval_chunk_length):
+                if i+j < self.dimension:
+                    chunk[j] = x[i+j]
+            computed_sq_norm += self.GADGETS[1].eval(self.Field, chunk)
+
         # The `v` bits (difference between squared L2-norm and lower bound)
         # and `u` bits (difference between squared L2-norm and upper bound)
         # claimed by the Client for the range check of the squared L2-norm.
@@ -450,6 +446,9 @@ def range_check(vec0: Vec[Field],
         v.as_unsigned() <= (upper_bound - lower_bound).as_unsigned()
     return (is_in_range, v, u)
 
+def chunk_count(chunk_length: int, length: int):
+    return (length + chunk_length - 1) // chunk_length
+
 # Adapted from `FlpGeneric.test_flp_generic` to take joint randomness
 # as part of a test case, because wraparound joint randomness
 # is part of FLP encoding for PINE, and the same joint randomness
@@ -463,15 +462,14 @@ def test_flp_pine(flp, test_cases):
         # Evaluate validity circuit.
         v = flp.Valid.eval(meas, joint_rand, 1)
         if (v == flp.Field(0)) != expected_decision:
-            print('{}: test {} failed: validity circuit returned {}'.format(
-                flp.Valid.__name__, i, v))
+            print('validity test {} failed: validity circuit returned {}'.format(i, v))
 
         # Run the FLP.
         decision = run_flp_pine(flp, meas, joint_rand, 2)
         if decision != expected_decision:
-            print('{}: test {} failed: proof evaluation resulted in {}; '
+            print('flp test {} failed: proof evaluation resulted in {}; '
                   'want {}'.format(
-                flp.Valid.__name__, i, decision, expected_decision
+                i, decision, expected_decision
             ))
 
 
@@ -532,7 +530,7 @@ def test_bit_chunks():
         assert bits_str == bit_chunks_str
 
 def test_pine_valid_roundtrip():
-    valid = PineValid(1.0, 15, 2)
+    valid = PineValid(1.0, 15, 2, 1)
     f64_vals = [1.5, -1.5]
     assert f64_vals == valid.decode(valid.truncate(valid.encode(f64_vals)), 1)
 
@@ -546,7 +544,7 @@ def test():
     dimension = 4
     # A gradient with a L2-norm of exactly 1.0.
     measurement = [l2_norm_bound / 2] * dimension
-    pine_valid = PineValid(l2_norm_bound, num_frac_bits, dimension)
+    pine_valid = PineValid(l2_norm_bound, num_frac_bits, dimension, 3)
     flp = FlpGeneric(pine_valid)
 
     # Test PINE FLP with verification.
