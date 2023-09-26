@@ -22,8 +22,7 @@ class PineValid(Valid):
     dimension: Unsigned = None # Set by constructor
 
     # Internal operational parameters.
-    # TODO(junyechen1996): Figure out how to fix them safely, so it
-    # doesn't negatively impact soundness and completeness error. (#24)
+    # TODO(junyechen1996): Figure out how to fix them safely, so it doesn't negatively impact soundness and completeness error. (#24)
     ALPHA: float = 7
     NUM_WR_CHECKS: Unsigned = 135
     TAU: float = 0.75
@@ -104,7 +103,6 @@ class PineValid(Valid):
         self.num_bits_for_wr_res = 1 + math.ceil(math.log2(
             self.wr_bound.as_unsigned() + 1
         ))
-        # TODO(junyechen1996): update after ParallelSum Mul (#25).
         self.wraparound_joint_rand_len = self.NUM_WR_CHECKS * dimension
         # 1 for bit check, 1 for wraparound check, 1 for final reduction.
         self.verification_joint_rand_len = 1 + 1 + 1
