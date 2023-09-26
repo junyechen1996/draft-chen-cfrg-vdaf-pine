@@ -148,9 +148,13 @@ class PineValid(Valid):
 
         # 0/1 bit check:
         x, bit_checked = front(self.dimension, meas)
-        bit_check_res = self.bit_check(
-            bit_checked, bit_check_red_joint_rand, shares_inv
-        )
+        r_power = self.Field(1)
+        bit_check_res = self.Field(0)
+        for bit in bit_checked:
+            bit_check_res += self.GADGETS[0].eval(
+                self.Field, [r_power * bit, bit - shares_inv]
+            )
+            r_power *= bit_check_red_joint_rand
 
         # L2-norm check:
         norm_bits, bit_checked = front(
@@ -162,10 +166,43 @@ class PineValid(Valid):
         # Wraparound check:
         assert(len(bit_checked) ==
                (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS)
-        (wr_mul_check_res, wr_success_count_check_res) = self.wraparound_check(
-            x, bit_checked, wr_joint_rand, wr_check_red_joint_rand,
-            shares_inv
-        )
+        r_power = self.Field(1)
+        wr_mul_check_res = self.Field(0)
+        wr_success_count_check_res = \
+            -self.Field(self.NUM_PASS_WR_CHECKS) * shares_inv
+        for check in range(self.NUM_WR_CHECKS):
+            z, wr_joint_rand = front(self.dimension, wr_joint_rand)
+            # Compute the dot product of `x` and `z`, and add the
+            # absolute value of the wraparound check lower bound.
+            computed_wr_res = dot_prod(x, z) + self.wr_bound * shares_inv
+
+            # Wraparound check result indicated by the Client:
+            wr_res_bits, bit_checked = \
+                front(self.num_bits_for_wr_res, bit_checked)
+            wr_res = self.Field.decode_from_bit_vector(wr_res_bits)
+
+            # Success bit, the Client's indication as to whether the current
+            # check passed.
+            [success_bit], bit_checked = front(1, bit_checked)
+            wr_success_count_check_res += success_bit
+
+            # The Client share is considered valid if the multiplication of
+            # the difference between computed wraparound check result and
+            # the result from the bits, and the success bit is equal to 0.
+            # This means either:
+            # - success bit is 0, the current check failed.
+            #   The difference can be any arbitrary value.
+            # - success bit is 1, the current check passed.
+            #   Then the difference must be 0, i.e., the bits of `wr_res`
+            #   must match `computed_wr_res`.
+            mul_check = self.GADGETS[0].eval(
+                self.Field, [computed_wr_res - wr_res, success_bit]
+            )
+            # Compute a reduction over all multiplication checks.
+            wr_mul_check_res += r_power * mul_check
+            r_power *= wr_check_red_joint_rand
+        assert(len(wr_joint_rand) == 0)
+        assert(len(bit_checked) == 0)
 
         # Reduce over all circuits.
         return bit_check_res + \
@@ -173,19 +210,6 @@ class PineValid(Valid):
             final_red_joint_rand ** 2 * norm_range_check_res + \
             final_red_joint_rand ** 3 * wr_mul_check_res + \
             final_red_joint_rand ** 4 * wr_success_count_check_res
-
-    def bit_check(self,
-                  bit_checked: Vec[Field],
-                  red_joint_rand: Field,
-                  shares_inv: Field) -> Field:
-        r_power = self.Field(1)
-        bit_check_res = self.Field(0)
-        for bit in bit_checked:
-            bit_check_res += self.GADGETS[0].eval(
-                self.Field, [r_power * bit, bit - shares_inv]
-            )
-            r_power *= red_joint_rand
-        return bit_check_res
 
     def norm_check(self,
                    x: Vec[Field],
@@ -220,51 +244,6 @@ class PineValid(Valid):
             (norm_range_check_v + norm_range_check_u -
              self.encoded_sq_norm_bound * shares_inv),
         )
-
-    def wraparound_check(self,
-                         x: Vec[Field],
-                         wr_bit_checked: Vec[Field],
-                         wr_joint_rand: Vec[Field],
-                         red_joint_rand: Field,
-                         shares_inv: Field) -> tuple[Field, Field]:
-        r_power = self.Field(1)
-        wr_mul_check_res = self.Field(0)
-        wr_success_count_check_res = \
-            -self.Field(self.NUM_PASS_WR_CHECKS) * shares_inv
-        for check in range(self.NUM_WR_CHECKS):
-            z, wr_joint_rand = front(self.dimension, wr_joint_rand)
-            # Compute the dot product of `x` and `z`, and add the
-            # absolute value of the wraparound check lower bound.
-            computed_wr_res = dot_prod(x, z) + self.wr_bound * shares_inv
-
-            # Wraparound check result indicated by the Client:
-            wr_res_bits, wr_bit_checked = \
-                front(self.num_bits_for_wr_res, wr_bit_checked)
-            wr_res = self.Field.decode_from_bit_vector(wr_res_bits)
-
-            # Success bit, the Client's indication as to whether the current
-            # check passed.
-            [success_bit], wr_bit_checked = front(1, wr_bit_checked)
-            wr_success_count_check_res += success_bit
-
-            # The Client share is considered valid if the multiplication of
-            # the difference between computed wraparound check result and
-            # the result from the bits, and the success bit is equal to 0.
-            # This means either:
-            # - success bit is 0, the current check failed.
-            #   The difference can be any arbitrary value.
-            # - success bit is 1, the current check passed.
-            #   Then the difference must be 0, i.e., the bits of `wr_res`
-            #   must match `computed_wr_res`.
-            mul_check = self.GADGETS[0].eval(
-                self.Field, [computed_wr_res - wr_res, success_bit]
-            )
-            # Compute a reduction over all multiplication checks.
-            wr_mul_check_res += r_power * mul_check
-            r_power *= red_joint_rand
-        assert(len(wr_joint_rand) == 0)
-        assert(len(wr_bit_checked) == 0)
-        return (wr_mul_check_res, wr_success_count_check_res)
 
     def encode(self, measurement: Measurement) -> Vec[Field]:
         if len(measurement) != self.dimension:
