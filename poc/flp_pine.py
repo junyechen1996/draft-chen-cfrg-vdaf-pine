@@ -21,11 +21,6 @@ class PineValid(Valid):
     num_frac_bits: Unsigned = None # Set by constructor
     dimension: Unsigned = None # Set by constructor
 
-    # Associated types for `Valid`.
-    Measurement = Vec[float]
-    AggResult = Vec[float]
-    Field = Field128
-
     # Internal operational parameters.
     # TODO(junyechen1996): Figure out how to fix them safely, so it
     # doesn't negatively impact soundness and completeness error. (#24)
@@ -39,6 +34,11 @@ class PineValid(Valid):
     num_bits_for_wr_res: Unsigned = None # Set by constructor
     wraparound_joint_rand_len = None # Set by constructor
     verification_joint_rand_len = None # Set by constructor
+
+    # Associated types for `Valid`.
+    Measurement = Vec[float]
+    AggResult = Vec[float]
+    Field = Field128
 
     # Associated parameters for `Valid`.
     MEAS_LEN = None # Set by constructor
