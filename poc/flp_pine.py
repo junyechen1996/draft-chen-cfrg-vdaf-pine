@@ -123,8 +123,9 @@ class PineValid(Valid):
 
         self.chunk_length = chunk_length
         self.GADGET_CALLS = [
-            chunk_count(chunk_length, total_num_bits + self.NUM_WR_CHECKS) + \
-            chunk_count(chunk_length, dimension)
+            chunk_count(chunk_length, total_num_bits) + \
+            chunk_count(chunk_length, dimension) + \
+            chunk_count(chunk_length, self.NUM_WR_CHECKS)
         ]
         self.GADGETS = [
             ParallelSum(Mul(), chunk_length),
@@ -136,7 +137,6 @@ class PineValid(Valid):
              num_shares: Unsigned) -> Field:
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
-        mul_inputs = []
 
         wr_joint_rand, joint_rand = front(self.wraparound_joint_rand_len,
                                           joint_rand)
@@ -147,10 +147,11 @@ class PineValid(Valid):
 
         # 0/1 bit checks:
         x, bit_checked = front(self.dimension, meas)
-        self.bit_checks(mul_inputs,
-                        bit_check_red_joint_rand,
-                        bit_checked,
-                        shares_inv)
+        bit_check_res = self.bit_check(
+            bit_check_red_joint_rand,
+            bit_checked,
+            shares_inv,
+        )
 
         # L2-norm check:
         norm_bits, bit_checked = front(
@@ -162,52 +163,50 @@ class PineValid(Valid):
         # Wraparound checks:
         assert(len(bit_checked) ==
                (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS)
-        wr_success_count_check_res = self.wr_checks(mul_inputs,
-                                                    x,
-                                                    bit_checked,
-                                                    wr_check_red_joint_rand,
-                                                    wr_joint_rand,
-                                                    shares_inv)
+        (wr_test_check_res, wr_success_count_check_res) = self.wr_check(
+            x,
+            bit_checked,
+            wr_check_red_joint_rand,
+            wr_joint_rand,
+            shares_inv,
+        )
 
         # Reduce over all circuits.
-        return self.parallel_sum(mul_inputs) + \
+        return bit_check_res + \
             final_red_joint_rand * norm_equality_check_res + \
             final_red_joint_rand**2 * norm_range_check_res + \
-            final_red_joint_rand**3 * wr_success_count_check_res
+            final_red_joint_rand**3 * wr_test_check_res + \
+            final_red_joint_rand**4 * wr_success_count_check_res
 
-    def bit_checks(self,
-                   mul_inputs,
-                   bit_check_red_joint_rand,
-                   bit_checked,
-                   shares_inv):
+    def bit_check(self,
+                  bit_check_red_joint_rand,
+                  bit_checked,
+                  shares_inv):
         """
         Compute the bit checks, consisting of a random linear combination of a
-        range check for each element of `bit_checked`. The inputs to each
-        multiplication gate are appended to `mul_inputs`.
+        range check for each element of `bit_checked`.
         """
+        mul_inputs = []
         r_power = self.Field(1)
         for bit in bit_checked:
             mul_inputs += [r_power * bit, bit - shares_inv]
             r_power *= bit_check_red_joint_rand
+        return self.parallel_sum(mul_inputs)
 
-    def wr_checks(self,
-                  mul_inputs,
-                  x,
-                  bit_checked,
-                  wr_check_red_joint_rand,
-                  wr_joint_rand,
-                  shares_inv):
+    def wr_check(self,
+                 x,
+                 bit_checked,
+                 wr_check_red_joint_rand,
+                 wr_joint_rand,
+                 shares_inv):
         """
         Compute the wraparound checks, consisting of (i) checking that, for
         each wraparound test, either the Client indicated failure or the Client
         indicated success and the dot product is equal to the claimed value and
         is in range; and (ii) checking that the Client indicated the expected
         number of successes.
-
-        The inputs to each multiplication required for (i) are appended to
-        `mul_inputs` (the caller completes this check by calling the gadget).
-        The return value is the number of successes indicated by the Client.
         """
+        mul_inputs = []
         r_power = self.Field(1)
         wr_mul_check_res = self.Field(0)
         wr_success_count_check_res = \
@@ -241,7 +240,7 @@ class PineValid(Valid):
             r_power *= wr_check_red_joint_rand
         assert(len(wr_joint_rand) == 0)
         assert(len(bit_checked) == 0)
-        return wr_success_count_check_res
+        return (self.parallel_sum(mul_inputs), wr_success_count_check_res)
 
     def norm_check(self,
                    x: Vec[Field],
@@ -276,7 +275,7 @@ class PineValid(Valid):
              self.encoded_sq_norm_bound * shares_inv),
         )
 
-     def parallel_sum(self, inputs):
+    def parallel_sum(self, inputs):
         """
         Split `inputs` into chunks, call the gadget on each chunk, and return
         the sum of the results. If there is a partial leftover, then it is
