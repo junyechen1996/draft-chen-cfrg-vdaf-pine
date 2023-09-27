@@ -44,7 +44,7 @@ class PineValid(Valid):
                  l2_norm_bound: float,
                  num_frac_bits: Unsigned,
                  dimension: Unsigned,
-                 gradient_chunk_length: Unsigned):
+                 chunk_length: Unsigned):
         """
         Instantiate the `PineValid` circuit for gradients with `dimension`
         elements. Each element will be truncated to `num_frac_bits` binary
@@ -121,16 +121,13 @@ class PineValid(Valid):
             self.wraparound_joint_rand_len + self.verification_joint_rand_len
         self.OUTPUT_LEN = dimension
 
-        self.mul_chunk_length = 2 * self.NUM_WR_CHECKS
-        self.poly_eval_chunk_length = gradient_chunk_length
+        self.chunk_length = chunk_length
         self.GADGET_CALLS = [
-            chunk_count(self.mul_chunk_length // 2,
-                        total_num_bits + self.NUM_WR_CHECKS),
-            chunk_count(self.poly_eval_chunk_length, dimension),
+            chunk_count(chunk_length, total_num_bits + self.NUM_WR_CHECKS) + \
+            chunk_count(chunk_length, dimension)
         ]
         self.GADGETS = [
-            ParallelSum(Mul(), self.mul_chunk_length // 2),
-            ParallelSum(PolyEval([0, 0, 1]), self.poly_eval_chunk_length),
+            ParallelSum(Mul(), chunk_length),
         ]
 
     def eval(self,
@@ -200,7 +197,7 @@ class PineValid(Valid):
         assert(len(bit_checked) == 0)
 
         # Reduce over all circuits.
-        return self.parallel_sum(0, mul_inputs, self.mul_chunk_length) + \
+        return self.parallel_sum(mul_inputs) + \
             final_red_joint_rand * norm_equality_check_res + \
             final_red_joint_rand**2 * norm_range_check_res + \
             final_red_joint_rand**3 * wr_success_count_check_res
@@ -210,7 +207,10 @@ class PineValid(Valid):
                    norm_bits: Vec[Field],
                    shares_inv: Field) -> tuple[Field, Field]:
         # Compute the squared L2-norm of the gradient.
-        computed_sq_norm = self.parallel_sum(1, x, self.poly_eval_chunk_length)
+        mul_inputs = []
+        for val in x:
+            mul_inputs += [val, val]
+        computed_sq_norm = self.parallel_sum(mul_inputs)
 
         # The `v` bits (difference between squared L2-norm and lower bound)
         # and `u` bits (difference between squared L2-norm and upper bound)
@@ -349,16 +349,16 @@ class PineValid(Valid):
                num_measurements: Unsigned) -> AggResult:
         return [self.decode_f64_from_field(x) for x in output]
 
-    def parallel_sum(self, gadget, inputs, chunk_length):
+    def parallel_sum(self, inputs):
         s = self.Field(0)
-        while len(inputs) >= chunk_length:
-            chunk, inputs = front(chunk_length, inputs)
-            s += self.GADGETS[gadget].eval(self.Field, chunk)
+        while len(inputs) >= 2*self.chunk_length:
+            chunk, inputs = front(2*self.chunk_length, inputs)
+            s += self.GADGETS[0].eval(self.Field, chunk)
         if len(inputs) > 0:
-            chunk = self.Field.zeros(chunk_length)
+            chunk = self.Field.zeros(2*self.chunk_length)
             for i in range(len(inputs)):
                 chunk[i] = inputs[i]
-            s += self.GADGETS[gadget].eval(self.Field, chunk)
+            s += self.GADGETS[0].eval(self.Field, chunk)
         return s
 
     def encode_f64_into_field(self, x: float) -> Field:
@@ -425,7 +425,7 @@ def range_check(vec0: Vec[Field],
         v.as_unsigned() <= (upper_bound - lower_bound).as_unsigned()
     return (is_in_range, v, u)
 
-def chunk_count(chunk_length: int, length: int):
+def chunk_count(chunk_length, length):
     return (length + chunk_length - 1) // chunk_length
 
 # Adapted from `FlpGeneric.test_flp_generic` to take joint randomness
@@ -523,7 +523,7 @@ def test():
     dimension = 4
     # A gradient with a L2-norm of exactly 1.0.
     measurement = [l2_norm_bound / 2] * dimension
-    pine_valid = PineValid(l2_norm_bound, num_frac_bits, dimension, 3)
+    pine_valid = PineValid(l2_norm_bound, num_frac_bits, dimension, 150)
     flp = FlpGeneric(pine_valid)
 
     # Test PINE FLP with verification.
