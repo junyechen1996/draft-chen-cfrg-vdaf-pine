@@ -193,6 +193,39 @@ class PineValid(Valid):
             r_power *= bit_check_red_joint_rand
         return self.parallel_sum(mul_inputs)
 
+    def norm_check(self,
+                   x: Vec[Field],
+                   norm_bits: Vec[Field],
+                   shares_inv: Field) -> tuple[Field, Field]:
+        """
+        Compute the squared L2-norm of the gradient and test that it is in range.
+        """
+        mul_inputs = []
+        for val in x:
+            mul_inputs += [val, val]
+        computed_sq_norm = self.parallel_sum(mul_inputs)
+
+        # The `v` bits (difference between squared L2-norm and lower bound)
+        # and `u` bits (difference between squared L2-norm and upper bound)
+        # claimed by the Client for the range check of the squared L2-norm.
+        norm_range_check_v_bits, norm_range_check_u_bits = front(
+            self.num_bits_for_norm, norm_bits
+        )
+        norm_range_check_v = \
+            self.Field.decode_from_bit_vector(norm_range_check_v_bits)
+        norm_range_check_u = \
+            self.Field.decode_from_bit_vector(norm_range_check_u_bits)
+
+        return (
+            # Check that the computed squared L2-norm result matches
+            # the value claimed by the Client.
+            norm_range_check_v - computed_sq_norm,
+            # Check the squared L2-norm is in range
+            # `[0, encoded_sq_norm_bound]`.
+            (norm_range_check_v + norm_range_check_u -
+             self.encoded_sq_norm_bound * shares_inv),
+        )
+
     def wr_check(self,
                  x,
                  bit_checked,
@@ -241,39 +274,6 @@ class PineValid(Valid):
         assert(len(wr_joint_rand) == 0)
         assert(len(bit_checked) == 0)
         return (self.parallel_sum(mul_inputs), wr_success_count_check_res)
-
-    def norm_check(self,
-                   x: Vec[Field],
-                   norm_bits: Vec[Field],
-                   shares_inv: Field) -> tuple[Field, Field]:
-        """
-        Compute the squared L2-norm of the gradient and test that it is in range.
-        """
-        mul_inputs = []
-        for val in x:
-            mul_inputs += [val, val]
-        computed_sq_norm = self.parallel_sum(mul_inputs)
-
-        # The `v` bits (difference between squared L2-norm and lower bound)
-        # and `u` bits (difference between squared L2-norm and upper bound)
-        # claimed by the Client for the range check of the squared L2-norm.
-        norm_range_check_v_bits, norm_range_check_u_bits = front(
-            self.num_bits_for_norm, norm_bits
-        )
-        norm_range_check_v = \
-            self.Field.decode_from_bit_vector(norm_range_check_v_bits)
-        norm_range_check_u = \
-            self.Field.decode_from_bit_vector(norm_range_check_u_bits)
-
-        return (
-            # Check that the computed squared L2-norm result matches
-            # the value claimed by the Client.
-            norm_range_check_v - computed_sq_norm,
-            # Check the squared L2-norm is in range
-            # `[0, encoded_sq_norm_bound]`.
-            (norm_range_check_v + norm_range_check_u -
-             self.encoded_sq_norm_bound * shares_inv),
-        )
 
     def parallel_sum(self, inputs):
         """
