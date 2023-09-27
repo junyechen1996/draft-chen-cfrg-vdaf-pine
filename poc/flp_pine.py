@@ -22,7 +22,8 @@ class PineValid(Valid):
     dimension: Unsigned = None # Set by constructor
 
     # Internal operational parameters.
-    # TODO(junyechen1996): Figure out how to fix them safely, so it doesn't negatively impact soundness and completeness error. (#24)
+    # TODO(junyechen1996): Figure out how to fix them safely, so it doesn't
+    # negatively impact soundness and completeness error. (#24)
     ALPHA: float = 7
     NUM_WR_CHECKS: Unsigned = 135
     TAU: float = 0.75
@@ -43,7 +44,7 @@ class PineValid(Valid):
                  l2_norm_bound: float,
                  num_frac_bits: Unsigned,
                  dimension: Unsigned,
-                 chunk_length: Unsigned):
+                 gradient_chunk_length: Unsigned):
         """
         Instantiate the `PineValid` circuit for gradients with `dimension`
         elements. Each element will be truncated to `num_frac_bits` binary
@@ -121,7 +122,7 @@ class PineValid(Valid):
         self.OUTPUT_LEN = dimension
 
         self.mul_chunk_length = 2 * self.NUM_WR_CHECKS
-        self.poly_eval_chunk_length = chunk_length
+        self.poly_eval_chunk_length = gradient_chunk_length
         self.GADGET_CALLS = [
             chunk_count(self.mul_chunk_length // 2,
                         total_num_bits + self.NUM_WR_CHECKS),
