@@ -353,10 +353,11 @@ class PineValid(Valid):
         while len(inputs) >= chunk_length:
             chunk, inputs = front(chunk_length, inputs)
             s += self.GADGETS[gadget].eval(self.Field, chunk)
-        chunk = self.Field.zeros(chunk_length)
-        for i in range(len(inputs)):
-            chunk[i] = inputs[i]
-        s += self.GADGETS[gadget].eval(self.Field, chunk)
+        if len(inputs) > 0:
+            chunk = self.Field.zeros(chunk_length)
+            for i in range(len(inputs)):
+                chunk[i] = inputs[i]
+            s += self.GADGETS[gadget].eval(self.Field, chunk)
         return s
 
     def encode_f64_into_field(self, x: float) -> Field:
