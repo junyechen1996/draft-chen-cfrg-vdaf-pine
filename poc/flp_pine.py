@@ -145,12 +145,12 @@ class PineValid(Valid):
         [final_red_joint_rand], joint_rand = front(1, joint_rand)
         assert len(joint_rand) == 0 # sanity check
 
-        # 0/1 bit check:
+        # 0/1 bit checks:
         x, bit_checked = front(self.dimension, meas)
-        r_power = self.Field(1)
-        for bit in bit_checked:
-            mul_inputs += [r_power * bit, bit - shares_inv]
-            r_power *= bit_check_red_joint_rand
+        self.bit_checks(mul_inputs,
+                        bit_check_red_joint_rand,
+                        bit_checked,
+                        shares_inv)
 
         # L2-norm check:
         norm_bits, bit_checked = front(
@@ -159,9 +159,55 @@ class PineValid(Valid):
         (norm_equality_check_res, norm_range_check_res) = \
             self.norm_check(x, norm_bits, shares_inv)
 
-        # Wraparound check:
+        # Wraparound checks:
         assert(len(bit_checked) ==
                (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS)
+        wr_success_count_check_res = self.wr_checks(mul_inputs,
+                                                    x,
+                                                    bit_checked,
+                                                    wr_check_red_joint_rand,
+                                                    wr_joint_rand,
+                                                    shares_inv)
+
+        # Reduce over all circuits.
+        return self.parallel_sum(mul_inputs) + \
+            final_red_joint_rand * norm_equality_check_res + \
+            final_red_joint_rand**2 * norm_range_check_res + \
+            final_red_joint_rand**3 * wr_success_count_check_res
+
+    def bit_checks(self,
+                   mul_inputs,
+                   bit_check_red_joint_rand,
+                   bit_checked,
+                   shares_inv):
+        """
+        Compute the bit checks, consisting of a random linear combination of a
+        range check for each element of `bit_checked`. The inputs to each
+        multiplication gate are appended to `mul_inputs`.
+        """
+        r_power = self.Field(1)
+        for bit in bit_checked:
+            mul_inputs += [r_power * bit, bit - shares_inv]
+            r_power *= bit_check_red_joint_rand
+
+    def wr_checks(self,
+                  mul_inputs,
+                  x,
+                  bit_checked,
+                  wr_check_red_joint_rand,
+                  wr_joint_rand,
+                  shares_inv):
+        """
+        Compute the wraparound checks, consisting of (i) checking that, for
+        each wraparound test, either the Client indicated failure or the Client
+        indicated success and the dot product is equal to the claimed value and
+        is in range; and (ii) checking that the Client indicated the expected
+        number of successes.
+
+        The inputs to each multiplication required for (i) are appended to
+        `mul_inputs` (the caller completes this check by calling the gadget).
+        The return value is the number of successes indicated by the Client.
+        """
         r_power = self.Field(1)
         wr_mul_check_res = self.Field(0)
         wr_success_count_check_res = \
@@ -195,18 +241,15 @@ class PineValid(Valid):
             r_power *= wr_check_red_joint_rand
         assert(len(wr_joint_rand) == 0)
         assert(len(bit_checked) == 0)
-
-        # Reduce over all circuits.
-        return self.parallel_sum(mul_inputs) + \
-            final_red_joint_rand * norm_equality_check_res + \
-            final_red_joint_rand**2 * norm_range_check_res + \
-            final_red_joint_rand**3 * wr_success_count_check_res
+        return wr_success_count_check_res
 
     def norm_check(self,
                    x: Vec[Field],
                    norm_bits: Vec[Field],
                    shares_inv: Field) -> tuple[Field, Field]:
-        # Compute the squared L2-norm of the gradient.
+        """
+        Compute the squared L2-norm of the gradient and test that it is in range.
+        """
         mul_inputs = []
         for val in x:
             mul_inputs += [val, val]
@@ -232,6 +275,23 @@ class PineValid(Valid):
             (norm_range_check_v + norm_range_check_u -
              self.encoded_sq_norm_bound * shares_inv),
         )
+
+     def parallel_sum(self, inputs):
+        """
+        Split `inputs` into chunks, call the gadget on each chunk, and return
+        the sum of the results. If there is a partial leftover, then it is
+        padded with zeros.
+        """
+        s = self.Field(0)
+        while len(inputs) >= 2*self.chunk_length:
+            chunk, inputs = front(2*self.chunk_length, inputs)
+            s += self.GADGETS[0].eval(self.Field, chunk)
+        if len(inputs) > 0:
+            chunk = self.Field.zeros(2*self.chunk_length)
+            for i in range(len(inputs)):
+                chunk[i] = inputs[i]
+            s += self.GADGETS[0].eval(self.Field, chunk)
+        return s
 
     def encode(self, measurement: Measurement) -> Vec[Field]:
         if len(measurement) != self.dimension:
@@ -348,18 +408,6 @@ class PineValid(Valid):
                output: Vec[Field],
                num_measurements: Unsigned) -> AggResult:
         return [self.decode_f64_from_field(x) for x in output]
-
-    def parallel_sum(self, inputs):
-        s = self.Field(0)
-        while len(inputs) >= 2*self.chunk_length:
-            chunk, inputs = front(2*self.chunk_length, inputs)
-            s += self.GADGETS[0].eval(self.Field, chunk)
-        if len(inputs) > 0:
-            chunk = self.Field.zeros(2*self.chunk_length)
-            for i in range(len(inputs)):
-                chunk[i] = inputs[i]
-            s += self.GADGETS[0].eval(self.Field, chunk)
-        return s
 
     def encode_f64_into_field(self, x: float) -> Field:
         if (math.isnan(x) or not math.isfinite(x) or
