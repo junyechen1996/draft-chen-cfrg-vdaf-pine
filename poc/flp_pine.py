@@ -34,6 +34,9 @@ class PineValid(Valid):
     num_bits_for_wr_res: Unsigned = None # Set by constructor
     wr_joint_rand_len = None # Set by constructor
     vf_joint_rand_len = None # Set by constructor
+    # Length of the encoded gradient, plus the bits for L2-norm check.
+    # This indicates the output length of `encode()`.
+    encoded_gradient_len = None
 
     # Associated types for `Valid`.
     Measurement = Vec[float]
@@ -107,6 +110,8 @@ class PineValid(Valid):
         self.wr_joint_rand_len = self.NUM_WR_CHECKS * dimension
         # 1 for bit check, 1 for wraparound check, 1 for final reduction.
         self.vf_joint_rand_len = 1 + 1 + 1
+        # The length of the encoded gradient, plus the bits for L2-norm check.
+        self.encoded_gradient_len = dimension + 2 * self.num_bits_for_norm
 
         # Set `Valid` parameters.
         # Total number of bits is:
@@ -134,14 +139,14 @@ class PineValid(Valid):
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
 
-        wr_joint_rand, joint_rand = front(self.wr_joint_rand_len, joint_rand)
-        [bit_check_red_joint_rand], joint_rand = front(1, joint_rand)
-        [wr_check_red_joint_rand], joint_rand = front(1, joint_rand)
-        [final_red_joint_rand], joint_rand = front(1, joint_rand)
+        (wr_joint_rand, joint_rand) = front(self.wr_joint_rand_len, joint_rand)
+        ([bit_check_red_joint_rand], joint_rand) = front(1, joint_rand)
+        ([wr_check_red_joint_rand], joint_rand) = front(1, joint_rand)
+        ([final_red_joint_rand], joint_rand) = front(1, joint_rand)
         assert len(joint_rand) == 0 # sanity check
 
         # 0/1 bit checks:
-        x, bit_checked = front(self.dimension, meas)
+        (x, bit_checked) = front(self.dimension, meas)
         bit_check_res = self.bit_check(
             bit_check_red_joint_rand,
             bit_checked,
@@ -149,7 +154,7 @@ class PineValid(Valid):
         )
 
         # L2-norm check:
-        norm_bits, bit_checked = front(
+        (norm_bits, bit_checked) = front(
             2 * self.num_bits_for_norm, bit_checked
         )
         (norm_equality_check_res, norm_range_check_res) = \
@@ -203,7 +208,7 @@ class PineValid(Valid):
         # The `v` bits (difference between squared L2-norm and lower bound)
         # and `u` bits (difference between squared L2-norm and upper bound)
         # claimed by the Client for the range check of the squared L2-norm.
-        norm_range_check_v_bits, norm_range_check_u_bits = front(
+        (norm_range_check_v_bits, norm_range_check_u_bits) = front(
             self.num_bits_for_norm, norm_bits
         )
         norm_range_check_v = \
@@ -240,19 +245,19 @@ class PineValid(Valid):
         wr_success_count_check_res = \
             -self.Field(self.NUM_PASS_WR_CHECKS) * shares_inv
         for check in range(self.NUM_WR_CHECKS):
-            z, wr_joint_rand = front(self.dimension, wr_joint_rand)
+            (z, wr_joint_rand) = front(self.dimension, wr_joint_rand)
             # Compute the dot product of `x` and `z`, and add the
             # absolute value of the wraparound check lower bound.
             computed_wr_res = dot_prod(x, z) + self.wr_bound * shares_inv
 
             # Wraparound check result indicated by the Client:
-            wr_res_bits, bit_checked = \
+            (wr_res_bits, bit_checked) = \
                 front(self.num_bits_for_wr_res, bit_checked)
             wr_res = self.Field.decode_from_bit_vector(wr_res_bits)
 
             # Success bit, the Client's indication as to whether the current
             # check passed.
-            [success_bit], bit_checked = front(1, bit_checked)
+            ([success_bit], bit_checked) = front(1, bit_checked)
             wr_success_count_check_res += success_bit
 
             # The Client share is considered valid if the multiplication of
@@ -278,7 +283,7 @@ class PineValid(Valid):
         """
         s = self.Field(0)
         while len(inputs) >= 2*self.chunk_length:
-            chunk, inputs = front(2*self.chunk_length, inputs)
+            (chunk, inputs) = front(2*self.chunk_length, inputs)
             s += self.GADGETS[0].eval(self.Field, chunk)
         if len(inputs) > 0:
             chunk = self.Field.zeros(2*self.chunk_length)
@@ -353,7 +358,7 @@ class PineValid(Valid):
         # `self.NUM_PASS_WR_CHECKS` checks passed.
         num_passed_wr_checks = 0
         for check in range(self.NUM_WR_CHECKS):
-            z, wr_joint_rand = front(self.dimension, wr_joint_rand)
+            (z, wr_joint_rand) = front(self.dimension, wr_joint_rand)
             # This wraparound check passes if `dot_prod(x, z)` is in range
             # `[-wr_bound, wr_bound+1]`. To prove this, the Client sends the
             # bit-encoding of `wr_res = dot_prod(x, z) + wr_bound` to the
@@ -571,9 +576,9 @@ def test():
     # Test PINE FLP with verification.
     xof = XofShake128(gen_rand(16), b"", b"")
     wr_joint_rand = pine_valid.sample_wr_joint_rand(xof)
-    partially_encoded = flp.encode(measurement)
-    encoded = partially_encoded + \
-        pine_valid.run_wr_checks(partially_encoded[:dimension],
+    encoded_gradient = flp.encode(measurement)
+    encoded = encoded_gradient + \
+        pine_valid.run_wr_checks(encoded_gradient[:dimension],
                                  wr_joint_rand)
 
     vf_joint_rand = flp.Field.rand_vec(pine_valid.vf_joint_rand_len)
