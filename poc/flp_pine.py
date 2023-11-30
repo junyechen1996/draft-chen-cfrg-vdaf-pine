@@ -32,8 +32,8 @@ class PineValid(Valid):
     num_bits_for_norm: Unsigned = None # Set by constructor
     wr_bound: Field = None # Set by constructor
     num_bits_for_wr_res: Unsigned = None # Set by constructor
-    wraparound_joint_rand_len = None # Set by constructor
-    verification_joint_rand_len = None # Set by constructor
+    wr_joint_rand_len = None # Set by constructor
+    vf_joint_rand_len = None # Set by constructor
 
     # Associated types for `Valid`.
     Measurement = Vec[float]
@@ -104,9 +104,9 @@ class PineValid(Valid):
         self.num_bits_for_wr_res = 1 + math.ceil(math.log2(
             self.wr_bound.as_unsigned() + 1
         ))
-        self.wraparound_joint_rand_len = self.NUM_WR_CHECKS * dimension
+        self.wr_joint_rand_len = self.NUM_WR_CHECKS * dimension
         # 1 for bit check, 1 for wraparound check, 1 for final reduction.
-        self.verification_joint_rand_len = 1 + 1 + 1
+        self.vf_joint_rand_len = 1 + 1 + 1
 
         # Set `Valid` parameters.
         # Total number of bits is:
@@ -115,10 +115,8 @@ class PineValid(Valid):
         #   success bit for each wraparound check.
         total_num_bits = 2 * self.num_bits_for_norm + \
                          (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS
-        # TODO(junyechen1996): update after implementing L2-norm check.
         self.MEAS_LEN = dimension + total_num_bits
-        self.JOINT_RAND_LEN = \
-            self.wraparound_joint_rand_len + self.verification_joint_rand_len
+        self.JOINT_RAND_LEN = self.wr_joint_rand_len + self.vf_joint_rand_len
         self.OUTPUT_LEN = dimension
 
         self.chunk_length = chunk_length
@@ -127,9 +125,7 @@ class PineValid(Valid):
             chunk_count(chunk_length, dimension) + \
             chunk_count(chunk_length, self.NUM_WR_CHECKS)
         ]
-        self.GADGETS = [
-            ParallelSum(Mul(), chunk_length),
-        ]
+        self.GADGETS = [ParallelSum(Mul(), chunk_length)]
 
     def eval(self,
              meas: Vec[Field],
@@ -138,8 +134,7 @@ class PineValid(Valid):
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
 
-        wr_joint_rand, joint_rand = front(self.wraparound_joint_rand_len,
-                                          joint_rand)
+        wr_joint_rand, joint_rand = front(self.wr_joint_rand_len, joint_rand)
         [bit_check_red_joint_rand], joint_rand = front(1, joint_rand)
         [wr_check_red_joint_rand], joint_rand = front(1, joint_rand)
         [final_red_joint_rand], joint_rand = front(1, joint_rand)
@@ -293,11 +288,30 @@ class PineValid(Valid):
         return s
 
     def encode(self, measurement: Measurement) -> Vec[Field]:
+        """
+        Encode everything except wraparound check results:
+        - Encode each f64 value into field element.
+        - Encode L2-norm check results.
+        """
         if len(measurement) != self.dimension:
             raise ValueError("Unexpected gradient dimension.")
-        return [self.encode_f64_into_field(x) for x in measurement]
+        encoded = [self.encode_f64_into_field(x) for x in measurement]
 
-    def sample_wraparound_joint_rand(self, xof: Xof):
+        # Encode results for range check of the squared L2-norm.
+        (_, norm_range_check_v, norm_range_check_u) = range_check(
+            encoded, encoded, self.Field(0), self.encoded_sq_norm_bound,
+        )
+        encoded += self.Field.encode_into_bit_vector(
+            norm_range_check_v.as_unsigned(),
+            self.num_bits_for_norm,
+        )
+        encoded += self.Field.encode_into_bit_vector(
+            norm_range_check_u.as_unsigned(),
+            self.num_bits_for_norm,
+        )
+        return encoded
+
+    def sample_wr_joint_rand(self, xof: Xof):
         # Each element in the wraparound joint randomness is:
         # - -1 with probability 1/4,
         # - 0 with probability 1/2,
@@ -307,17 +321,17 @@ class PineValid(Valid):
         # elements we can generate from each byte is 4.
         NUM_ELEMS_IN_ONE_BYTE = 4
         # Compute the number of bytes we will need from `Xof`
-        # in order to sample `self.wraparound_joint_rand_len`
+        # in order to sample `self.wr_joint_rand_len`
         # number of field elements.
         # Taking the ceiling of the division makes sure we can sample
-        # one more byte if `self.wraparound_joint_rand_len` is not
+        # one more byte if `self.wr_joint_rand_len` is not
         # divisible by `NUM_ELEMS_IN_ONE_BYTE`.
         xof_output_len = math.ceil(
-            self.wraparound_joint_rand_len / NUM_ELEMS_IN_ONE_BYTE
+            self.wr_joint_rand_len / NUM_ELEMS_IN_ONE_BYTE
         )
         rand_buf = xof.next(xof_output_len)
 
-        wraparound_joint_rand = []
+        wr_joint_rand = []
         for rand_bits in bit_chunks(rand_buf, 2):
             if rand_bits == 0b00:
                 rand_field = self.Field(self.Field.MODULUS - 1)
@@ -325,30 +339,13 @@ class PineValid(Valid):
                 rand_field = self.Field(0)
             else:
                 rand_field = self.Field(1)
-            wraparound_joint_rand.append(rand_field)
-        return wraparound_joint_rand
+            wr_joint_rand.append(rand_field)
+        return wr_joint_rand
 
-    def finalize_encoding_with_wraparound_joint_rand(
-        self,
-        x: Vec[Field],
-        wr_joint_rand: Vec[Field],
-    ) -> Vec[Field]:
-        encoded_measurement = []
-        encoded_measurement += x
-
-        # Encode results for range check of the squared L2-norm.
-        (_, norm_range_check_v, norm_range_check_u) = range_check(
-            x, x, self.Field(0), self.encoded_sq_norm_bound,
-        )
-        encoded_measurement += self.Field.encode_into_bit_vector(
-            norm_range_check_v.as_unsigned(),
-            self.num_bits_for_norm,
-        )
-        encoded_measurement += self.Field.encode_into_bit_vector(
-            norm_range_check_u.as_unsigned(),
-            self.num_bits_for_norm,
-        )
-
+    def run_wr_checks(self,
+                      x: Vec[Field],
+                      wr_joint_rand: Vec[Field]) -> Vec[Field]:
+        full_wr_res = []
         # Keep track of the number of passing checks in
         # `num_passed_wr_checks`. If the Client has passed more than
         # `self.NUM_PASS_WR_CHECKS`, don't set the success bit to be 1
@@ -384,11 +381,11 @@ class PineValid(Valid):
                 success_bit = self.Field(0)
 
             # Send the bits of wraparound check result, and the success bit.
-            encoded_measurement += self.Field.encode_into_bit_vector(
+            full_wr_res += self.Field.encode_into_bit_vector(
                 wr_res.as_unsigned(),
                 self.num_bits_for_wr_res,
             )
-            encoded_measurement.append(success_bit)
+            full_wr_res.append(success_bit)
 
         assert(len(wr_joint_rand) == 0)
         # Sanity check the Client has passed `self.NUM_PASS_WR_CHECKS`
@@ -398,7 +395,7 @@ class PineValid(Valid):
                 "Client should retry wraparound check with "
                 "different wraparound joint randomness."
             )
-        return encoded_measurement
+        return full_wr_res
 
     def truncate(self, meas: Vec[Field]):
         return meas[:self.dimension]
@@ -478,8 +475,7 @@ def chunk_count(chunk_length, length):
 # Adapted from `FlpGeneric.test_flp_generic` to take joint randomness
 # as part of a test case, because wraparound joint randomness
 # is part of FLP encoding for PINE, and the same joint randomness
-# needs to be passed to `finalize_encoding_with_wraparound_joint_rand`
-# and `eval` functions.
+# needs to be passed to `run_wr_checks` and `eval` functions.
 def test_flp_pine(flp, test_cases):
     for (i, (meas, joint_rand, expected_decision)) in enumerate(test_cases):
         assert len(meas) == flp.MEAS_LEN
@@ -501,8 +497,7 @@ def test_flp_pine(flp, test_cases):
 
 # Adapted from `Flp.run_flp` with joint randomness, because wraparound
 # joint randomness is part of FLP encoding for PINE, and the same joint
-# randomness needs to be passed to
-# `finalize_encoding_with_wraparound_joint_rand` and `run_flp`, instead
+# randomness needs to be passed to `run_wr_checks` and `run_flp`, instead
 # of `run_flp` sampling joint randomness directly.
 def run_flp_pine(flp,
                  meas: Vec[PineValid.Field],
@@ -557,7 +552,7 @@ def test_bit_chunks():
 
 def test_pine_valid_roundtrip():
     valid = PineValid(1.0, 15, 2, 1)
-    f64_vals = [1.5, -1.5]
+    f64_vals = [0.5, 0.5]
     assert f64_vals == valid.decode(valid.truncate(valid.encode(f64_vals)), 1)
 
 def test():
@@ -575,15 +570,14 @@ def test():
 
     # Test PINE FLP with verification.
     xof = XofShake128(gen_rand(16), b"", b"")
-    wr_joint_rand = pine_valid.sample_wraparound_joint_rand(xof)
-    x = flp.encode(measurement)
-    encoded = pine_valid.finalize_encoding_with_wraparound_joint_rand(
-        x, wr_joint_rand
-    )
-    verification_joint_rand = flp.Field.rand_vec(
-        pine_valid.verification_joint_rand_len
-    )
-    joint_rand = wr_joint_rand + verification_joint_rand
+    wr_joint_rand = pine_valid.sample_wr_joint_rand(xof)
+    partially_encoded = flp.encode(measurement)
+    encoded = partially_encoded + \
+        pine_valid.run_wr_checks(partially_encoded[:dimension],
+                                 wr_joint_rand)
+
+    vf_joint_rand = flp.Field.rand_vec(pine_valid.vf_joint_rand_len)
+    joint_rand = wr_joint_rand + vf_joint_rand
     test_flp_pine(flp, [(encoded, joint_rand, True)])
 
 
