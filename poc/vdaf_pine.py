@@ -35,6 +35,9 @@ class Pine(Vdaf):
     # Internal parameters of `Pine`.
     Xof = xof.XofShake128
     Flp = None  # Set by constructor based on the user parameters.
+    MEAS_LEN = None  # Set by constructor, based on `Flp.MEAS_LEN`, minus
+                     # the number of wraparound checks, because Clients
+                     # don't send the dot products in wraparound checks.
 
     # Associated parameters required by `Vdaf`.
     ID = 0xFFFFFFFF  # Private codepoint that will be updated later.
@@ -88,6 +91,7 @@ class Pine(Vdaf):
             Flp = FlpGeneric(
                 PineValid(l2_norm_bound, num_frac_bits, dimension, chunk_length)
             )
+            MEAS_LEN = Flp.MEAS_LEN - Flp.Valid.NUM_WR_CHECKS
             # The size of randomness is the seed size times the sum of
             # the following:
             # - One prover randomness seed.
@@ -148,7 +152,7 @@ class Pine(Vdaf):
             seeds
         ) = front(2, seeds)
         ((k_prove,), seeds) = front(1, seeds)
-        assert(len(seeds) == 0)  # sanity check
+        assert len(seeds) == 0  # sanity check
 
         # Compute wraparound joint randomness parts.
         (_, k_wr_joint_rand_parts) = Pine.leader_meas_share_and_joint_rand_parts(
@@ -159,18 +163,23 @@ class Pine(Vdaf):
             nonce,
             USAGE_WR_JOINT_RAND_PART
         )
-        # Compute wraparound joint randomness field elements.
-        wr_joint_rand = Pine.sample_wr_joint_rand(Pine.joint_rand_seed(
-            k_wr_joint_rand_parts, USAGE_WR_JOINT_RAND_SEED
-        ))
+        # Initialize the `Xof` for wraparound joint randomness, with the seed
+        # computed from the parts.
+        wr_joint_rand_xof = Pine.wr_joint_rand_xof(
+            Pine.joint_rand_seed(k_wr_joint_rand_parts,
+                                 USAGE_WR_JOINT_RAND_SEED)
+        )
 
-        # Run wraparound checks with wraparound joint randomness, and append
-        # results at the end of `encoded_gradient`.
-        encoded_measurement = encoded_gradient + \
-            Pine.Flp.Valid.run_wr_checks(
-                encoded_gradient[:Pine.Flp.Valid.dimension], wr_joint_rand
-            )
-        assert(len(encoded_measurement) == Pine.Flp.MEAS_LEN)
+        # Run wraparound checks with wraparound joint randomness XOF, and append
+        # wraparound check results at the end of `encoded_gradient`.
+        # Note Client doesn't send the dot products in wraparound checks,
+        # because Aggregators are expected to derive the wrapround joint
+        # randomness themselves, but the dot products are passed to
+        # `Flp.Valid.eval()` later to avoid computing the dot products again.
+        (wr_check_bits, wr_dot_prods) = \
+            Pine.Flp.Valid.run_wr_checks(encoded_gradient, wr_joint_rand_xof)
+        encoded_measurement = encoded_gradient + wr_check_bits
+        assert len(encoded_measurement) == Pine.MEAS_LEN
 
         # Compute Leader's measurement share and verification joint randomness
         # parts.
@@ -184,15 +193,16 @@ class Pine(Vdaf):
                 USAGE_JOINT_RAND_PART
             )
         # Compute verification joint randomness field elements.
-        vf_joint_rand = Pine.sample_vf_joint_rand(Pine.joint_rand_seed(
+        vf_joint_rand = Pine.vf_joint_rand(Pine.joint_rand_seed(
             k_vf_joint_rand_parts, USAGE_JOINT_RAND_SEED,
         ))
-        joint_rand = wr_joint_rand + vf_joint_rand
 
         # Generate the proof and shard it into proof shares.
         prove_rand = Pine.prove_rand(k_prove)
+        # PINE's `eval()` function expects the dot products in wraparound checks
+        # to be appended after `encoded_measurement`.
         leader_proof_share = Pine.Flp.prove(
-            encoded_measurement, prove_rand, joint_rand
+            encoded_measurement + wr_dot_prods, prove_rand, vf_joint_rand
         )
         for j in range(Pine.SHARES-1):
             leader_proof_share = vec_sub(
@@ -256,8 +266,12 @@ class Pine(Vdaf):
                 USAGE_WR_JOINT_RAND_PART,
                 USAGE_WR_JOINT_RAND_SEED,
             )
-        wr_joint_rand = \
-            Pine.sample_wr_joint_rand(k_corrected_wr_joint_rand_seed)
+        # Now initialize the wraparound joint randomness XOF, in order to
+        # compute the dot products in wraparound checks.
+        wr_joint_rand_xof = \
+            Pine.wr_joint_rand_xof(k_corrected_wr_joint_rand_seed)
+        wr_dot_prods = Pine.Flp.Valid.wr_check_dot_prod(meas_share,
+                                                        wr_joint_rand_xof)
 
         # Compute this Aggregator's verification joint randomness part and seed.
         (k_vf_joint_rand_part, k_corrected_vf_joint_rand_seed) = \
@@ -270,16 +284,14 @@ class Pine(Vdaf):
                 USAGE_JOINT_RAND_PART,
                 USAGE_JOINT_RAND_SEED,
             )
-        vf_joint_rand = \
-            Pine.sample_vf_joint_rand(k_corrected_vf_joint_rand_seed)
-        joint_rand = wr_joint_rand + vf_joint_rand
+        vf_joint_rand = Pine.vf_joint_rand(k_corrected_vf_joint_rand_seed)
 
         # Query the measurement and proof share.
         query_rand = Pine.query_rand(verify_key, nonce)
-        verifier_share = Pine.Flp.query(meas_share,
+        verifier_share = Pine.Flp.query(meas_share + wr_dot_prods,
                                         proof_share,
                                         query_rand,
-                                        joint_rand,
+                                        vf_joint_rand,
                                         Pine.SHARES)
 
         return (
@@ -417,9 +429,8 @@ class Pine(Vdaf):
             k_vf_joint_rand_blind
         ) = input_share
         if agg_id > 0:
-            meas_share = Pine.helper_meas_share(
-                agg_id, meas_share, Pine.Flp.MEAS_LEN
-            )
+            meas_share = \
+                Pine.helper_meas_share(agg_id, meas_share, Pine.MEAS_LEN)
             proof_share = Pine.helper_proof_share(agg_id, proof_share)
         return (meas_share,
                 proof_share,
@@ -543,24 +554,17 @@ class Pine(Vdaf):
         return (k_joint_rand_part, k_corrected_joint_rand_seed)
 
     @classmethod
-    def sample_wr_joint_rand(Pine,
-                             k_joint_rand_seed: bytes) -> list[PineValid.Field]:
-        """
-        Sample wraparound joint randomness based on the initial seed.
-        This function will initialize `Xof` with the seed and destination
-        string, and let PINE FLP generate the wraparound joint randomess with
-        the initialized `Xof`.
-        """
-        xof_with_seed = Pine.Xof(
-            k_joint_rand_seed,
+    def wr_joint_rand_xof(Pine, k_wr_joint_rand_seed: bytes) -> Xof:
+        """Initialize the XOF to sample wraparound joint randomness. """
+        return Pine.Xof(
+            k_wr_joint_rand_seed,
             Pine.domain_separation_tag(USAGE_WR_JOINT_RANDOMNESS),
             b'',
         )
-        return Pine.Flp.Valid.sample_wr_joint_rand(xof_with_seed)
 
     @classmethod
-    def sample_vf_joint_rand(Pine,
-                             k_joint_rand_seed: bytes) -> list[PineValid.Field]:
+    def vf_joint_rand(Pine,
+                      k_joint_rand_seed: bytes) -> list[PineValid.Field]:
         """
         Derive the verification joint randomness based on the initial seed.
         """
@@ -569,8 +573,7 @@ class Pine(Vdaf):
             k_joint_rand_seed,
             Pine.domain_separation_tag(USAGE_JOINT_RANDOMNESS),
             b'',
-            # `vf_joint_rand_len` is a property of `PineValid`.
-            Pine.Flp.Valid.vf_joint_rand_len,
+            Pine.Flp.JOINT_RAND_LEN,
         )
 
     @classmethod
@@ -620,12 +623,12 @@ def test_shard_result_share_length(Vdaf: Pine):
     nonce = gen_rand(Vdaf.NONCE_SIZE)
     rand = gen_rand(Vdaf.RAND_SIZE)
     (public_share, input_shares) = Vdaf.shard(measurement, nonce, rand)
-    assert(public_share is not None)
-    assert(input_shares is not None and len(input_shares) == Vdaf.SHARES)
+    assert public_share is not None
+    assert input_shares is not None and len(input_shares) == Vdaf.SHARES
 
     [wr_joint_rand_parts, vf_joint_rand_parts] = public_share
-    assert(len(wr_joint_rand_parts) == Vdaf.SHARES)
-    assert(len(vf_joint_rand_parts) == Vdaf.SHARES)
+    assert len(wr_joint_rand_parts) == Vdaf.SHARES
+    assert len(vf_joint_rand_parts) == Vdaf.SHARES
     assert(all(len(part) == Pine.Xof.SEED_SIZE
                for part in wr_joint_rand_parts))
     assert(all(len(part) == Pine.Xof.SEED_SIZE
@@ -634,8 +637,8 @@ def test_shard_result_share_length(Vdaf: Pine):
     # Check leader share length.
     (meas_share, proof_share, wr_joint_rand_blind, vf_joint_rand_blind) = \
         input_shares[0]
-    assert(len(meas_share) == Vdaf.Flp.MEAS_LEN)
-    assert(len(proof_share) == Vdaf.Flp.PROOF_LEN)
+    assert len(meas_share) == Vdaf.MEAS_LEN
+    assert len(proof_share) == Vdaf.Flp.PROOF_LEN
 
 if __name__ == '__main__':
     usages = [USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
