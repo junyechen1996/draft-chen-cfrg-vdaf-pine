@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-12-17T01:21:56.905500+00:00",
+  "timestamp": "2023-12-19T01:16:29.834660+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -462,6 +462,22 @@
       "body": "Investigate whether model gradient can have subnormal float values.",
       "createdAt": "2023-09-19T21:01:54Z",
       "updatedAt": "2023-09-19T21:01:54Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 39,
+      "id": "I_kwDOJWdxls5592wW",
+      "title": "Analyze end-to-end robustness of PINE",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/39",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "As titled. We will need to recommend the field size and number of proofs like Prio3.",
+      "createdAt": "2023-12-18T10:10:37Z",
+      "updatedAt": "2023-12-18T10:10:38Z",
       "closedAt": null,
       "comments": []
     }
@@ -4991,18 +5007,26 @@
       "labels": [],
       "body": "Reviewer's note: stacked PR on #35 ",
       "createdAt": "2023-10-24T13:23:30Z",
-      "updatedAt": "2023-12-04T19:51:14Z",
+      "updatedAt": "2023-12-18T22:49:24Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "0c85319ddf7413034d39e13107b7e4f58d122dfc",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/vdaf-prep",
-      "headRefOid": "ffbaac87095b93bded4a53a5d5040679a8075058",
+      "headRefOid": "f36126b3baace8a4352f0995dfa0a434a0caa3fd",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "> One high level thing: Is there anything we can do to reduce the runtime of the tests?\r\n\r\nTurns out I forgot to increase the chunk length in `vdaf_pine.py`. The unit test time should reduce significantly now, ~5s. It's still not super ideal, but I will try to reduce the time further when I have time to add more tests, for both happy and sad cases.",
+          "createdAt": "2023-12-17T18:10:23Z",
+          "updatedAt": "2023-12-17T18:10:23Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOJWdxls5pGUF6",
@@ -5051,6 +5075,251 @@
               "body": "prep_init happens first, then prep_shares_to_prep second, then prep_next third. I'd suggest defining the functions in this order, too.",
               "createdAt": "2023-12-04T19:49:57Z",
               "updatedAt": "2023-12-04T19:51:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qbDdE",
+          "commit": {
+            "abbreviatedOid": "f36126b"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "@cjpatton  I've addressed all the comments. These threads probably just need another eye from you, but no major issues I see so far.\r\n\r\n- Define a new property in `PineValid` to output the length of the result of  `encode()`: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/38/commits/ffbaac87095b93bded4a53a5d5040679a8075058#r1414410916\r\n- Dedup code to compute joint randomness part and seed in `prep_init()`: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/38/commits/ffbaac87095b93bded4a53a5d5040679a8075058#r1414413040",
+          "createdAt": "2023-12-17T17:14:10Z",
+          "updatedAt": "2023-12-17T18:08:32Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "How about \"encoded measurement without wraparound check results\"? and for variables, I'll define `encoded_meas_no_wr`.",
+              "createdAt": "2023-12-17T17:14:10Z",
+              "updatedAt": "2023-12-17T18:08:33Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "I'll move this property definition to the `PineValid`, calling it `encoded_meas_len_no_wr`?",
+              "createdAt": "2023-12-17T17:14:49Z",
+              "updatedAt": "2023-12-17T18:08:33Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "Done. I defined a subroutine to compute joint randomness part and seed for `prep_init`.",
+              "createdAt": "2023-12-17T18:04:36Z",
+              "updatedAt": "2023-12-17T18:08:33Z"
+            },
+            {
+              "originalPosition": 6,
+              "body": "I made a pass to clean this up for both `flp_pine.py` and `vdaf_pine.py`.",
+              "createdAt": "2023-12-17T18:06:05Z",
+              "updatedAt": "2023-12-17T18:08:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qkCfW",
+          "commit": {
+            "abbreviatedOid": "ffbaac8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-18T22:49:10Z",
+          "updatedAt": "2023-12-18T22:49:10Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "I would write \"without\" instead of \"no\" but otherwise this seems fine.",
+              "createdAt": "2023-12-18T22:49:10Z",
+              "updatedAt": "2023-12-18T22:49:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qkCo5",
+          "commit": {
+            "abbreviatedOid": "f36126b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2023-12-18T22:49:24Z",
+          "updatedAt": "2023-12-18T22:49:24Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 40,
+      "id": "PR_kwDOJWdxls5iPozD",
+      "title": "Refactor to prepare for multiproof implementation",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/40",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Compute dot products before Flp.eval(), so we don't have to persist all wraparound joint randomness in memory, and don't have to repeatedly sample them in each invocation of Flp.eval(), because the dot products don't change within in each proof.\r\n\r\nReviewer's note: stacked PR on #38 .",
+      "createdAt": "2023-12-18T10:29:35Z",
+      "updatedAt": "2023-12-19T00:08:41Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "junyec/vdaf-prep",
+      "baseRefOid": "f36126b3baace8a4352f0995dfa0a434a0caa3fd",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/multiproof-refactor",
+      "headRefOid": "0f0807eb3be3e11893e6d31951c891d91305c4e4",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5qkKRu",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Nice improvement \ud83d\udc4d \r\n\r\nI think I've spotted a bug: the bit check no longer covers the entire range of the encoded measurement that needs to be bit-checked. Please double check and let me know if I've missed something.\r\n\r\nStepping back a little, I think it would be really useful to put a diagram some where (in the docucomment for eval()?) of how the encoding works and make sure all of the variables in all of the vunctions are consistent. Something like this (using `||` to denote concatenation, also correct me if I'm wrong about anything, this isn't totally fresh in my mind):\r\n\r\n```\r\nencoded_measurement =\r\n    encoded_gradient ||  # self.dimension\r\n    bit_checked = (\r\n        norm_bits ||     # self.num_bits_for_norm\r\n        wr_test_bits ||  # self.num_bits_for_wr_res * self.NUM_WR_CHECKS\r\n        wr_test_results  # self.NUM_WR_CHECKS\r\n    ) ||\r\n    wr_dot_prods         # self.NUM_WR_CHECKS\r\n)   \r\n```\r\n\r\nAlso, it would be useful to make sure we use variable names consistenly.",
+          "createdAt": "2023-12-18T23:27:28Z",
+          "updatedAt": "2023-12-19T00:06:42Z",
+          "comments": [
+            {
+              "originalPosition": 110,
+              "body": "Prefer native types: https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/222\r\nHere and below.\r\n\r\n```suggestion\r\n                 wr_dot_prods: list[Field],\r\n```",
+              "createdAt": "2023-12-18T23:27:28Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 240,
+              "body": "Maybe worth commenting here that the Aggregators re-compute the dot products on their side.",
+              "createdAt": "2023-12-18T23:29:27Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 429,
+              "body": "Kind of related to our discussion here: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/38#discussion_r1429215489\r\n\r\n\"encoded_meas_no_wr\" is kind of confusing and verbose. What about just calling it the encoded gradient? (We could change `x` to `encoded_gradient` to match elsewhere.)\r\n\r\n```python3\r\n    encoded_gradient = flp.encode(gradient)\r\n    (wr_dot_prods, wr_res) = pine_valid.run_wr_checks(encoded_meas_no_wr, xof)\r\n    flp_meas = encoded_greadient + wr_res + wr_dot_prods\r\n    test_flp_generic(flp, [(flp_meas, True)])\r\n```",
+              "createdAt": "2023-12-18T23:36:46Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 243,
+              "body": "```suggestion\r\n        # First compute the dot product between`x` and each wraparound joint\r\n        # randomness field elements sampled from `wr_joint_rand_xof`.\r\n```",
+              "createdAt": "2023-12-18T23:39:12Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 177,
+              "body": "I would just say that the circuit input encodes the dot products. I don't think it'll be relevant to the reader why we did it this way. In retrospect, this is just a better design :)",
+              "createdAt": "2023-12-18T23:44:14Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 132,
+              "body": "For consistency\r\n\r\n```suggestion\r\n            (wr_res_bits, wr_bits) = front(self.num_bits_for_wr_res, wr_bits)\r\n```",
+              "createdAt": "2023-12-18T23:47:23Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            },
+            {
+              "originalPosition": 72,
+              "body": "I'm not sure this range is computed correctly. IIRC the bit-checked portion of the encoded measurement should include:\r\n1. L2 norm range check\r\n2. wraparound test range checks\r\n3. wraparound test result",
+              "createdAt": "2023-12-18T23:56:32Z",
+              "updatedAt": "2023-12-19T00:06:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qkSK1",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T00:08:40Z",
+          "updatedAt": "2023-12-19T00:08:41Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "Again, it would be useful to be consistent about variable names.",
+              "createdAt": "2023-12-19T00:08:41Z",
+              "updatedAt": "2023-12-19T00:08:41Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 41,
+      "id": "PR_kwDOJWdxls5iPpYF",
+      "title": "Support multiproof in PINE",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/41",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Reviewer's note: stacked PR on #40 . ",
+      "createdAt": "2023-12-18T10:30:23Z",
+      "updatedAt": "2023-12-19T00:23:50Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "junyec/multiproof-refactor",
+      "baseRefOid": "0f0807eb3be3e11893e6d31951c891d91305c4e4",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/multiproof",
+      "headRefOid": "3e3765d574329f584dbbcca86866f62b29770ef4",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5qkSlN",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T00:10:48Z",
+          "updatedAt": "2023-12-19T00:23:50Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "Hmmm, this is gross, I'm sorry about this. I think we instead need to overcome this limitation.\r\n\r\nThe problem is that if we use the reference code for TurboSHAKE directly, we end up with something that is very inefficient. The way forward I think is to replace the implementation of TurboSHAKE that's efficient.",
+              "createdAt": "2023-12-19T00:10:48Z",
+              "updatedAt": "2023-12-19T00:23:50Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "Instead of making these associated parameters, I would just make them concrete. I.e., wherever you have a reference to `Pine.Field`, just use `PineValid.Field`.\r\n\r\nSimilarly for `Xof`.",
+              "createdAt": "2023-12-19T00:12:21Z",
+              "updatedAt": "2023-12-19T00:23:50Z"
+            },
+            {
+              "originalPosition": 88,
+              "body": "FWIW I don't think this function is worth copy-pasting from Prio3. I don't expect it to ever be used for anything.",
+              "createdAt": "2023-12-19T00:13:33Z",
+              "updatedAt": "2023-12-19T00:23:50Z"
+            },
+            {
+              "originalPosition": 79,
+              "body": "We need to be flexible with the field (i.e., we need `with_field()`) but I don't think we need to be flexible with the XOF. Let's just pick one? ",
+              "createdAt": "2023-12-19T00:17:45Z",
+              "updatedAt": "2023-12-19T00:23:50Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/321",
+              "createdAt": "2023-12-19T00:23:10Z",
+              "updatedAt": "2023-12-19T00:23:50Z"
             }
           ]
         }
