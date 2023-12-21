@@ -8,9 +8,9 @@ import sys
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import Unsigned, front, gen_rand, next_power_of_2
-from field import Field, Field128
+from field import Field, Field128, Field64
 from flp_generic import FlpGeneric, Mul, ParallelSum, Valid, test_flp_generic
-from xof import Xof, XofShake128
+from xof import Xof, XofFixedKeyAes128
 
 
 class PineValid(Valid):
@@ -37,10 +37,25 @@ class PineValid(Valid):
     # Number of bits in the encoded measurement.
     bit_checked_len = None
 
+    # XOF for `PineValid`.
+    # Note we currently use `XofFixedKeyAes128` by default, because
+    # `XofTurboShake128` in VDAF poc has a limit of how many bytes can be
+    # sampled:
+    # https://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/fd7a2dc4993babbf3acffc7d498cd7925890064b/poc/xof.py#L18-L21.
+    # TODO(junyechen1996): Switch to TurboShake128 after
+    # https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/322 is merged.
+    Xof = XofFixedKeyAes128
+
     # Associated types for `Valid`.
     Measurement = list[float]
     AggResult = list[float]
-    Field = Field128
+    Field = None  # Set by `with_field()`.
+
+    @classmethod
+    def with_field(PineValid, TheField):
+        class PineValidWithField(PineValid):
+            Field = TheField
+        return PineValidWithField
 
     def __init__(self,
                  l2_norm_bound: float,
@@ -513,7 +528,7 @@ def test_bit_chunks():
         assert bits_str == bit_chunks_str
 
 def test_pine_valid_roundtrip():
-    valid = PineValid(1.0, 15, 2, 1)
+    valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
     f64_vals = [0.5, 0.5]
     assert f64_vals == valid.decode(valid.truncate(valid.encode(f64_vals)), 1)
 
@@ -521,22 +536,24 @@ def test():
     test_bit_chunks()
     test_pine_valid_roundtrip()
 
+    # `PineValid` with `l2_norm_bound = 1.0`, `num_frac_bits = 4`,
+    # `dimension = 4`, `chunk_length = 150`.
     l2_norm_bound = 1.0
-    # 4 fractional bits should be enough to keep 1 decimal digit.
-    num_frac_bits = 4
     dimension = 4
+    args = [l2_norm_bound, 4, dimension, 150]
     # A gradient with a L2-norm of exactly 1.0.
     measurement = [l2_norm_bound / 2] * dimension
-    pine_valid = PineValid(l2_norm_bound, num_frac_bits, dimension, 150)
-    flp = FlpGeneric(pine_valid)
+    for field in [Field64, Field128]:
+        pine_valid = PineValid.with_field(field)(*args)
+        flp = FlpGeneric(pine_valid)
 
-    # Test PINE FLP with verification.
-    xof = XofShake128(gen_rand(16), b"", b"")
-    encoded_gradient = flp.encode(measurement)
-    (wr_check_bits, wr_dot_prods) = \
-        pine_valid.run_wr_checks(encoded_gradient, xof)
-    flp_meas = encoded_gradient + wr_check_bits + wr_dot_prods
-    test_flp_generic(flp, [(flp_meas, True)])
+        # Test PINE FLP with verification.
+        xof = XofFixedKeyAes128(gen_rand(16), b"", b"")
+        encoded_gradient = flp.encode(measurement)
+        (wr_check_bits, wr_dot_prods) = \
+            pine_valid.run_wr_checks(encoded_gradient, xof)
+        meas = encoded_gradient + wr_check_bits + wr_dot_prods
+        test_flp_generic(flp, [(meas, True)])
 
 
 if __name__ == '__main__':
