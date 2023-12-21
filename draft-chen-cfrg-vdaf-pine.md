@@ -24,9 +24,16 @@ venue:
 
 author:
  -
-    fullname: Junye Chen
-    organization: Apple Inc.
-    email: "junyec@apple.com"
+       ins: J. Chen
+       name: Junye Chen
+       organization: Apple Inc.
+       email: "junyec@apple.com"
+
+ -
+       ins: C. Patton
+       name: Christopher Patton
+       organization: Cloudflare
+       email: chrispatton+ietf@gmail.com
 
 normative:
 
