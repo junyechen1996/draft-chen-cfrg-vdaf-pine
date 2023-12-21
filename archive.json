@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-12-19T01:16:29.834660+00:00",
+  "timestamp": "2023-12-21T01:15:41.021567+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -5000,24 +5000,26 @@
       "id": "PR_kwDOJWdxls5do_Ta",
       "title": "Implement VDAF preparation, and enable tests",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/38",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Reviewer's note: stacked PR on #35 ",
       "createdAt": "2023-10-24T13:23:30Z",
-      "updatedAt": "2023-12-18T22:49:24Z",
+      "updatedAt": "2023-12-19T09:49:22Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "0c85319ddf7413034d39e13107b7e4f58d122dfc",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/vdaf-prep",
-      "headRefOid": "f36126b3baace8a4352f0995dfa0a434a0caa3fd",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "b9eddf27fcf51e1e6fb91369c6396b790c1cbd69",
+      "closedAt": "2023-12-19T09:49:18Z",
+      "mergedAt": "2023-12-19T09:49:18Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "9af1f1f21b58b58dc3c4b06b8a827a8f5ec76ed0"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -5148,6 +5150,26 @@
           "createdAt": "2023-12-18T22:49:24Z",
           "updatedAt": "2023-12-18T22:49:24Z",
           "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qmjEw",
+          "commit": {
+            "abbreviatedOid": "ffbaac8"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T09:49:08Z",
+          "updatedAt": "2023-12-19T09:49:08Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "Changing it to `encoded_gradient` per discussion [here](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/40#discussion_r1430752049).",
+              "createdAt": "2023-12-19T09:49:08Z",
+              "updatedAt": "2023-12-19T09:49:09Z"
+            }
+          ]
         }
       ]
     },
@@ -5163,13 +5185,13 @@
       "labels": [],
       "body": "Compute dot products before Flp.eval(), so we don't have to persist all wraparound joint randomness in memory, and don't have to repeatedly sample them in each invocation of Flp.eval(), because the dot products don't change within in each proof.\r\n\r\nReviewer's note: stacked PR on #38 .",
       "createdAt": "2023-12-18T10:29:35Z",
-      "updatedAt": "2023-12-19T00:08:41Z",
+      "updatedAt": "2023-12-19T21:14:26Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
-      "baseRefName": "junyec/vdaf-prep",
-      "baseRefOid": "f36126b3baace8a4352f0995dfa0a434a0caa3fd",
+      "baseRefName": "main",
+      "baseRefOid": "9af1f1f21b58b58dc3c4b06b8a827a8f5ec76ed0",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/multiproof-refactor",
-      "headRefOid": "0f0807eb3be3e11893e6d31951c891d91305c4e4",
+      "headRefOid": "730891fd66fc47f6eff20fbf8db15468f76e82d7",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -5251,6 +5273,138 @@
               "updatedAt": "2023-12-19T00:08:41Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qmlx_",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T09:54:58Z",
+          "updatedAt": "2023-12-19T09:54:58Z",
+          "comments": [
+            {
+              "originalPosition": 429,
+              "body": "Sounds good. `encoded_gradient` is not completely precise, since we decided to make `encode()` also encode the result of L2-norm check, but `encoded_gradient` is good enough...",
+              "createdAt": "2023-12-19T09:54:58Z",
+              "updatedAt": "2023-12-19T09:54:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qmtiT",
+          "commit": {
+            "abbreviatedOid": "730891f"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "> I think I've spotted a bug\r\n\r\nYou are right. It should be fixed now.\r\n\r\n> Stepping back a little, I think it would be really useful to put a diagram some where\r\n\r\nThat's a good idea. I put that in `eval()` function now.\r\n\r\n> Also, it would be useful to make sure we use variable names consistenly.\r\n\r\nMakes sense. I made a pass to call the output of `encode()`: `encoded_gradient` (although it's not completely accurate, it also contains the bits of L2-norm check). The output of `run_wr_checks` are the `wr_bits` and `wr_dot_prods`, which are used throughout the validity circuit and VDAF. Note `wr_bits` contains the wraparound check result bits, and also the success bits.\r\n\r\n@cjpatton The only open thread: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/40/files#r1430770039. I'm not sure about which variable you are referring to here...",
+          "createdAt": "2023-12-19T10:12:03Z",
+          "updatedAt": "2023-12-19T10:43:49Z",
+          "comments": [
+            {
+              "originalPosition": 72,
+              "body": "Yes... good catch. I meant `rest[:(len(rest) - self.NUM_WR_CHECKS)]`.",
+              "createdAt": "2023-12-19T10:12:03Z",
+              "updatedAt": "2023-12-19T10:43:07Z"
+            },
+            {
+              "originalPosition": 110,
+              "body": "Made a pass to fix all the `Vec` in this file.",
+              "createdAt": "2023-12-19T10:12:29Z",
+              "updatedAt": "2023-12-19T10:43:07Z"
+            },
+            {
+              "originalPosition": 100,
+              "body": "which variable here? Do you mean `meas_share`? I believe that is consistent in the Aggregators' side, it means \"a share of the encoded measurement\"...",
+              "createdAt": "2023-12-19T10:32:10Z",
+              "updatedAt": "2023-12-19T10:43:07Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qpQty",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T15:57:07Z",
+          "updatedAt": "2023-12-19T15:57:08Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "Here I think `meas_share` is used for everything but the dot prods, but elsewhere `meas_share` includes the dot prods.",
+              "createdAt": "2023-12-19T15:57:07Z",
+              "updatedAt": "2023-12-19T15:57:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qpxxf",
+          "commit": {
+            "abbreviatedOid": "730891f"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T16:59:30Z",
+          "updatedAt": "2023-12-19T16:59:56Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "At `vdaf_pine.py`, `meas_share` and also `encoded_measurement` doesn't include the dot products because that's what gets sent between Client and Aggregators. I think you mean the `meas` you see elsewhere is from `flp_pine.py`? I'm not sure what's the best way to distinguish the two... Perhaps we call the `meas` in `flp_pine.py`: `flp_meas` (that's what I did in tests), or `meas_with_dot_prods`, or call the `meas` in `vdaf_pine.py`: `vdaf_meas`, or `meas_without_dot_prods`?",
+              "createdAt": "2023-12-19T16:59:30Z",
+              "updatedAt": "2023-12-19T16:59:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qqdpM",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T18:45:03Z",
+          "updatedAt": "2023-12-19T18:45:03Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "I think we should think of the \"encoded measurement\" as *everything* that's passed to `eval()`, including the dot products. Is there anything that prevents us from being consistent at both the VDAF and FLP level?",
+              "createdAt": "2023-12-19T18:45:03Z",
+              "updatedAt": "2023-12-19T18:45:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qrQpy",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T21:14:26Z",
+          "updatedAt": "2023-12-19T21:14:26Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "The dot products aren\u2019t actually sent between Client and Aggregators. In VDAF layer, `encoded_measurement` is `encoded_gradient + wr_bits`. When we do the proof or validation with `PineValid.eval()`, it expects `encoded_gradient + wr_bits + wr_dot_prods`. Perhaps we should call `encoded_gradient + wr_bits`: `vdaf_meas`, or `meas_on_the_wire` (what is being sent from the Client)?",
+              "createdAt": "2023-12-19T21:14:26Z",
+              "updatedAt": "2023-12-19T21:14:26Z"
+            }
+          ]
         }
       ]
     },
@@ -5266,13 +5420,13 @@
       "labels": [],
       "body": "Reviewer's note: stacked PR on #40 . ",
       "createdAt": "2023-12-18T10:30:23Z",
-      "updatedAt": "2023-12-19T00:23:50Z",
+      "updatedAt": "2023-12-20T19:19:46Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "junyec/multiproof-refactor",
-      "baseRefOid": "0f0807eb3be3e11893e6d31951c891d91305c4e4",
+      "baseRefOid": "730891fd66fc47f6eff20fbf8db15468f76e82d7",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/multiproof",
-      "headRefOid": "3e3765d574329f584dbbcca86866f62b29770ef4",
+      "headRefOid": "3f8c203805f7b8119a6de02e7899069161af57d8",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -5320,6 +5474,164 @@
               "body": "https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/321",
               "createdAt": "2023-12-19T00:23:10Z",
               "updatedAt": "2023-12-19T00:23:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qnA3s",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T10:54:49Z",
+          "updatedAt": "2023-12-19T11:21:58Z",
+          "comments": [
+            {
+              "originalPosition": 79,
+              "body": "Makes sense. Let's hardcode XOF",
+              "createdAt": "2023-12-19T10:54:49Z",
+              "updatedAt": "2023-12-19T11:21:58Z"
+            },
+            {
+              "originalPosition": 88,
+              "body": "But don't we want to evaluate the robustness for different field sizes as well?",
+              "createdAt": "2023-12-19T10:55:07Z",
+              "updatedAt": "2023-12-19T11:21:58Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "I changed `Field` to `Valid`, which by default is set to `PineValid`. We either need `Field` or `Valid`, to hold the type set by `with_field()`. `PineValid` is only a class that hardcodes `Field` to be `Field128`. The calling path looks like the following:\r\n\r\n```\r\nconcrete_pine = Pine.with_field(Field64) \\  # This will set `Pine.Field` to be `Field64`,\r\n                                            # or `Pine.Valid` to be `PineValid.with_field(Field64)`\r\n    .with_params(...)  # This will create validity circuit `PineValid.with_field(Pine.Field).with_params(...)`,\r\n                       # and then create the `Flp`\r\n```",
+              "createdAt": "2023-12-19T11:15:10Z",
+              "updatedAt": "2023-12-19T11:23:11Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "I could be missing something... Setting the associated type in python is a little weird to me...",
+              "createdAt": "2023-12-19T11:16:32Z",
+              "updatedAt": "2023-12-19T11:21:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qpOkO",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T15:54:03Z",
+          "updatedAt": "2023-12-19T15:54:03Z",
+          "comments": [
+            {
+              "originalPosition": 88,
+              "body": "Sure, but how does this function help with that?",
+              "createdAt": "2023-12-19T15:54:03Z",
+              "updatedAt": "2023-12-19T15:54:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qpP1Y",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T15:56:00Z",
+          "updatedAt": "2023-12-19T15:56:00Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "The point is to let `PineValid` determine the field, and to make that clear in the code. There is no need to set Pine.Field if you already have Pine.Valid.Field. Does that make more sense?",
+              "createdAt": "2023-12-19T15:56:00Z",
+              "updatedAt": "2023-12-19T15:56:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qpcbu",
+          "commit": {
+            "abbreviatedOid": "9ed64b3"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T16:17:56Z",
+          "updatedAt": "2023-12-19T16:17:56Z",
+          "comments": [
+            {
+              "originalPosition": 76,
+              "body": "Remvoe this and follow this pattern: https://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/3d2dd77befcf149c818b4bae1744e60c00d0a4f3/poc/vdaf_prio3.py#L534",
+              "createdAt": "2023-12-19T16:17:56Z",
+              "updatedAt": "2023-12-19T16:17:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qp3kh",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T17:12:01Z",
+          "updatedAt": "2023-12-19T17:12:01Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "Discussed offline. Let `with_params()` take in field as well.",
+              "createdAt": "2023-12-19T17:12:01Z",
+              "updatedAt": "2023-12-19T17:12:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qp3zt",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-19T17:12:19Z",
+          "updatedAt": "2023-12-19T17:12:20Z",
+          "comments": [
+            {
+              "originalPosition": 88,
+              "body": "Discussed offline, removing this and leave a TODO to evaluate robustness.",
+              "createdAt": "2023-12-19T17:12:19Z",
+              "updatedAt": "2023-12-19T17:12:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qyHE7",
+          "commit": {
+            "abbreviatedOid": "3e3765d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-20T19:19:46Z",
+          "updatedAt": "2023-12-20T19:19:46Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "Here you go! It should be sufficient to point to this branch, or feel free to wait to resolve this until we merge the PR:  https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/322",
+              "createdAt": "2023-12-20T19:19:46Z",
+              "updatedAt": "2023-12-20T19:19:47Z"
             }
           ]
         }
