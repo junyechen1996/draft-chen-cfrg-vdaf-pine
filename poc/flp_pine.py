@@ -1,6 +1,5 @@
 """Validity circuit for PINE. """
 
-import functools
 import math
 import os
 import sys
@@ -8,10 +7,9 @@ import sys
 # Access poc folder in submoduled VDAF draft.
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-from common import Unsigned, Vec, front, gen_rand, next_power_of_2, vec_add
+from common import Unsigned, front, gen_rand, next_power_of_2
 from field import Field, Field128
-from flp import additive_secret_share
-from flp_generic import FlpGeneric, Mul, ParallelSum, PolyEval, Valid
+from flp_generic import FlpGeneric, Mul, ParallelSum, Valid, test_flp_generic
 from xof import Xof, XofShake128
 
 
@@ -33,14 +31,15 @@ class PineValid(Valid):
     wr_bound: Field = None # Set by constructor
     num_bits_for_wr_res: Unsigned = None # Set by constructor
     wr_joint_rand_len = None # Set by constructor
-    vf_joint_rand_len = None # Set by constructor
     # Length of the encoded gradient, plus the bits for L2-norm check.
     # This indicates the output length of `encode()`.
     encoded_gradient_len = None
+    # Number of bits in the encoded measurement.
+    bit_checked_len = None
 
     # Associated types for `Valid`.
-    Measurement = Vec[float]
-    AggResult = Vec[float]
+    Measurement = list[float]
+    AggResult = list[float]
     Field = Field128
 
     def __init__(self,
@@ -108,66 +107,71 @@ class PineValid(Valid):
             self.wr_bound.as_unsigned() + 1
         ))
         self.wr_joint_rand_len = self.NUM_WR_CHECKS * dimension
-        # 1 for bit check, 1 for wraparound check, 1 for final reduction.
-        self.vf_joint_rand_len = 1 + 1 + 1
         # The length of the encoded gradient, plus the bits for L2-norm check.
         self.encoded_gradient_len = dimension + 2 * self.num_bits_for_norm
-
-        # Set `Valid` parameters.
-        # Total number of bits is:
+        # The expected number of bits is:
         # - The number of bits for L2-norm check.
         # - The number of bits for each wraparound check result, and the
         #   success bit for each wraparound check.
-        total_num_bits = 2 * self.num_bits_for_norm + \
-                         (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS
-        self.MEAS_LEN = dimension + total_num_bits
-        self.JOINT_RAND_LEN = self.wr_joint_rand_len + self.vf_joint_rand_len
+        self.bit_checked_len = \
+            2 * self.num_bits_for_norm + \
+            (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS
+
+        # Set `Valid` parameters.
+        # The measurement length expected by `Flp.eval()` contains the encoded
+        # gradient, the expected bits, and the dot products in wraparound
+        # checks.
+        self.MEAS_LEN = dimension + self.bit_checked_len + self.NUM_WR_CHECKS
+        # 1 for bit check, 1 for wraparound check, 1 for final reduction.
+        # Note we don't include the number of wraparound joint randomness field
+        # elements in `JOINT_RAND_LEN`.
+        self.JOINT_RAND_LEN = 1 + 1 + 1
         self.OUTPUT_LEN = dimension
 
         self.chunk_length = chunk_length
         self.GADGET_CALLS = [
-            chunk_count(chunk_length, total_num_bits) + \
+            chunk_count(chunk_length, self.bit_checked_len) + \
             chunk_count(chunk_length, dimension) + \
             chunk_count(chunk_length, self.NUM_WR_CHECKS)
         ]
         self.GADGETS = [ParallelSum(Mul(), chunk_length)]
 
     def eval(self,
-             meas: Vec[Field],
-             joint_rand: Vec[Field],
+             meas: list[Field],
+             joint_rand: list[Field],
              num_shares: Unsigned) -> Field:
+        """Validity circuit for PINE. """
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
 
-        (wr_joint_rand, joint_rand) = front(self.wr_joint_rand_len, joint_rand)
+        # Unpack `meas = encoded_gradient || bit_checked || wr_dot_prods`
+        (encoded_gradient, rest) = front(self.dimension, meas)
+        (bit_checked, wr_dot_prods) = front(self.bit_checked_len, rest)
+
         ([bit_check_red_joint_rand], joint_rand) = front(1, joint_rand)
         ([wr_check_red_joint_rand], joint_rand) = front(1, joint_rand)
         ([final_red_joint_rand], joint_rand) = front(1, joint_rand)
         assert len(joint_rand) == 0 # sanity check
 
         # 0/1 bit checks:
-        (x, bit_checked) = front(self.dimension, meas)
         bit_check_res = self.bit_check(
-            bit_check_red_joint_rand,
-            bit_checked,
-            shares_inv,
+            bit_check_red_joint_rand, bit_checked, shares_inv,
         )
 
         # L2-norm check:
-        (norm_bits, bit_checked) = front(
-            2 * self.num_bits_for_norm, bit_checked
-        )
+        (norm_bits, wr_check_bits) = \
+            front(2 * self.num_bits_for_norm, bit_checked)
         (norm_equality_check_res, norm_range_check_res) = \
-            self.norm_check(x, norm_bits, shares_inv)
+            self.norm_check(encoded_gradient, norm_bits, shares_inv)
 
         # Wraparound checks:
-        assert(len(bit_checked) ==
-               (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS)
-        (wr_test_check_res, wr_success_count_check_res) = self.wr_check(
-            x,
-            bit_checked,
+        assert len(wr_check_bits) == \
+               (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS
+        assert len(wr_dot_prods) == self.NUM_WR_CHECKS
+        (wr_mul_check_res, wr_success_count_check_res) = self.wr_check(
+            wr_check_bits,
+            wr_dot_prods,
             wr_check_red_joint_rand,
-            wr_joint_rand,
             shares_inv,
         )
 
@@ -175,7 +179,7 @@ class PineValid(Valid):
         return bit_check_res + \
             final_red_joint_rand * norm_equality_check_res + \
             final_red_joint_rand**2 * norm_range_check_res + \
-            final_red_joint_rand**3 * wr_test_check_res + \
+            final_red_joint_rand**3 * wr_mul_check_res + \
             final_red_joint_rand**4 * wr_success_count_check_res
 
     def bit_check(self,
@@ -194,14 +198,14 @@ class PineValid(Valid):
         return self.parallel_sum(mul_inputs)
 
     def norm_check(self,
-                   x: Vec[Field],
-                   norm_bits: Vec[Field],
+                   encoded_gradient: list[Field],
+                   norm_bits: list[Field],
                    shares_inv: Field) -> tuple[Field, Field]:
         """
         Compute the squared L2-norm of the gradient and test that it is in range.
         """
         mul_inputs = []
-        for val in x:
+        for val in encoded_gradient:
             mul_inputs += [val, val]
         computed_sq_norm = self.parallel_sum(mul_inputs)
 
@@ -227,11 +231,10 @@ class PineValid(Valid):
         )
 
     def wr_check(self,
-                 x,
-                 bit_checked,
-                 wr_check_red_joint_rand,
-                 wr_joint_rand,
-                 shares_inv):
+                 wr_check_bits: list[Field],
+                 wr_dot_prods: list[Field],
+                 wr_check_red_joint_rand: Field,
+                 shares_inv: Field) -> tuple[Field, Field]:
         """
         Compute the wraparound checks, consisting of (i) checking that, for
         each wraparound test, either the Client indicated failure or the Client
@@ -245,19 +248,18 @@ class PineValid(Valid):
         wr_success_count_check_res = \
             -self.Field(self.NUM_PASS_WR_CHECKS) * shares_inv
         for check in range(self.NUM_WR_CHECKS):
-            (z, wr_joint_rand) = front(self.dimension, wr_joint_rand)
-            # Compute the dot product of `x` and `z`, and add the
-            # absolute value of the wraparound check lower bound.
-            computed_wr_res = dot_prod(x, z) + self.wr_bound * shares_inv
+            # Add the dot product result and the absolute value of the
+            # wraparound check lower bound.
+            computed_wr_res = wr_dot_prods[check] + self.wr_bound * shares_inv
 
             # Wraparound check result indicated by the Client:
-            (wr_res_bits, bit_checked) = \
-                front(self.num_bits_for_wr_res, bit_checked)
+            (wr_res_bits, wr_check_bits) = \
+                front(self.num_bits_for_wr_res, wr_check_bits)
             wr_res = self.Field.decode_from_bit_vector(wr_res_bits)
 
             # Success bit, the Client's indication as to whether the current
             # check passed.
-            ([success_bit], bit_checked) = front(1, bit_checked)
+            ([success_bit], wr_check_bits) = front(1, wr_check_bits)
             wr_success_count_check_res += success_bit
 
             # The Client share is considered valid if the multiplication of
@@ -271,8 +273,7 @@ class PineValid(Valid):
             #   must match `computed_wr_res`.
             mul_inputs += [r_power * (computed_wr_res - wr_res), success_bit]
             r_power *= wr_check_red_joint_rand
-        assert(len(wr_joint_rand) == 0)
-        assert(len(bit_checked) == 0)
+        assert len(wr_check_bits) == 0
         return (self.parallel_sum(mul_inputs), wr_success_count_check_res)
 
     def parallel_sum(self, inputs):
@@ -292,7 +293,7 @@ class PineValid(Valid):
             s += self.GADGETS[0].eval(self.Field, chunk)
         return s
 
-    def encode(self, measurement: Measurement) -> Vec[Field]:
+    def encode(self, measurement: Measurement) -> list[Field]:
         """
         Encode everything except wraparound check results:
         - Encode each f64 value into field element.
@@ -303,8 +304,9 @@ class PineValid(Valid):
         encoded = [self.encode_f64_into_field(x) for x in measurement]
 
         # Encode results for range check of the squared L2-norm.
+        sq_encoded = sum((x**2 for x in encoded), self.Field(0))
         (_, norm_range_check_v, norm_range_check_u) = range_check(
-            encoded, encoded, self.Field(0), self.encoded_sq_norm_bound,
+            sq_encoded, self.Field(0), self.encoded_sq_norm_bound,
         )
         encoded += self.Field.encode_into_bit_vector(
             norm_range_check_v.as_unsigned(),
@@ -316,41 +318,66 @@ class PineValid(Valid):
         )
         return encoded
 
-    def sample_wr_joint_rand(self, xof: Xof):
+    def wr_check_dot_prod(self,
+                          encoded_gradient: list[Field],
+                          wr_joint_rand_xof: Xof) -> list[Field]:
+        """
+        Compute the dot products of `encoded_gradient` with the wraparound
+        joint randomness, sampled from the XOF `wr_joint_rand_xof`. `eval()`
+        function expects the circuit input to contain the dot products.
+        """
+        wr_dot_prods = [self.Field(0)] * self.NUM_WR_CHECKS
         # Each element in the wraparound joint randomness is:
         # - -1 with probability 1/4,
         # - 0 with probability 1/2,
         # - 1 with probability 1/4.
-        # To sample this distribution exactly, we will look at the
-        # bytes from `Xof` two bits at a time, so the number of field
-        # elements we can generate from each byte is 4.
-        NUM_ELEMS_IN_ONE_BYTE = 4
-        # Compute the number of bytes we will need from `Xof`
-        # in order to sample `self.wr_joint_rand_len`
-        # number of field elements.
-        # Taking the ceiling of the division makes sure we can sample
-        # one more byte if `self.wr_joint_rand_len` is not
-        # divisible by `NUM_ELEMS_IN_ONE_BYTE`.
-        xof_output_len = math.ceil(
-            self.wr_joint_rand_len / NUM_ELEMS_IN_ONE_BYTE
-        )
-        rand_buf = xof.next(xof_output_len)
+        # To sample this distribution exactly, we will look at the bytes from
+        # `Xof` two bits at a time, so the number of field elements we can
+        # generate from each byte is 4.
+        NUM_ELEMS_PER_BYTE = 4
+        # Compute the total number of bytes we will need from `Xof` in order to
+        # sample `self.wr_joint_rand_len` number of field elements.
+        # Taking the ceiling of the division makes sure we can sample one more
+        # byte if `self.wr_joint_rand_len` is not divisible by
+        # `NUM_ELEMS_PER_BYTE`.
+        # Note in a real implementation with large dimension, in order to not
+        # consume a lot of memory when sampling, we can sample from the XOF one
+        # block at a time.
+        xof_output_len = math.ceil(self.wr_joint_rand_len / NUM_ELEMS_PER_BYTE)
+        xof_output = wr_joint_rand_xof.next(xof_output_len)
 
-        wr_joint_rand = []
-        for rand_bits in bit_chunks(rand_buf, 2):
+        for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
+            wr_check_index = i // self.dimension
+            x = encoded_gradient[i % self.dimension]
             if rand_bits == 0b00:
                 rand_field = self.Field(self.Field.MODULUS - 1)
             elif rand_bits == 0b01 or rand_bits == 0b10:
                 rand_field = self.Field(0)
             else:
                 rand_field = self.Field(1)
-            wr_joint_rand.append(rand_field)
-        return wr_joint_rand
+            wr_dot_prods[wr_check_index] += rand_field * x
+        return wr_dot_prods
 
     def run_wr_checks(self,
-                      x: Vec[Field],
-                      wr_joint_rand: Vec[Field]) -> Vec[Field]:
-        full_wr_res = []
+                      encoded_gradient: list[Field],
+                      wr_joint_rand_xof: Xof) -> tuple[list[Field],
+                                                       list[Field]]:
+        """
+        Client runs the wraparound checks, and outputs the dot products in the
+        wraparound checks, and also the bits of wraparound check results.
+        The dot products are passed into the `PineValid.eval()` function, and
+        the wraparound check results are sent to the Aggregators. The
+        Aggregators are expected to re-compute the dot products on their own,
+        with the encoded gradient and the wraparound joint randomness XOF.
+        """
+        # First compute the dot product between `encoded_gradient` and the
+        # wraparound joint randomness field elements in each wraparound check,
+        # sampled from the XOF `wr_joint_rand_xof`.
+        wr_dot_prods = \
+            self.wr_check_dot_prod(encoded_gradient, wr_joint_rand_xof)
+
+        # Stores wraparound check result bits, and success bits.
+        wr_check_bits = []
         # Keep track of the number of passing checks in
         # `num_passed_wr_checks`. If the Client has passed more than
         # `self.NUM_PASS_WR_CHECKS`, don't set the success bit to be 1
@@ -358,18 +385,19 @@ class PineValid(Valid):
         # `self.NUM_PASS_WR_CHECKS` checks passed.
         num_passed_wr_checks = 0
         for check in range(self.NUM_WR_CHECKS):
-            (z, wr_joint_rand) = front(self.dimension, wr_joint_rand)
-            # This wraparound check passes if `dot_prod(x, z)` is in range
-            # `[-wr_bound, wr_bound+1]`. To prove this, the Client sends the
-            # bit-encoding of `wr_res = dot_prod(x, z) + wr_bound` to the
-            # Aggregators. To check that the dot product is larger or equal to
-            # the lower bound, the Aggregator then reconstructs `wr_res` from
-            # the bits, and checks that it is equal to
-            # `computed_wr_res = dot_prod(x, z) + wr_bound`. The upper bound
-            # is checked implicitly by virtue of the fact that `wr_res` is
-            # encoded with `1 + ceil(log2(wr_bound + 1))` bits.
+            # This wraparound check passes if the current dot product is in
+            # range `[-wr_bound, wr_bound+1]`. To prove this, the Client sends
+            # the bit-encoding of `wr_res = wr_dot_prods[check] + wr_bound`
+            # to the Aggregators. To check that the dot product is larger or
+            # equal to the lower bound, the Aggregator then reconstructs
+            # `wr_res` from the bits, and checks that it is equal to
+            # `computed_wr_res = wr_dot_prods[check] + wr_bound`. The upper
+            # bound is checked implicitly by virtue of the fact that
+            # `wr_res` is encoded with `1 + ceil(log2(wr_bound + 1))` bits.
             (is_in_range, wr_res, _) = range_check(
-                x, z, -self.wr_bound, self.wr_bound + self.Field(1),
+                wr_dot_prods[check],
+                -self.wr_bound,
+                self.wr_bound + self.Field(1),
             )
 
             if is_in_range and num_passed_wr_checks < self.NUM_PASS_WR_CHECKS:
@@ -386,13 +414,11 @@ class PineValid(Valid):
                 success_bit = self.Field(0)
 
             # Send the bits of wraparound check result, and the success bit.
-            full_wr_res += self.Field.encode_into_bit_vector(
-                wr_res.as_unsigned(),
-                self.num_bits_for_wr_res,
+            wr_check_bits += self.Field.encode_into_bit_vector(
+                wr_res.as_unsigned(), self.num_bits_for_wr_res,
             )
-            full_wr_res.append(success_bit)
+            wr_check_bits.append(success_bit)
 
-        assert(len(wr_joint_rand) == 0)
         # Sanity check the Client has passed `self.NUM_PASS_WR_CHECKS`
         # number of checks, otherwise Client SHOULD retry.
         if num_passed_wr_checks != self.NUM_PASS_WR_CHECKS:
@@ -400,13 +426,13 @@ class PineValid(Valid):
                 "Client should retry wraparound check with "
                 "different wraparound joint randomness."
             )
-        return full_wr_res
+        return (wr_check_bits, wr_dot_prods)
 
-    def truncate(self, meas: Vec[Field]):
+    def truncate(self, meas: list[Field]):
         return meas[:self.dimension]
 
     def decode(self,
-               output: Vec[Field],
+               output: list[Field],
                num_measurements: Unsigned) -> AggResult:
         return [self.decode_f64_from_field(x) for x in output]
 
@@ -452,24 +478,15 @@ def bit_chunks(buf: bytes, num_chunk_bits: int):
         for chunk_start in reversed(range(0, 8, num_chunk_bits)):
             yield (byte >> chunk_start) & mask
 
-def dot_prod(vec0: Vec[Field], vec1: Vec[Field]):
-    """Compute the dot product of vectors `vec0` and `vec1`."""
-    if len(vec0) != len(vec1):
-        raise ValueError("Mismatched input vector length")
-    res = map(lambda x: x[0] * x[1], zip(vec0, vec1))
-    return functools.reduce(lambda x, y: x + y, res)
-
-def range_check(vec0: Vec[Field],
-                vec1: Vec[Field],
+def range_check(dot_prod: Field,
                 lower_bound: Field,
                 upper_bound: Field) -> tuple[bool, Field, Field]:
     """
-    Compute the dot product of `vec0` and `vec1`, and check if it is in the
-    range `[lower_bound, upper_bound]`, per Section 4.1 of PINE paper.
+    Check if the dot product is in the range `[lower_bound, upper_bound]`,
+    per Section 4.1 of PINE paper.
     """
-    res = dot_prod(vec0, vec1)
-    v = res - lower_bound
-    u = upper_bound - res
+    v = dot_prod - lower_bound
+    u = upper_bound - dot_prod
     is_in_range = \
         v.as_unsigned() <= (upper_bound - lower_bound).as_unsigned()
     return (is_in_range, v, u)
@@ -477,68 +494,8 @@ def range_check(vec0: Vec[Field],
 def chunk_count(chunk_length, length):
     return (length + chunk_length - 1) // chunk_length
 
-# Adapted from `FlpGeneric.test_flp_generic` to take joint randomness
-# as part of a test case, because wraparound joint randomness
-# is part of FLP encoding for PINE, and the same joint randomness
-# needs to be passed to `run_wr_checks` and `eval` functions.
-def test_flp_pine(flp, test_cases):
-    for (i, (meas, joint_rand, expected_decision)) in enumerate(test_cases):
-        assert len(meas) == flp.MEAS_LEN
-        assert len(flp.truncate(meas)) == flp.OUTPUT_LEN
 
-        # Evaluate validity circuit.
-        v = flp.Valid.eval(meas, joint_rand, 1)
-        if (v == flp.Field(0)) != expected_decision:
-            print('validity test {} failed: validity circuit returned {}'.format(i, v))
-
-        # Run the FLP.
-        decision = run_flp_pine(flp, meas, joint_rand, 2)
-        if decision != expected_decision:
-            print('flp test {} failed: proof evaluation resulted in {}; '
-                  'want {}'.format(
-                i, decision, expected_decision
-            ))
-
-
-# Adapted from `Flp.run_flp` with joint randomness, because wraparound
-# joint randomness is part of FLP encoding for PINE, and the same joint
-# randomness needs to be passed to `run_wr_checks` and `run_flp`, instead
-# of `run_flp` sampling joint randomness directly.
-def run_flp_pine(flp,
-                 meas: Vec[PineValid.Field],
-                 joint_rand: Vec[PineValid.Field],
-                 num_shares: Unsigned):
-    """Run PINE FLP on an encoded measurement and joint randomness. """
-    prove_rand = flp.Field.rand_vec(flp.PROVE_RAND_LEN)
-    query_rand = flp.Field.rand_vec(flp.QUERY_RAND_LEN)
-
-    # Prover generates the proof.
-    proof = flp.prove(meas, prove_rand, joint_rand)
-
-    # Shard the measurement and the proof.
-    meas_shares = additive_secret_share(meas, num_shares, flp.Field)
-    proof_shares = additive_secret_share(proof, num_shares, flp.Field)
-
-    # Verifier queries the meas shares and proof shares.
-    verifier_shares = [
-        flp.query(
-            meas_share,
-            proof_share,
-            query_rand,
-            joint_rand,
-            num_shares,
-        )
-        for meas_share, proof_share in zip(meas_shares, proof_shares)
-    ]
-
-    # Combine the verifier shares into the verifier.
-    verifier = flp.Field.zeros(len(verifier_shares[0]))
-    for verifier_share in verifier_shares:
-        verifier = vec_add(verifier, verifier_share)
-
-    # Verifier decides if the measurement is valid.
-    return flp.decide(verifier)
-
+## TESTS:
 
 def test_bit_chunks():
     buf = os.urandom(16)
@@ -575,15 +532,11 @@ def test():
 
     # Test PINE FLP with verification.
     xof = XofShake128(gen_rand(16), b"", b"")
-    wr_joint_rand = pine_valid.sample_wr_joint_rand(xof)
     encoded_gradient = flp.encode(measurement)
-    encoded = encoded_gradient + \
-        pine_valid.run_wr_checks(encoded_gradient[:dimension],
-                                 wr_joint_rand)
-
-    vf_joint_rand = flp.Field.rand_vec(pine_valid.vf_joint_rand_len)
-    joint_rand = wr_joint_rand + vf_joint_rand
-    test_flp_pine(flp, [(encoded, joint_rand, True)])
+    (wr_check_bits, wr_dot_prods) = \
+        pine_valid.run_wr_checks(encoded_gradient, xof)
+    flp_meas = encoded_gradient + wr_check_bits + wr_dot_prods
+    test_flp_generic(flp, [(flp_meas, True)])
 
 
 if __name__ == '__main__':
