@@ -4,8 +4,9 @@
 
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
-Intended status: Informational                          21 December 2023
-Expires: 23 June 2024
+Intended status: Informational                                 C. Patton
+Expires: 23 June 2024                                         Cloudflare
+                                                        21 December 2023
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -111,7 +112,7 @@ Table of Contents
      11.1.  Normative References
      11.2.  Informative References
    Acknowledgments
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -2293,8 +2294,13 @@ Acknowledgments
 
    TODO acknowledge.
 
-Author's Address
+Authors' Addresses
 
    Junye Chen
    Apple Inc.
    Email: junyec@apple.com
+
+
+   Christopher Patton
+   Cloudflare
+   Email: chrispatton+ietf@gmail.com
