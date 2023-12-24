@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-12-21T01:15:41.021567+00:00",
+  "timestamp": "2023-12-24T01:20:03.057018+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -478,6 +478,38 @@
       "body": "As titled. We will need to recommend the field size and number of proofs like Prio3.",
       "createdAt": "2023-12-18T10:10:37Z",
       "updatedAt": "2023-12-18T10:10:38Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 43,
+      "id": "I_kwDOJWdxls56Xw3L",
+      "title": "Use of `Flp.encode()` is slightly abusive",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/43",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The circuit expects a string of length `MEAS_LEN` [which is meant to match the output length of `Flp.encode()`](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.1-2.1.1). But our `Flp.encode()` produces a shorter string (that is missing the `wr_dot_prods`.\r\n\r\nI'd suggest we not overload `encode()` and simply use a function with a different name. `encode_gradient()` would probably make sense.",
+      "createdAt": "2023-12-21T20:56:53Z",
+      "updatedAt": "2023-12-21T20:56:53Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 44,
+      "id": "I_kwDOJWdxls56Yk3t",
+      "title": "How should we implement `Pine.domain_separation_tag()`?",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/44",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This depends on variable `VERSION` in the base draft: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2.3-4\r\n\r\nIs this intended? We probably should avoid this dependency.",
+      "createdAt": "2023-12-22T01:59:26Z",
+      "updatedAt": "2023-12-22T01:59:26Z",
       "closedAt": null,
       "comments": []
     }
@@ -3505,7 +3537,7 @@
       "labels": [],
       "body": "Use PolyEval gadget to evaluate the squared L2-norm because that can save the number of field elements in prover randomness.",
       "createdAt": "2023-09-18T08:55:29Z",
-      "updatedAt": "2023-09-22T17:07:22Z",
+      "updatedAt": "2023-12-21T16:48:26Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "d0c626a933413db12cfbaa30cf4b19a82943d131",
@@ -5178,25 +5210,35 @@
       "id": "PR_kwDOJWdxls5iPozD",
       "title": "Refactor to prepare for multiproof implementation",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/40",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Compute dot products before Flp.eval(), so we don't have to persist all wraparound joint randomness in memory, and don't have to repeatedly sample them in each invocation of Flp.eval(), because the dot products don't change within in each proof.\r\n\r\nReviewer's note: stacked PR on #38 .",
       "createdAt": "2023-12-18T10:29:35Z",
-      "updatedAt": "2023-12-19T21:14:26Z",
+      "updatedAt": "2023-12-21T16:05:24Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "9af1f1f21b58b58dc3c4b06b8a827a8f5ec76ed0",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/multiproof-refactor",
-      "headRefOid": "730891fd66fc47f6eff20fbf8db15468f76e82d7",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
-      "comments": [],
+      "headRefOid": "67ff536b65a9571565ccc3991ddde0532157dc02",
+      "closedAt": "2023-12-21T16:05:19Z",
+      "mergedAt": "2023-12-21T16:05:19Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "460ac6fc33afa5e83fc0822d135ef2d505b19156"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "> A couple minor suggestions but this looks good to me. Great work!\r\n\r\n@cjpatton Thanks for the feedback! Those are really helpful.",
+          "createdAt": "2023-12-21T16:05:15Z",
+          "updatedAt": "2023-12-21T16:05:15Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOJWdxls5qkKRu",
@@ -5405,6 +5447,90 @@
               "updatedAt": "2023-12-19T21:14:26Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qz2az",
+          "commit": {
+            "abbreviatedOid": "0f0807e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-21T01:24:13Z",
+          "updatedAt": "2023-12-21T01:24:13Z",
+          "comments": [
+            {
+              "originalPosition": 100,
+              "body": "Ah great point. Any distinguished name is fine with me. My main goal is to avoid using the same variable name for two different things.",
+              "createdAt": "2023-12-21T01:24:13Z",
+              "updatedAt": "2023-12-21T01:24:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qz3fh",
+          "commit": {
+            "abbreviatedOid": "730891f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "A couple minor suggestions but this looks good to me. Great work!",
+          "createdAt": "2023-12-21T01:31:47Z",
+          "updatedAt": "2023-12-21T01:39:06Z",
+          "comments": [
+            {
+              "originalPosition": 86,
+              "body": "Idea: We can make this self-documenting if we just unpack `meas` here.\r\n```suggestion\r\n        # Unpack meas = encoded_gradient || bit_checked || wr_dot_prods\r\n        (encoded_gradient, rest) = front(self.dimension, meas)\r\n        (bit_checked, rest) = front(self.bit_checked_len(), rest)\r\n        (wr_dot_prods, rest) = front(self.NUM_WR_CHECKS, rest)\r\n        assert len(rest) == 0\r\n \r\n        # Unpack bit_checked = norm_bits || wr_bits\r\n        (norm_bits, rest) = front(2 * self.num_bits_for_norm, bit_checked)\r\n        (wr_bits, rest) = front((self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS, rest)\r\n        assert len(rest) == 0\r\n```",
+              "createdAt": "2023-12-21T01:31:47Z",
+              "updatedAt": "2023-12-21T01:39:06Z"
+            },
+            {
+              "originalPosition": 105,
+              "body": "If you take the suggestion above, then we can just pass `bit_checked` here.",
+              "createdAt": "2023-12-21T01:34:21Z",
+              "updatedAt": "2023-12-21T01:39:06Z"
+            },
+            {
+              "originalPosition": 128,
+              "body": "Suggestion: I think `wr_test_bits` is as bit more meaningful.\r\n```suggestion\r\n            wr_test_bits,\r\n```",
+              "createdAt": "2023-12-21T01:35:40Z",
+              "updatedAt": "2023-12-21T01:39:06Z"
+            },
+            {
+              "originalPosition": 100,
+              "body": "Seems fine as-is.",
+              "createdAt": "2023-12-21T01:38:46Z",
+              "updatedAt": "2023-12-21T01:39:06Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5q4v7U",
+          "commit": {
+            "abbreviatedOid": "730891f"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-21T16:03:28Z",
+          "updatedAt": "2023-12-21T16:04:42Z",
+          "comments": [
+            {
+              "originalPosition": 86,
+              "body": "Nice. I think this is much clearer",
+              "createdAt": "2023-12-21T16:03:28Z",
+              "updatedAt": "2023-12-21T16:04:42Z"
+            },
+            {
+              "originalPosition": 128,
+              "body": "I'm going to call it `wr_check_bits`, since we've been using \"check\" so far. We can change it to \"test\" if you are more used to that.",
+              "createdAt": "2023-12-21T16:04:03Z",
+              "updatedAt": "2023-12-21T16:04:42Z"
+            }
+          ]
         }
       ]
     },
@@ -5413,24 +5539,26 @@
       "id": "PR_kwDOJWdxls5iPpYF",
       "title": "Support multiproof in PINE",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/41",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Reviewer's note: stacked PR on #40 . ",
       "createdAt": "2023-12-18T10:30:23Z",
-      "updatedAt": "2023-12-20T19:19:46Z",
+      "updatedAt": "2023-12-21T16:34:25Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
-      "baseRefName": "junyec/multiproof-refactor",
-      "baseRefOid": "730891fd66fc47f6eff20fbf8db15468f76e82d7",
+      "baseRefName": "main",
+      "baseRefOid": "460ac6fc33afa5e83fc0822d135ef2d505b19156",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/multiproof",
-      "headRefOid": "3f8c203805f7b8119a6de02e7899069161af57d8",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "d3ba212e166c9a14ce289c3995abf728f15c66d5",
+      "closedAt": "2023-12-21T16:34:22Z",
+      "mergedAt": "2023-12-21T16:34:22Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "2497295dbd1267fb36a8ab68a3d869e90e6efc1c"
+      },
       "comments": [],
       "reviews": [
         {
@@ -5634,6 +5762,130 @@
               "updatedAt": "2023-12-20T19:19:47Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5qz4sw",
+          "commit": {
+            "abbreviatedOid": "3f8c203"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Looks correct to me. I suggest removing some of the type hints, as these tend to turn into code rot. (See inline comment.)",
+          "createdAt": "2023-12-21T01:40:10Z",
+          "updatedAt": "2023-12-21T01:56:48Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "This would be fine as well.\r\n```suggestion\r\n    Field = None  # Set by `with_field()`.\r\n```",
+              "createdAt": "2023-12-21T01:40:10Z",
+              "updatedAt": "2023-12-21T01:56:48Z"
+            },
+            {
+              "originalPosition": 135,
+              "body": "For consistency with `flp_pine.py`?\r\n```suggestion\r\n        meas = encoded_measurement + wr_dot_prods\r\n```",
+              "createdAt": "2023-12-21T01:46:22Z",
+              "updatedAt": "2023-12-21T01:56:48Z"
+            },
+            {
+              "originalPosition": 204,
+              "body": "nit: Consistently include parantheses when breaking tuples. Here and below.\r\n```suggestion\r\n            (proof_share, proofs_share) = front(Pine.Flp.PROOF_LEN, proofs_share)\r\n```",
+              "createdAt": "2023-12-21T01:49:06Z",
+              "updatedAt": "2023-12-21T01:56:48Z"
+            },
+            {
+              "originalPosition": 268,
+              "body": "Here and below.\r\n\r\nFor what it's worth, I would remove the type hints here. This was a feature that we were eager to use early on when we started working on the VDAF draft, but they have turned out to be kind of a pain. The problem is that if we don't actually enforce the type hints, they become code rot.\r\n\r\nThe main value of the type hints I think is having explicit types in APIs defined in the VDAF draft. But in this draft, we're implementing an API, not defining one.\r\n\r\n```suggestion\r\n                agg_shares: list[list[Pine.Flp.Field]],\r\n```",
+              "createdAt": "2023-12-21T01:53:23Z",
+              "updatedAt": "2023-12-21T01:56:48Z"
+            },
+            {
+              "originalPosition": 283,
+              "body": "It's a bit odd to use PineValid here (a global variable) and `Pine.Flp.Field` above. How about `Pine.Flp.Valid.Xof`?",
+              "createdAt": "2023-12-21T01:53:43Z",
+              "updatedAt": "2023-12-21T02:37:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5q4zas",
+          "commit": {
+            "abbreviatedOid": "d3ba212"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-12-21T16:11:47Z",
+          "updatedAt": "2023-12-21T16:33:53Z",
+          "comments": [
+            {
+              "originalPosition": 204,
+              "body": "Missed it again... I made a pass over `flp_pine.py` and `vdaf_pine.py` again...",
+              "createdAt": "2023-12-21T16:11:47Z",
+              "updatedAt": "2023-12-21T16:33:53Z"
+            },
+            {
+              "originalPosition": 283,
+              "body": "That's fine too. In a real implementation, I think we might actually just use `XofTurboShake128` directly.",
+              "createdAt": "2023-12-21T16:16:01Z",
+              "updatedAt": "2023-12-21T16:33:53Z"
+            },
+            {
+              "originalPosition": 268,
+              "body": "Makes sense. Removed type hints in all the `Vdaf` required methods. I'm leaving them in all helper methods.\r\n\r\nRegarding `Flp.Field` -> `Pine.Flp.Field`, the type hints themselves don't have access to `Pine`. They have access to the properties in `Pine`. That's why it should be `Flp.Field` here.",
+              "createdAt": "2023-12-21T16:22:43Z",
+              "updatedAt": "2023-12-21T16:33:53Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "Appreciate it. I'll leave a TODO in `flp_pine.py` that points to this branch.",
+              "createdAt": "2023-12-21T16:29:49Z",
+              "updatedAt": "2023-12-21T16:33:53Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "id": "PR_kwDOJWdxls5ilszy",
+      "title": "Acknowledge Chris",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/42",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2023-12-21T16:39:22Z",
+      "updatedAt": "2023-12-21T16:48:11Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "2497295dbd1267fb36a8ab68a3d869e90e6efc1c",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/ack-chris",
+      "headRefOid": "389bcebc413fd73849521f9bb4c3064ef621feb1",
+      "closedAt": "2023-12-21T16:48:08Z",
+      "mergedAt": "2023-12-21T16:48:08Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "4be87207a3b9233a5de9529c5f96b40c7f565dc7"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5q5BAg",
+          "commit": {
+            "abbreviatedOid": "389bceb"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "FWIW, acknowledgement at the end of the draft is sufficient. Authorship is not necessary. That said, I'd be happy to help edit this.",
+          "createdAt": "2023-12-21T16:45:26Z",
+          "updatedAt": "2023-12-21T16:45:26Z",
+          "comments": []
         }
       ]
     }
