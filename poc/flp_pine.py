@@ -93,7 +93,7 @@ class PineValid(Valid):
         # which won't negatively impact completeness error,
         # and allows us to perform the optimization in Remark 4.11
         # of the PINE paper.
-        self.wr_bound = self.Field(
+        self.wr_check_bound = self.Field(
             next_power_of_2(ALPHA * encoded_norm_bound_unsigned + 1) - 1
         )
         # Number of bits to represent each wraparound check result, which
@@ -101,7 +101,7 @@ class PineValid(Valid):
         # values in this range is `2 * (wr_bound + 1)`, so take the `log2`
         # of `wr_bound + 1` and add 1 to it.
         self.num_bits_for_wr_res = 1 + math.ceil(math.log2(
-            self.wr_bound.as_unsigned() + 1
+            self.wr_check_bound.as_unsigned() + 1
         ))
         self.wr_joint_rand_len = NUM_WR_CHECKS * dimension
         # The length of the encoded gradient, plus the bits for L2-norm check.
@@ -247,7 +247,7 @@ class PineValid(Valid):
         for check in range(NUM_WR_CHECKS):
             # Add the dot product result and the absolute value of the
             # wraparound check lower bound.
-            computed_wr_res = wr_dot_prods[check] + self.wr_bound * shares_inv
+            computed_wr_res = wr_dot_prods[check] + self.wr_check_bound * shares_inv
 
             # Wraparound check result indicated by the Client:
             (wr_res_bits, wr_check_bits) = \
@@ -393,8 +393,8 @@ class PineValid(Valid):
             # `wr_res` is encoded with `1 + ceil(log2(wr_bound + 1))` bits.
             (is_in_range, wr_res, _) = range_check(
                 wr_dot_prods[check],
-                -self.wr_bound,
-                self.wr_bound + self.Field(1),
+                -self.wr_check_bound,
+                self.wr_check_bound + self.Field(1),
             )
 
             if is_in_range and num_passed_wr_checks < NUM_WR_SUCCESSES:
