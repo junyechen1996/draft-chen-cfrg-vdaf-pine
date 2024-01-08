@@ -12,7 +12,7 @@ from common import (Unsigned, byte, concat, front, gen_rand, vec_add, vec_sub,
                     zeros)
 from field import Field, Field128, Field64
 from flp_generic import FlpGeneric
-from flp_pine import PineValid
+from flp_pine import PineValid, NUM_WR_CHECKS, NUM_WR_SUCCESSES
 from vdaf import Vdaf, test_vdaf
 from vdaf_prio3 import (
     USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
@@ -100,7 +100,7 @@ class Pine(Vdaf):
                 l2_norm_bound, num_frac_bits, dimension, chunk_length
             ))
             PROOFS = num_proofs
-            MEAS_LEN = Flp.MEAS_LEN - Flp.Valid.NUM_WR_CHECKS
+            MEAS_LEN = Flp.MEAS_LEN - NUM_WR_CHECKS
             # The size of randomness is the seed size times the sum of
             # the following:
             # - One prover randomness seed.
