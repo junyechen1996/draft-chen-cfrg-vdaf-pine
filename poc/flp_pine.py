@@ -19,21 +19,6 @@ NUM_WR_CHECKS = 135
 NUM_WR_SUCCESSES = math.floor(0.75 * NUM_WR_CHECKS)
 
 class PineValid(Valid):
-    # Operational parameters set by user.
-    l2_norm_bound: float = None # Set by constructor
-    num_frac_bits: Unsigned = None # Set by constructor
-    dimension: Unsigned = None # Set by constructor
-    encoded_sq_norm_bound: Field = None # Set by constructor
-    num_bits_for_sq_norm: Unsigned = None # Set by constructor
-    wr_bound: Field = None # Set by constructor
-    num_bits_for_wr_res: Unsigned = None # Set by constructor
-    wr_joint_rand_len = None # Set by constructor
-    # Length of the encoded gradient, plus the bits for L2-norm check.
-    # This indicates the output length of `encode()`.
-    encoded_gradient_len = None
-    # Number of bits in the encoded measurement.
-    bit_checked_len = None
-
     # XOF for `PineValid`.
     # Note we currently use `XofFixedKeyAes128` by default, because
     # `XofTurboShake128` in VDAF poc has a limit of how many bytes can be
