@@ -323,31 +323,31 @@ class PineValid(Valid):
         joint randomness, sampled from the XOF `wr_joint_rand_xof`. `eval()`
         function expects the circuit input to contain the dot products.
         """
-        wr_dot_prods = [self.Field(0)] * NUM_WR_CHECKS
-        # Each element in the wraparound joint randomness is:
-        # - -1 with probability 1/4,
-        # - 0 with probability 1/2,
+
+        # Sample the wraparound joint randomness. This is a `{-1, 0, 1}`-vector
+        # with `NUM_WR_CHECKS` chunks, where the length of each chunk is
+        # `self.dimension`. Each element is independently distributed as
+        # follows:
+        # - -1 with probability 1/4;
+        # - 0 with probability 1/2; and
         # - 1 with probability 1/4.
+        #
         # To sample this distribution exactly, we will look at the bytes from
         # `Xof` two bits at a time, so the number of field elements we can
         # generate from each byte is 4.
-        NUM_ELEMS_PER_BYTE = 4
-        # Compute the total number of bytes we will need from `Xof` in order to
-        # sample the required number of field elements.
-        # Taking the ceiling of the division makes sure we can sample one more
-        # byte if the value is not divisible by
-        # `NUM_ELEMS_PER_BYTE`.
-        # Note in a real implementation with large dimension, in order to not
-        # consume a lot of memory when sampling, we can sample from the XOF one
-        # block at a time.
-        xof_output_len = math.ceil(NUM_WR_CHECKS * self.dimension / NUM_ELEMS_PER_BYTE)
-        xof_output = wr_joint_rand_xof.next(xof_output_len)
+        #
+        # Implementation note: Note in a real implementation with large
+        # dimension, in order to not consume a lot of memory when sampling, we
+        # can sample from the XOF one block at a time.
+        xof_output = wr_joint_rand_xof.next(
+            chunk_count(4, NUM_WR_CHECKS * self.dimension))
 
+        wr_dot_prods = [self.Field(0)] * NUM_WR_CHECKS
         for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
             wr_check_index = i // self.dimension
             x = encoded_gradient[i % self.dimension]
             if rand_bits == 0b00:
-                rand_field = self.Field(self.Field.MODULUS - 1)
+                rand_field = -self.Field(1)
             elif rand_bits == 0b01 or rand_bits == 0b10:
                 rand_field = self.Field(0)
             else:
