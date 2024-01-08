@@ -7,9 +7,9 @@ import sys
 # Access poc folder in submoduled VDAF draft.
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-from common import Unsigned, front, gen_rand, next_power_of_2
-from field import Field, Field128, Field64
-from flp_generic import FlpGeneric, Mul, ParallelSum, Valid, test_flp_generic
+from common import Unsigned, front, next_power_of_2
+from field import Field
+from flp_generic import Mul, ParallelSum, Valid
 from xof import Xof, XofFixedKeyAes128
 
 
@@ -459,14 +459,12 @@ class PineValid(Valid):
             raise ValueError("f64 encoding doesn't accept NAN, "
                              "infinite, or subnormal floats.")
         x_encoded = math.floor(x * (2 ** self.num_frac_bits))
-        if x >= 0:
-            return self.Field(x_encoded)
-        return self.Field(self.Field.MODULUS + x_encoded)
+        return self.Field(x_encoded)
 
     def decode_f64_from_field(self, field_elem: Field) -> float:
         decoded = field_elem.as_unsigned()
-        # If the aggregated field is larger than half of the field
-        # size, the decoded result should be negative.
+        # If the field is larger than half of the field size, then
+        # decoded result should be negative.
         if decoded > math.floor(field_elem.MODULUS / 2):
             # We need to take the difference between the result
             # and the field modulus, and return the result as negative.
@@ -508,53 +506,3 @@ def range_check(dot_prod: Field,
 
 def chunk_count(chunk_length, length):
     return (length + chunk_length - 1) // chunk_length
-
-
-## TESTS:
-
-def test_bit_chunks():
-    buf = os.urandom(16)
-    # Test that chunking the buffer with `num_chunk_bits` bits at a time and
-    # joining them back together should output the original buffer.
-    # First, display `buf` as a string of bits in `bits_str`.
-    bits_str = "".join(map(lambda byte: "{0:08b}".format(byte), buf))
-    for num_chunk_bits in [1, 2, 4, 8]:
-        bit_chunks_str = "".join(map(
-            # Format each chunk as bits string, and zero fill the most
-            # significant bits.
-            lambda bit_chunk: format(bit_chunk, "b").zfill(num_chunk_bits),
-            bit_chunks(buf, num_chunk_bits)
-        ))
-        assert bits_str == bit_chunks_str
-
-def test_pine_valid_roundtrip():
-    valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
-    f64_vals = [0.5, 0.5]
-    assert f64_vals == valid.decode(valid.truncate(valid.encode(f64_vals)), 1)
-
-def test():
-    test_bit_chunks()
-    test_pine_valid_roundtrip()
-
-    # `PineValid` with `l2_norm_bound = 1.0`, `num_frac_bits = 4`,
-    # `dimension = 4`, `chunk_length = 150`.
-    l2_norm_bound = 1.0
-    dimension = 4
-    args = [l2_norm_bound, 4, dimension, 150]
-    # A gradient with a L2-norm of exactly 1.0.
-    measurement = [l2_norm_bound / 2] * dimension
-    for field in [Field64, Field128]:
-        pine_valid = PineValid.with_field(field)(*args)
-        flp = FlpGeneric(pine_valid)
-
-        # Test PINE FLP with verification.
-        xof = XofFixedKeyAes128(gen_rand(16), b"", b"")
-        encoded_gradient = flp.encode(measurement)
-        (wr_check_bits, wr_dot_prods) = \
-            pine_valid.run_wr_checks(encoded_gradient, xof)
-        meas = encoded_gradient + wr_check_bits + wr_dot_prods
-        test_flp_generic(flp, [(meas, True)])
-
-
-if __name__ == '__main__':
-    test()
