@@ -27,7 +27,7 @@ class PineValid(Valid):
     TAU: float = 0.75
     NUM_PASS_WR_CHECKS: Unsigned = math.floor(TAU * NUM_WR_CHECKS)
     encoded_sq_norm_bound: Field = None # Set by constructor
-    num_bits_for_norm: Unsigned = None # Set by constructor
+    num_bits_for_sq_norm: Unsigned = None # Set by constructor
     wr_bound: Field = None # Set by constructor
     num_bits_for_wr_res: Unsigned = None # Set by constructor
     wr_joint_rand_len = None # Set by constructor
@@ -96,7 +96,7 @@ class PineValid(Valid):
         # be in range `[0, encoded_sq_norm_bound]`. The total number of values
         # in this range is `encoded_sq_norm_bound + 1`, so take the `log2`
         # of this quantity.
-        self.num_bits_for_norm = \
+        self.num_bits_for_sq_norm = \
             math.ceil(math.log2(self.encoded_sq_norm_bound.as_unsigned() + 1))
         # TODO(junyechen1996): check other field size requirement,
         # specifically the requirements from Figure 1 and Lemma 4.3
@@ -123,13 +123,13 @@ class PineValid(Valid):
         ))
         self.wr_joint_rand_len = self.NUM_WR_CHECKS * dimension
         # The length of the encoded gradient, plus the bits for L2-norm check.
-        self.encoded_gradient_len = dimension + 2 * self.num_bits_for_norm
+        self.encoded_gradient_len = dimension + 2 * self.num_bits_for_sq_norm
         # The expected number of bits is:
         # - The number of bits for L2-norm check.
         # - The number of bits for each wraparound check result, and the
         #   success bit for each wraparound check.
         self.bit_checked_len = \
-            2 * self.num_bits_for_norm + \
+            2 * self.num_bits_for_sq_norm + \
             (self.num_bits_for_wr_res + 1) * self.NUM_WR_CHECKS
 
         # Set `Valid` parameters.
@@ -175,7 +175,7 @@ class PineValid(Valid):
 
         # L2-norm check:
         (norm_bits, wr_check_bits) = \
-            front(2 * self.num_bits_for_norm, bit_checked)
+            front(2 * self.num_bits_for_sq_norm, bit_checked)
         (norm_equality_check_res, norm_range_check_res) = \
             self.norm_check(encoded_gradient, norm_bits, shares_inv)
 
@@ -228,7 +228,7 @@ class PineValid(Valid):
         # and `u` bits (difference between squared L2-norm and upper bound)
         # claimed by the Client for the range check of the squared L2-norm.
         (norm_range_check_v_bits, norm_range_check_u_bits) = front(
-            self.num_bits_for_norm, norm_bits
+            self.num_bits_for_sq_norm, norm_bits
         )
         norm_range_check_v = \
             self.Field.decode_from_bit_vector(norm_range_check_v_bits)
@@ -325,11 +325,11 @@ class PineValid(Valid):
         )
         encoded += self.Field.encode_into_bit_vector(
             norm_range_check_v.as_unsigned(),
-            self.num_bits_for_norm,
+            self.num_bits_for_sq_norm,
         )
         encoded += self.Field.encode_into_bit_vector(
             norm_range_check_u.as_unsigned(),
-            self.num_bits_for_norm,
+            self.num_bits_for_sq_norm,
         )
         return encoded
 
