@@ -101,8 +101,6 @@ class PineValid(Valid):
             self.wr_check_bound.as_unsigned() + 1
         ))
 
-        self.wr_joint_rand_len = NUM_WR_CHECKS * dimension
-
         # Length of the encoded gradient, including the gradient
         # itself and the L2-norm check.
         self.encoded_gradient_len = dimension + 2 * self.num_bits_for_sq_norm
@@ -335,14 +333,14 @@ class PineValid(Valid):
         # generate from each byte is 4.
         NUM_ELEMS_PER_BYTE = 4
         # Compute the total number of bytes we will need from `Xof` in order to
-        # sample `self.wr_joint_rand_len` number of field elements.
+        # sample the required number of field elements.
         # Taking the ceiling of the division makes sure we can sample one more
-        # byte if `self.wr_joint_rand_len` is not divisible by
+        # byte if the value is not divisible by
         # `NUM_ELEMS_PER_BYTE`.
         # Note in a real implementation with large dimension, in order to not
         # consume a lot of memory when sampling, we can sample from the XOF one
         # block at a time.
-        xof_output_len = math.ceil(self.wr_joint_rand_len / NUM_ELEMS_PER_BYTE)
+        xof_output_len = math.ceil(NUM_WR_CHECKS * self.dimension / NUM_ELEMS_PER_BYTE)
         xof_output = wr_joint_rand_xof.next(xof_output_len)
 
         for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
@@ -362,8 +360,10 @@ class PineValid(Valid):
                       wr_joint_rand_xof: Xof) -> tuple[list[Field],
                                                        list[Field]]:
         """
-        Client runs the wraparound checks, and outputs the dot products in the
-        wraparound checks, and also the bits of wraparound check results.
+        Run the wraparound checks and return the dot product for each check
+        (`wr_dot_prods`) and the range-checked result for each check
+        (`wr_check_bits`).
+
         The dot products are passed into the `PineValid.eval()` function, and
         the wraparound check results are sent to the Aggregators. The
         Aggregators are expected to re-compute the dot products on their own,
