@@ -84,18 +84,15 @@ class PineValid(Valid):
         # specifically the requirements from Figure 1 and Lemma 4.3
         # in the PINE paper.
 
-        # Compute wraparound check bound.
-        # Pick `alpha' >= alpha`, such that
-        # `alpha' * encoded_norm_bound_unsigned + 1` is a
-        # power of 2, so the bounds for wraparound check becomes
-        # `[-alpha' * encoded_norm_bound_unsigned,
-        #   alpha' * encoded_norm_bound_unsigned + 1]`,
-        # which won't negatively impact completeness error,
-        # and allows us to perform the optimization in Remark 4.11
-        # of the PINE paper.
+        # Wraparound check bound, equal to the smallest power of two
+        # larger than or equal to `ALPHA * encoded_norm_bound_unsigned
+        # + 1` is a power of 2. Using a power of 2 allows us to use
+        # the optimization of Remark 3.2 without degrading
+        # completeness.
         self.wr_check_bound = self.Field(
             next_power_of_2(ALPHA * encoded_norm_bound_unsigned + 1) - 1
         )
+
         # Number of bits to represent each wraparound check result, which
         # should be in range `[-wr_bound, wr_bound + 1]`. The number of
         # values in this range is `2 * (wr_bound + 1)`, so take the `log2`
@@ -103,13 +100,18 @@ class PineValid(Valid):
         self.num_bits_for_wr_res = 1 + math.ceil(math.log2(
             self.wr_check_bound.as_unsigned() + 1
         ))
+
         self.wr_joint_rand_len = NUM_WR_CHECKS * dimension
-        # The length of the encoded gradient, plus the bits for L2-norm check.
+
+        # Length of the encoded gradient, including the gradient
+        # itself and the L2-norm check.
         self.encoded_gradient_len = dimension + 2 * self.num_bits_for_sq_norm
-        # The expected number of bits is:
-        # - The number of bits for L2-norm check.
-        # - The number of bits for each wraparound check result, and the
-        #   success bit for each wraparound check.
+
+        # Length of the bit-checked portion of the encoded
+        # measurement. This includes:
+        # - The L2-norm check
+        # - Each wraparound check result
+        # - The success bit for each wraparound check
         self.bit_checked_len = \
             2 * self.num_bits_for_sq_norm + \
             (self.num_bits_for_wr_res + 1) * NUM_WR_CHECKS
