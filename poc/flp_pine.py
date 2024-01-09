@@ -143,16 +143,16 @@ class PineValid(Valid):
 
         # Unpack `meas = encoded_gradient || bit_checked || wr_dot_prods`
         (encoded_gradient, rest) = front(self.dimension, meas)
-        (bit_checked, wr_dot_prods) = front(self.bit_checked_len, rest)
+        (bit_checked, rest) = front(self.bit_checked_len, rest)
+        (wr_dot_prods, rest) = front(NUM_WR_CHECKS, rest)
+        assert len(rest) == 0
 
-        ([bit_check_red_joint_rand], joint_rand) = front(1, joint_rand)
-        ([wr_check_red_joint_rand], joint_rand) = front(1, joint_rand)
-        ([final_red_joint_rand], joint_rand) = front(1, joint_rand)
-        assert len(joint_rand) == 0 # sanity check
+        # Unpack the joint randomness.
+        [r_bit_check, r_wr_check, r_final] = joint_rand
 
         # 0/1 bit checks:
         bit_check_res = self.bit_check(
-            bit_check_red_joint_rand, bit_checked, shares_inv,
+            r_bit_check, bit_checked, shares_inv,
         )
 
         # L2-norm check:
@@ -168,19 +168,19 @@ class PineValid(Valid):
         (wr_mul_check_res, wr_success_count_check_res) = self.wr_check(
             wr_check_bits,
             wr_dot_prods,
-            wr_check_red_joint_rand,
+            r_wr_check,
             shares_inv,
         )
 
         # Reduce over all circuits.
         return bit_check_res + \
-            final_red_joint_rand * norm_equality_check_res + \
-            final_red_joint_rand**2 * norm_range_check_res + \
-            final_red_joint_rand**3 * wr_mul_check_res + \
-            final_red_joint_rand**4 * wr_success_count_check_res
+            r_final * norm_equality_check_res + \
+            r_final**2 * norm_range_check_res + \
+            r_final**3 * wr_mul_check_res + \
+            r_final**4 * wr_success_count_check_res
 
     def bit_check(self,
-                  bit_check_red_joint_rand,
+                  r_bit_check,
                   bit_checked,
                   shares_inv):
         """
@@ -191,7 +191,7 @@ class PineValid(Valid):
         r_power = self.Field(1)
         for bit in bit_checked:
             mul_inputs += [r_power * bit, bit - shares_inv]
-            r_power *= bit_check_red_joint_rand
+            r_power *= r_bit_check
         return self.parallel_sum(mul_inputs)
 
     def norm_check(self,
@@ -228,10 +228,10 @@ class PineValid(Valid):
         )
 
     def wr_check(self,
-                 wr_check_bits: list[Field],
-                 wr_dot_prods: list[Field],
-                 wr_check_red_joint_rand: Field,
-                 shares_inv: Field) -> tuple[Field, Field]:
+                 wr_check_bits,
+                 wr_dot_prods,
+                 r_wr_check,
+                 shares_inv):
         """
         Compute the wraparound checks, consisting of (i) checking that, for
         each wraparound test, either the Client indicated failure or the Client
@@ -269,7 +269,7 @@ class PineValid(Valid):
             #   Then the difference must be 0, i.e., the bits of `wr_res`
             #   must match `computed_wr_res`.
             mul_inputs += [r_power * (computed_wr_res - wr_res), success_bit]
-            r_power *= wr_check_red_joint_rand
+            r_power *= r_wr_check
         assert len(wr_check_bits) == 0
         return (self.parallel_sum(mul_inputs), wr_success_count_check_res)
 
