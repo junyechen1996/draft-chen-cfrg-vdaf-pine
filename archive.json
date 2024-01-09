@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-07T01:23:10.640538+00:00",
+  "timestamp": "2024-01-09T01:18:01.681954+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -311,15 +311,15 @@
       "id": "I_kwDOJWdxls5vHDC7",
       "title": "Fix some of the operational parameters",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/24",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "```rust\r\n// XXX Junye will follow up with Guy about what numbers to pick here.\r\n// python3: eta = 1/1000000000; math.ceil(math.sqrt(math.log(2/eta)))\r\nconst ALPHA: u128 = 8;\r\nconst TAU: f64 = 0.75;\r\nconst WR_TEST_COUNT: usize = 135;\r\nconst WR_TEST_PASSES: usize = (TAU * WR_TEST_COUNT as f64) as usize;\r\n```",
       "createdAt": "2023-08-23T22:50:47Z",
-      "updatedAt": "2023-08-23T22:50:47Z",
-      "closedAt": null,
+      "updatedAt": "2024-01-08T21:35:23Z",
+      "closedAt": "2024-01-08T21:35:23Z",
       "comments": []
     },
     {
@@ -510,6 +510,22 @@
       "body": "This depends on variable `VERSION` in the base draft: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2.3-4\r\n\r\nIs this intended? We probably should avoid this dependency.",
       "createdAt": "2023-12-22T01:59:26Z",
       "updatedAt": "2023-12-22T01:59:26Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 46,
+      "id": "I_kwDOJWdxls57cw4t",
+      "title": "Bounds for gradient coordinates (i.e., how to pick the upper bound for `num_frac_bits`)",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/46",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Currently we require that `num_frac_bits` is at most 128, but [double precision floats only have 53 bits for the fractional part](https://en.wikipedia.org/wiki/Double-precision_floating-point_format#/media/File:IEEE_754_Double_Floating_Point_Format.svg). \r\n\r\nIn fact, the largest value we can accommodate is probably smaller than 53:\r\n\r\n1. `x * 2**num_frac_bits` might be too big to represent as a float.\r\n2. `x * 2**num_frac_bits` might be too large to represent as a field element (the unsigned part must be smaller than 1/2 of the field modulus).\r\n\r\nI think what we really want to do is come up with a bounds check for each coordinate and the field modulus.",
+      "createdAt": "2024-01-08T20:04:41Z",
+      "updatedAt": "2024-01-08T20:04:42Z",
       "closedAt": null,
       "comments": []
     }
@@ -5888,6 +5904,101 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 45,
+      "id": "PR_kwDOJWdxls5jgbnM",
+      "title": "Improve unit testing for the FLP",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/45",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "* Use the `unitest` module to define unit tests.\r\n* Add unit tests for encoding floats as field elements. While at it, simplify `encode_f64_into_field()`.\r\n\r\nReviewer note: I originally thought there was a bug in the encoding, so I wrote tests to confirm. It turned out to be a non-issue, but I thought it would be useful to merge the changes I made along the way.",
+      "createdAt": "2024-01-08T18:45:38Z",
+      "updatedAt": "2024-01-08T21:00:00Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4be87207a3b9233a5de9529c5f96b40c7f565dc7",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/bug-negative-float-encoding",
+      "headRefOid": "9923a479470a0800c8dd6268160df535b0b0b878",
+      "closedAt": "2024-01-08T21:00:00Z",
+      "mergedAt": "2024-01-08T21:00:00Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "e73d4d34f6c7653409cd0d285742fc456a81bdf4"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5r4Qqo",
+          "commit": {
+            "abbreviatedOid": "9923a47"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-08T19:47:37Z",
+          "updatedAt": "2024-01-08T19:47:55Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "oh... does the constructor do the offsetting?",
+              "createdAt": "2024-01-08T19:47:37Z",
+              "updatedAt": "2024-01-08T19:47:55Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5r4YDi",
+          "commit": {
+            "abbreviatedOid": "9923a47"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-08T20:09:58Z",
+          "updatedAt": "2024-01-08T20:09:58Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "This is just a result of modular arithmetic. Sage does the right thing here:\r\n```\r\n$ sage\r\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\r\n\u2502 SageMath version 9.8, Release Date: 2023-02-11                     \u2502\r\n\u2502 Using Python 3.11.1. Type \"help()\" for help.                       \u2502\r\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\r\nsage: f = GF(2^32 * 4294967295 + 1)\r\nsage: f(-23)\r\n18446744069414584298\r\nsage: f(-23 + f.order())\r\n18446744069414584298\r\n```",
+              "createdAt": "2024-01-08T20:09:58Z",
+              "updatedAt": "2024-01-08T20:09:59Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "id": "PR_kwDOJWdxls5jhSw4",
+      "title": "Code clean up",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/47",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "See commit messages for details.",
+      "createdAt": "2024-01-08T21:49:02Z",
+      "updatedAt": "2024-01-09T00:53:33Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "e73d4d34f6c7653409cd0d285742fc456a81bdf4",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/2",
+      "headRefOid": "3df431d1ffa8d7738fbab1aa0cc2e661c7a2de78",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
