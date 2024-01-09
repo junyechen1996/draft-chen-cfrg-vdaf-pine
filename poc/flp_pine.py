@@ -241,7 +241,6 @@ class PineValid(Valid):
         """
         mul_inputs = []
         r_power = self.Field(1)
-        wr_mul_check_res = self.Field(0)
         wr_success_count_check_res = \
             -self.Field(NUM_WR_SUCCESSES) * shares_inv
         for check in range(NUM_WR_CHECKS):
