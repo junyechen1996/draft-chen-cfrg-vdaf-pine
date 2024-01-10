@@ -118,8 +118,9 @@ class TestCircuit(unittest.TestCase):
             # Test PINE FLP with verification.
             xof = PineValid.Xof(gen_rand(16), b"", b"")
             encoded_gradient = flp.Valid.encode_gradient(measurement)
-            (wr_check_bits, wr_dot_prods) = pine_valid.encode_wr_checks(encoded_gradient, xof)
-            meas = encoded_gradient + wr_check_bits + wr_dot_prods
+            (wr_check_bits, wr_check_results) = \
+                pine_valid.encode_wr_checks(encoded_gradient, xof)
+            meas = encoded_gradient + wr_check_bits + wr_check_results
             test_flp_generic(flp, [(meas, True)])
 
 

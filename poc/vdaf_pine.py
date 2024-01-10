@@ -121,8 +121,8 @@ class Pine(Vdaf):
         l = Pine.Flp.Valid.Xof.SEED_SIZE
         seeds = [rand[i:i+l] for i in range(0, Pine.RAND_SIZE, l)]
 
-        encoded_gradient = Pine.Flp.Valid.encode_gradient(measurement)
-        assert len(encoded_gradient) == Pine.Flp.Valid.encoded_gradient_len
+        meas = Pine.Flp.Valid.encode_gradient(measurement)
+        assert len(meas) == Pine.Flp.Valid.encoded_gradient_len
 
         # Parse Helper seeds. Each Helper has 4 seeds:
         # - one for measurement share.
@@ -165,7 +165,7 @@ class Pine(Vdaf):
 
         # Compute wraparound joint randomness parts.
         (_, k_wr_joint_rand_parts) = Pine.leader_meas_share_and_joint_rand_parts(
-            encoded_gradient,
+            meas,
             k_helper_wr_joint_rand_blinds,
             k_helper_meas_shares,
             k_leader_wr_joint_rand_blind,
@@ -180,21 +180,21 @@ class Pine(Vdaf):
         )
 
         # Run wraparound checks with wraparound joint randomness XOF, and append
-        # wraparound check results at the end of `encoded_gradient`.
+        # wraparound check results at the end of the encoded gradient.
         # Note Client doesn't send the dot products in wraparound checks,
         # because Aggregators are expected to derive the wrapround joint
         # randomness themselves, but the dot products are passed to
         # `Flp.Valid.eval()` later to avoid computing the dot products again.
-        (wr_check_bits, wr_dot_prods) = \
-            Pine.Flp.Valid.encode_wr_checks(encoded_gradient, wr_joint_rand_xof)
-        encoded_measurement = encoded_gradient + wr_check_bits
-        assert len(encoded_measurement) == Pine.MEAS_LEN
+        (wr_check_bits, wr_check_results) = \
+            Pine.Flp.Valid.encode_wr_checks(meas, wr_joint_rand_xof)
+        meas += wr_check_bits
+        assert len(meas) == Pine.MEAS_LEN
 
         # Compute Leader's measurement share and verification joint randomness
         # parts.
         (leader_meas_share, k_vf_joint_rand_parts) = \
             Pine.leader_meas_share_and_joint_rand_parts(
-                encoded_measurement,
+                meas,
                 k_helper_vf_joint_rand_blinds,
                 k_helper_meas_shares,
                 k_leader_vf_joint_rand_blind,
@@ -207,17 +207,15 @@ class Pine(Vdaf):
         ))
 
         # Generate the proof and shard it into proof shares.
+        meas += wr_check_results
         prove_rands = Pine.prove_rands(k_prove)
-        # `PineValid.eval()` function expects the dot products in wraparound
-        # checks to be appended after `encoded_measurement`.
-        flp_meas = encoded_measurement + wr_dot_prods
         leader_proofs_share = []
         for _ in range(Pine.PROOFS):
             (prove_rand, prove_rands) = \
                 front(Pine.Flp.PROVE_RAND_LEN, prove_rands)
             (vf_joint_rand, vf_joint_rands) = \
                 front(Pine.Flp.JOINT_RAND_LEN, vf_joint_rands)
-            leader_proofs_share += Pine.Flp.prove(flp_meas,
+            leader_proofs_share += Pine.Flp.prove(meas,
                                                   prove_rand,
                                                   vf_joint_rand)
         # Sanity check:

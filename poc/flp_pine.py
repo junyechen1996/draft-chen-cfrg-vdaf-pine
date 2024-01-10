@@ -91,7 +91,7 @@ class PineValid(Valid):
         # should be in range `[-wr_bound, wr_bound + 1]`. The number of
         # values in this range is `2 * (wr_bound + 1)`, so take the `log2`
         # of `wr_bound + 1` and add 1 to it.
-        self.num_bits_for_wr_res = 1 + math.ceil(math.log2(
+        self.num_bits_for_wr_check = 1 + math.ceil(math.log2(
             self.wr_check_bound.as_unsigned() + 1
         ))
 
@@ -106,7 +106,7 @@ class PineValid(Valid):
         # - The success bit for each wraparound check
         self.bit_checked_len = \
             2 * self.num_bits_for_sq_norm + \
-            (self.num_bits_for_wr_res + 1) * NUM_WR_CHECKS
+            (self.num_bits_for_wr_check + 1) * NUM_WR_CHECKS
 
         # Set `Valid` parameters.
         # The measurement length expected by `Flp.eval()` contains the encoded
@@ -131,55 +131,94 @@ class PineValid(Valid):
              meas: list[Field],
              joint_rand: list[Field],
              num_shares: Unsigned) -> Field:
-        """Validity circuit for PINE. """
+        """Validity circuit for PINE.
+
+        The goal of this circuit is to recognize gradients with bounded L2-norm
+        (hereafter "norm"). This is accomplished by computing the squared norm
+        of the gradient and checking that its value is in the desired range. We
+        also need to ensure the squared norm is not so large that it wraps
+        around the field modulus. Otherwise, a squared norm that is too large
+        (or too small) may appear to be in range when in fact it is not.
+
+        Wraparound enforcement is accomplished by a sequence of probabilistic
+        tests devised by [ROCK23]. A successful wraparound test indicates,
+        w.h.p., that the squared norm of the gradient, as it is represented in
+        the field, is a value between 0 and an upper bound that depends on the
+        circuit parameters.
+        """
         self.check_valid_eval(meas, joint_rand)
         shares_inv = self.Field(num_shares).inv()
 
-        # Unpack `meas = encoded_gradient || bit_checked || wr_dot_prods`
-        (encoded_gradient, rest) = front(self.dimension, meas)
+        # Unpack the encoded measurement. It is composed of the following
+        # components:
+        #
+        # - The gradient `encoded_gradient`.
+        #
+        # - A pair `(sq_norm_v_bits, sq_norm_u_bits)`, the bit-encoded,
+        #   range-checked, squared norm of the gradient.
+        #
+        # - For each wraparound test, a pair `(wr_check_v_bits, wr_check_g)`:
+        #   `wr_check_v_bits` is the bit-encoded, range-checked test result;
+        #   and `wr_check_g` is an indication of whether the test succeeded
+        #   (i.e., the result is in the specified range).
+        #
+        # - For each wraparound test, the result `wr_check_results`.
+        rest = meas
+        (encoded_gradient, rest) = front(self.dimension, rest)
         (bit_checked, rest) = front(self.bit_checked_len, rest)
-        (wr_dot_prods, rest) = front(NUM_WR_CHECKS, rest)
+        (wr_check_results, rest) = front(NUM_WR_CHECKS, rest)
+        assert len(rest) == 0
+
+        rest = bit_checked
+        (sq_norm_v_bits, rest) = front(self.num_bits_for_sq_norm, rest)
+        (sq_norm_u_bits, rest) = front(self.num_bits_for_sq_norm, rest)
+        wr_check_v_bits = []
+        wr_check_g = []
+        while len(rest) > 0:
+            (v_bits, rest) = front(self.num_bits_for_wr_check, rest)
+            wr_check_v_bits.append(v_bits)
+            ([g], rest) = front(1, rest)
+            wr_check_g.append(g)
         assert len(rest) == 0
 
         # Unpack the joint randomness.
         [r_bit_check, r_wr_check, r_final] = joint_rand
 
-        # 0/1 bit checks:
-        bit_check_res = self.bit_check(
-            r_bit_check, bit_checked, shares_inv,
-        )
+        bit_checks_result = self.eval_bit_checks(r_bit_check,
+                                                 bit_checked,
+                                                 shares_inv)
 
-        # L2-norm check:
-        (norm_bits, wr_check_bits) = \
-            front(2 * self.num_bits_for_sq_norm, bit_checked)
-        (norm_equality_check_res, norm_range_check_res) = \
-            self.norm_check(encoded_gradient, norm_bits, shares_inv)
+        (sq_norm_equality_check_result, sq_norm_range_check_result) = \
+            self.eval_norm_check(encoded_gradient,
+                                 sq_norm_v_bits,
+                                 sq_norm_u_bits,
+                                 shares_inv)
 
-        # Wraparound checks:
-        assert len(wr_check_bits) == \
-               (self.num_bits_for_wr_res + 1) * NUM_WR_CHECKS
-        assert len(wr_dot_prods) == NUM_WR_CHECKS
-        (wr_mul_check_res, wr_success_count_check_res) = self.wr_check(
-            wr_check_bits,
-            wr_dot_prods,
-            r_wr_check,
-            shares_inv,
-        )
+        (wr_checks_result, wr_success_count_check_result) = \
+            self.eval_wr_checks(r_wr_check,
+                                wr_check_v_bits,
+                                wr_check_g,
+                                wr_check_results,
+                                shares_inv)
 
-        # Reduce over all circuits.
-        return bit_check_res + \
-            r_final * norm_equality_check_res + \
-            r_final**2 * norm_range_check_res + \
-            r_final**3 * wr_mul_check_res + \
-            r_final**4 * wr_success_count_check_res
+        return bit_checks_result + \
+            r_final * sq_norm_equality_check_result + \
+            r_final**2 * sq_norm_range_check_result + \
+            r_final**3 * wr_checks_result + \
+            r_final**4 * wr_success_count_check_result
 
-    def bit_check(self,
-                  r_bit_check,
-                  bit_checked,
-                  shares_inv):
+    def eval_bit_checks(self, r_bit_check, bit_checked, shares_inv):
         """
-        Compute the bit checks, consisting of a random linear combination of a
-        range check for each element of `bit_checked`.
+        Check that each element of `bit_checked` is a 0 or 1.
+
+        Construct a polynomial from the bits and evaluate it at `r_bit_check`.
+        The polynomial is
+
+           f(x) = B[0]*(B[0]-1) + x*B[1]*(B[1]-1) + x^2*B[2]*(B[2]-1) + ...
+
+        where `B[i]` is the `(i-1)`-th bit. The value of `B[i](B[i]-1)` is 0 if
+        and only if `B[i]` is 0 or 1. Thus if one of the bits is non-zero, then
+        `f(r_bit_check)` will be non-zero w.h.p.
         """
         mul_inputs = []
         r_power = self.Field(1)
@@ -188,152 +227,152 @@ class PineValid(Valid):
             r_power *= r_bit_check
         return self.parallel_sum(mul_inputs)
 
-    def norm_check(self,
-                   encoded_gradient: list[Field],
-                   norm_bits: list[Field],
-                   shares_inv: Field) -> tuple[Field, Field]:
+    def eval_norm_check(self,
+                        encoded_gradient,
+                        sq_norm_v_bits,
+                        sq_norm_u_bits,
+                        shares_inv):
         """
-        Compute the squared L2-norm of the gradient and test that it is in range.
+        Check that (1) the reported squared was computed correctly and (2) the
+        squared norm is in range. The result is only valid if the bit checks
+        and the wraparound checks were successful.
         """
+        # Compute the squared norm.
         mul_inputs = []
         for val in encoded_gradient:
             mul_inputs += [val, val]
         computed_sq_norm = self.parallel_sum(mul_inputs)
 
-        # The `v` bits (difference between squared L2-norm and lower bound)
-        # and `u` bits (difference between squared L2-norm and upper bound)
-        # claimed by the Client for the range check of the squared L2-norm.
-        (norm_range_check_v_bits, norm_range_check_u_bits) = front(
-            self.num_bits_for_sq_norm, norm_bits
-        )
-        norm_range_check_v = \
-            self.Field.decode_from_bit_vector(norm_range_check_v_bits)
-        norm_range_check_u = \
-            self.Field.decode_from_bit_vector(norm_range_check_u_bits)
+        sq_norm_v = self.Field.decode_from_bit_vector(sq_norm_v_bits)
+        sq_norm_u = self.Field.decode_from_bit_vector(sq_norm_u_bits)
 
         return (
             # Check that the computed squared L2-norm result matches
             # the value claimed by the Client.
-            norm_range_check_v - computed_sq_norm,
-            # Check the squared L2-norm is in range
-            # `[0, encoded_sq_norm_bound]`.
-            (norm_range_check_v + norm_range_check_u -
-             self.encoded_sq_norm_bound * shares_inv),
+            sq_norm_v - computed_sq_norm,
+            # Check the squared L2-norm is in range (see [ROCK23], Figure 1).
+            sq_norm_v + sq_norm_u - self.encoded_sq_norm_bound * shares_inv,
         )
 
-    def wr_check(self,
-                 wr_check_bits,
-                 wr_dot_prods,
-                 r_wr_check,
-                 shares_inv):
+    def eval_wr_checks(self,
+                       r_wr_check,
+                       wr_check_v_bits,
+                       wr_check_g,
+                       wr_check_results,
+                       shares_inv):
         """
-        Compute the wraparound checks, consisting of (i) checking that, for
-        each wraparound test, either the Client indicated failure or the Client
-        indicated success and the dot product is equal to the claimed value and
-        is in range; and (ii) checking that the Client indicated the expected
-        number of successes.
+        Check two things:
+
+        (1) For each wraparound test, (i) the reported success bit
+            (`wr_test_g`) is 0 or (ii) the success bit is 1 and the reported
+            result (`wr_test_v`) was computed correctly.
+
+        (2) The number of reported successes is equal to the expected number of
+            successes.
+
+        See [ROCK23], Figure 2 for details.
+
+        A test is only successful if the reported result is in the specified
+        range. The range is chosen so that it is sufficient to bit-check the
+        reported result. See [ROCK23], Remark 3.2 for details.
+
+        These checks are only valid if the bit checks were successful.
         """
         mul_inputs = []
+        wr_success_count = self.Field(0)
         r_power = self.Field(1)
-        wr_success_count_check_res = \
-            -self.Field(NUM_WR_SUCCESSES) * shares_inv
-        for check in range(NUM_WR_CHECKS):
-            # Add the dot product result and the absolute value of the
-            # wraparound check lower bound.
-            computed_wr_res = wr_dot_prods[check] + self.wr_check_bound * shares_inv
 
-            # Wraparound check result indicated by the Client:
-            (wr_res_bits, wr_check_bits) = \
-                front(self.num_bits_for_wr_res, wr_check_bits)
-            wr_res = self.Field.decode_from_bit_vector(wr_res_bits)
+        for i in range(NUM_WR_CHECKS):
+            wr_check_v = self.Field.decode_from_bit_vector(wr_check_v_bits[i])
+            computed_result = wr_check_v - self.wr_check_bound * shares_inv
 
-            # Success bit, the Client's indication as to whether the current
-            # check passed.
-            ([success_bit], wr_check_bits) = front(1, wr_check_bits)
-            wr_success_count_check_res += success_bit
+            # (1) For each check, we want that either (i) the Client reported
+            # failure (`wr_check_g[i] == 0`) or (ii) the Client reported
+            # success and the reported result was computed correctly. To
+            # accomplish this, subtract the computed result from the reported
+            # result and multiply by the success bit.
+            #
+            # Similar to the bit checks, interpret the values as coefficients
+            # of a polynomial and evaluate the polynomial at a random point
+            # (`r_wr_check`).
+            mul_inputs += [
+                r_power * (wr_check_results[i] - computed_result),
+                wr_check_g[i],
+            ]
 
-            # The Client share is considered valid if the multiplication of
-            # the difference between computed wraparound check result and
-            # the result from the bits, and the success bit is equal to 0.
-            # This means either:
-            # - success bit is 0, the current check failed.
-            #   The difference can be any arbitrary value.
-            # - success bit is 1, the current check passed.
-            #   Then the difference must be 0, i.e., the bits of `wr_res`
-            #   must match `computed_wr_res`.
-            mul_inputs += [r_power * (computed_wr_res - wr_res), success_bit]
+            # (2) Sum up the success bits for each test.
+            wr_success_count += wr_check_g[i]
             r_power *= r_wr_check
-        assert len(wr_check_bits) == 0
-        return (self.parallel_sum(mul_inputs), wr_success_count_check_res)
 
-    def parallel_sum(self, inputs):
+        return (
+            self.parallel_sum(mul_inputs),
+            wr_success_count - self.Field(NUM_WR_SUCCESSES) * shares_inv
+        )
+
+    def parallel_sum(self, mul_inputs):
         """
-        Split `inputs` into chunks, call the gadget on each chunk, and return
-        the sum of the results. If there is a partial leftover, then it is
-        padded with zeros.
+        Split `mul_inputs` into chunks, call the gadget on each chunk, and
+        return the sum of the results. If there is a partial leftover, then it
+        is padded with zeros.
         """
         s = self.Field(0)
-        while len(inputs) >= 2*self.chunk_length:
-            (chunk, inputs) = front(2*self.chunk_length, inputs)
+        while len(mul_inputs) >= 2*self.chunk_length:
+            (chunk, mul_inputs) = front(2*self.chunk_length, mul_inputs)
             s += self.GADGETS[0].eval(self.Field, chunk)
-        if len(inputs) > 0:
+        if len(mul_inputs) > 0:
             chunk = self.Field.zeros(2*self.chunk_length)
-            for i in range(len(inputs)):
-                chunk[i] = inputs[i]
+            for i in range(len(mul_inputs)):
+                chunk[i] = mul_inputs[i]
             s += self.GADGETS[0].eval(self.Field, chunk)
         return s
 
     def encode_gradient(self, measurement):
         """
-        Encode everything except wraparound check results:
-        - Encode each f64 value into field element.
-        - Encode L2-norm check results.
+        Encode the gradient and the range-checked, squared L2-norm.
         """
         if len(measurement) != self.dimension:
             raise ValueError("Unexpected gradient dimension.")
-        encoded = [self.encode_f64_into_field(x) for x in measurement]
+        encoded_gradient = [self.encode_f64_into_field(x) for x in measurement]
 
         # Encode results for range check of the squared L2-norm.
-        sq_encoded = sum((x**2 for x in encoded), self.Field(0))
-        (_, norm_range_check_v, norm_range_check_u) = range_check(
-            sq_encoded, self.Field(0), self.encoded_sq_norm_bound,
+        sq_norm = sum((x**2 for x in encoded_gradient), self.Field(0))
+        (_, sq_norm_v, sq_norm_u) = range_check(
+            sq_norm, self.Field(0), self.encoded_sq_norm_bound,
         )
-        encoded += self.Field.encode_into_bit_vector(
-            norm_range_check_v.as_unsigned(),
+        encoded_gradient += self.Field.encode_into_bit_vector(
+            sq_norm_v.as_unsigned(),
             self.num_bits_for_sq_norm,
         )
-        encoded += self.Field.encode_into_bit_vector(
-            norm_range_check_u.as_unsigned(),
+        encoded_gradient += self.Field.encode_into_bit_vector(
+            sq_norm_u.as_unsigned(),
             self.num_bits_for_sq_norm,
         )
-        return encoded
+        return encoded_gradient
 
     def run_wr_checks(self, encoded_gradient, wr_joint_rand_xof):
         """
-        Compute the dot products of `encoded_gradient` with the wraparound
-        joint randomness, sampled from the XOF `wr_joint_rand_xof`. `eval()`
-        function expects the circuit input to contain the dot products.
-        """
+        Run the wraparound tests. For each test, we compute the dot product of
+        the gradient and a random `{-1, 0, 1}`-vector derived from the provided
+        XOF instance.
 
-        # Sample the wraparound joint randomness. This is a `{-1, 0, 1}`-vector
-        # with `NUM_WR_CHECKS` chunks, where the length of each chunk is
-        # `self.dimension`. Each element is independently distributed as
-        # follows:
-        # - -1 with probability 1/4;
-        # - 0 with probability 1/2; and
-        # - 1 with probability 1/4.
-        #
-        # To sample this distribution exactly, we will look at the bytes from
-        # `Xof` two bits at a time, so the number of field elements we can
-        # generate from each byte is 4.
-        #
-        # Implementation note: Note in a real implementation with large
-        # dimension, in order to not consume a lot of memory when sampling, we
-        # can sample from the XOF one block at a time.
+        Each element of the `{-1, 0, 1}`-vector is independently distributed as
+        follows:
+
+        - `-1` occurs with probability 1/4;
+        - `0` occurs with probability 1/2; and
+        - `1` occurs with probability 1/4.
+
+        To sample this distribution exactly, we will look at the bytes from
+        `Xof` two bits at a time, so the number of field elements we can
+        generate from each byte is 4.
+
+        Implementation note: It may be useful to stream the XOF output a block
+        a time rather than pre-compute the entire bufferr.
+        """
         xof_output = wr_joint_rand_xof.next(
             chunk_count(4, NUM_WR_CHECKS * self.dimension))
 
-        wr_dot_prods = [self.Field(0)] * NUM_WR_CHECKS
+        wr_check_results = [self.Field(0)] * NUM_WR_CHECKS
         for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
             wr_check_index = i // self.dimension
             x = encoded_gradient[i % self.dimension]
@@ -343,77 +382,69 @@ class PineValid(Valid):
                 rand_field = self.Field(0)
             else:
                 rand_field = self.Field(1)
-            wr_dot_prods[wr_check_index] += rand_field * x
-        return wr_dot_prods
+            wr_check_results[wr_check_index] += rand_field * x
+        return wr_check_results
 
     def encode_wr_checks(self, encoded_gradient, wr_joint_rand_xof):
         """
         Run the wraparound checks and return the dot product for each check
-        (`wr_dot_prods`) and the range-checked result for each check
+        (`wr_check_results`) and the range-checked result for each check
         (`wr_check_bits`).
 
-        The dot products are passed into the `PineValid.eval()` function, and
-        the wraparound check results are sent to the Aggregators. The
-        Aggregators are expected to re-compute the dot products on their own,
-        with the encoded gradient and the wraparound joint randomness XOF.
+        The string `encoded_gradient + wr_check_bits + wr_check_results` is
+        passed to the circuit. The Aggregators are expected to re-compute the
+        dot products on their own, with the encoded gradient and the wraparound
+        joint randomness XOF.
         """
-        # First compute the dot product between `encoded_gradient` and the
-        # wraparound joint randomness field elements in each wraparound check,
-        # sampled from the XOF `wr_joint_rand_xof`.
-        wr_dot_prods = \
-            self.run_wr_checks(encoded_gradient, wr_joint_rand_xof)
+        wr_check_results = self.run_wr_checks(encoded_gradient,
+                                              wr_joint_rand_xof)
 
-        # Stores wraparound check result bits, and success bits.
         wr_check_bits = []
-        # Keep track of the number of passing checks in
-        # `num_passed_wr_checks`. If the Client has passed more than
-        # `NUM_WR_SUCCESSES`, don't set the success bit to be 1
-        # anymore, because Aggregators will check that exactly
-        # `NUM_WR_SUCCESSES` checks passed.
-        num_passed_wr_checks = 0
-        for check in range(NUM_WR_CHECKS):
+
+        # Number of successful checks. If the prover has passed more than
+        # `NUM_WR_SUCCESSES`, don't set the success bit to be 1 anymore,
+        # because verifier will check that exactly `NUM_WR_SUCCESSES` checks
+        # passed.
+        wr_success_count = 0
+
+        for i in range(NUM_WR_CHECKS):
             # This wraparound check passes if the current dot product is in
-            # range `[-wr_bound, wr_bound+1]`. To prove this, the Client sends
-            # the bit-encoding of `wr_res = wr_dot_prods[check] + wr_bound`
-            # to the Aggregators. To check that the dot product is larger or
-            # equal to the lower bound, the Aggregator then reconstructs
-            # `wr_res` from the bits, and checks that it is equal to
-            # `computed_wr_res = wr_dot_prods[check] + wr_bound`. The upper
-            # bound is checked implicitly by virtue of the fact that
-            # `wr_res` is encoded with `1 + ceil(log2(wr_bound + 1))` bits.
-            (is_in_range, wr_res, _) = range_check(
-                wr_dot_prods[check],
+            # range `[-wr_check_bound, wr_check_bound+1]`. To prove this, the
+            # prover sends the bit-encoding of `wr_check_v =
+            # wr_check_results[i] + wr_check_bound` to the verifier. The
+            # verifier re-computes this value and makes sure it matches the
+            # reported value.
+            (is_in_range, wr_check_v, _) = range_check(
+                wr_check_results[i],
                 -self.wr_check_bound,
                 self.wr_check_bound + self.Field(1),
             )
 
-            if is_in_range and num_passed_wr_checks < NUM_WR_SUCCESSES:
+            if is_in_range and wr_success_count < NUM_WR_SUCCESSES:
                 # If the result of the current wraparound check is
                 # in range, and the number of passing checks hasn't
-                # reached `NUM_WR_SUCCESSES`, set the success bit
+                # reached `NUM_WR_SUCCESSES`. Set the success bit
                 # to be 1.
-                num_passed_wr_checks += 1
-                success_bit = self.Field(1)
+                wr_success_count += 1
+                wr_check_g = self.Field(1)
             else:
-                # Otherwise set the success bit to be 0, and set wraparound
-                # check result to be 0.
-                wr_res = self.Field(0)
-                success_bit = self.Field(0)
+                # Otherwise set the success bit to be 0.
+                wr_check_g = self.Field(0)
 
             # Send the bits of wraparound check result, and the success bit.
             wr_check_bits += self.Field.encode_into_bit_vector(
-                wr_res.as_unsigned(), self.num_bits_for_wr_res,
+                wr_check_v.as_unsigned(), self.num_bits_for_wr_check,
             )
-            wr_check_bits.append(success_bit)
+            wr_check_bits.append(wr_check_g)
 
         # Sanity check the Client has passed `NUM_WR_SUCCESSES`
         # number of checks, otherwise Client SHOULD retry.
-        if num_passed_wr_checks != NUM_WR_SUCCESSES:
+        if wr_success_count != NUM_WR_SUCCESSES:
             raise Exception(
                 "Client should retry wraparound check with "
                 "different wraparound joint randomness."
             )
-        return (wr_check_bits, wr_dot_prods)
+        return (wr_check_bits, wr_check_results)
 
     def truncate(self, meas: list[Field]):
         return meas[:self.dimension]
