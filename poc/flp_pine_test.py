@@ -76,7 +76,7 @@ class TestEncoding(unittest.TestCase):
         valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
         f64_vals = [0.5, 0.5]
         self.assertEqual(f64_vals,
-                         valid.decode(valid.truncate(valid.encode(f64_vals)), 1))
+                         valid.decode(valid.truncate(valid.encode_gradient(f64_vals)), 1))
 
 
 class TestCircuit(unittest.TestCase):
@@ -117,9 +117,8 @@ class TestCircuit(unittest.TestCase):
 
             # Test PINE FLP with verification.
             xof = PineValid.Xof(gen_rand(16), b"", b"")
-            encoded_gradient = flp.encode(measurement)
-            (wr_check_bits, wr_dot_prods) = \
-                pine_valid.run_wr_checks(encoded_gradient, xof)
+            encoded_gradient = flp.Valid.encode_gradient(measurement)
+            (wr_check_bits, wr_dot_prods) = pine_valid.encode_wr_checks(encoded_gradient, xof)
             meas = encoded_gradient + wr_check_bits + wr_dot_prods
             test_flp_generic(flp, [(meas, True)])
 
