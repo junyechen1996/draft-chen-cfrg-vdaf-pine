@@ -8,8 +8,8 @@ from typing import Union
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 import xof
-from common import (Unsigned, byte, concat, front, gen_rand, vec_add, vec_sub,
-                    zeros)
+from common import (Unsigned, byte, concat, front, gen_rand, to_be_bytes,
+                    vec_add, vec_sub, zeros)
 from field import Field, Field128, Field64
 from flp_generic import FlpGeneric
 from flp_pine import PineValid, NUM_WR_CHECKS, NUM_WR_SUCCESSES
@@ -28,6 +28,9 @@ USAGE_WR_JOINT_RANDOMNESS = 8
 USAGE_WR_JOINT_RAND_SEED = 9
 # Used to derive each wraparound joint randomness seed part.
 USAGE_WR_JOINT_RAND_PART = 10
+
+# PINE draft version.
+VERSION = 0
 
 
 class Pine(Vdaf):
@@ -252,6 +255,14 @@ class Pine(Vdaf):
         )
 
     @classmethod
+    def is_valid(Pine, _agg_param, previous_agg_params):
+        """
+        Checks if `previous_agg_params` is empty, as input shares in Pine may
+        only be used once.
+        """
+        return len(previous_agg_params) == 0
+
+    @classmethod
     def prep_init(Pine,
                   verify_key,
                   agg_id,
@@ -404,6 +415,14 @@ class Pine(Vdaf):
         for agg_share in agg_shares:
             agg = vec_add(agg, agg_share)
         return Pine.Flp.decode(agg, num_measurements)
+
+    @classmethod
+    def domain_separation_tag(Pine, usage):
+        return concat([
+            to_be_bytes(VERSION, 1),
+            to_be_bytes(Pine.ID, 4),
+            to_be_bytes(usage, 2),
+        ])
 
     # Helper functions:
 
@@ -601,6 +620,8 @@ class Pine(Vdaf):
             Pine.Flp.JOINT_RAND_LEN * Pine.PROOFS
         )
 
+    # Methods for generating test vectors:
+
     @classmethod
     def test_vec_encode_input_share(Pine, input_share):
         (
@@ -669,8 +690,12 @@ if __name__ == '__main__':
               USAGE_PROVE_RANDOMNESS, USAGE_QUERY_RANDOMNESS,
               USAGE_JOINT_RAND_SEED, USAGE_JOINT_RAND_PART]
     if usages != list(range(1, len(usages) + 1)):
-        raise ValueError("Expect Prio3's domain separation tags to be unique "
-                         "from 1 to " + str(len(usages)) + ".")
+        raise ValueError("Expect Prio3's usage string in domain separation "
+                         "tag to be unique from 1 to " + str(len(usages)) + ".")
+
+    # Check `Pine.domain_separation_tag` output length: 1 byte for draft
+    # version, 4 bytes for algorithm ID, 2 bytes for usage string.
+    assert(len(Pine.domain_separation_tag(0)) == 7)
 
     # Instantiate `Pine` with different field sizes and number of proofs, but
     # with the same user parameters:
