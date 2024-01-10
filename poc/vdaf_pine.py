@@ -121,7 +121,7 @@ class Pine(Vdaf):
         l = Pine.Flp.Valid.Xof.SEED_SIZE
         seeds = [rand[i:i+l] for i in range(0, Pine.RAND_SIZE, l)]
 
-        encoded_gradient = Pine.Flp.encode(measurement)
+        encoded_gradient = Pine.Flp.Valid.encode_gradient(measurement)
         assert len(encoded_gradient) == Pine.Flp.Valid.encoded_gradient_len
 
         # Parse Helper seeds. Each Helper has 4 seeds:
@@ -186,7 +186,7 @@ class Pine(Vdaf):
         # randomness themselves, but the dot products are passed to
         # `Flp.Valid.eval()` later to avoid computing the dot products again.
         (wr_check_bits, wr_dot_prods) = \
-            Pine.Flp.Valid.run_wr_checks(encoded_gradient, wr_joint_rand_xof)
+            Pine.Flp.Valid.encode_wr_checks(encoded_gradient, wr_joint_rand_xof)
         encoded_measurement = encoded_gradient + wr_check_bits
         assert len(encoded_measurement) == Pine.MEAS_LEN
 
@@ -286,7 +286,6 @@ class Pine(Vdaf):
             Pine.joint_rand_part_and_seed_for_aggregator(
                 agg_id,
                 k_wr_joint_rand_blind,
-                # Use the output of `Pine.Flp.encode()`.
                 meas_share[:Pine.Flp.Valid.encoded_gradient_len],
                 nonce,
                 k_wr_joint_rand_parts,
@@ -297,8 +296,8 @@ class Pine(Vdaf):
         # compute the dot products in wraparound checks.
         wr_joint_rand_xof = \
             Pine.wr_joint_rand_xof(k_corrected_wr_joint_rand_seed)
-        wr_dot_prods = Pine.Flp.Valid.wr_check_dot_prod(meas_share,
-                                                        wr_joint_rand_xof)
+        wr_dot_prods = Pine.Flp.Valid.run_wr_checks(meas_share,
+                                                    wr_joint_rand_xof)
 
         # Compute this Aggregator's verification joint randomness part and seed.
         (k_vf_joint_rand_part, k_corrected_vf_joint_rand_seed) = \

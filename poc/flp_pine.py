@@ -283,7 +283,7 @@ class PineValid(Valid):
             s += self.GADGETS[0].eval(self.Field, chunk)
         return s
 
-    def encode(self, measurement: Measurement) -> list[Field]:
+    def encode_gradient(self, measurement):
         """
         Encode everything except wraparound check results:
         - Encode each f64 value into field element.
@@ -308,9 +308,7 @@ class PineValid(Valid):
         )
         return encoded
 
-    def wr_check_dot_prod(self,
-                          encoded_gradient: list[Field],
-                          wr_joint_rand_xof: Xof) -> list[Field]:
+    def run_wr_checks(self, encoded_gradient, wr_joint_rand_xof):
         """
         Compute the dot products of `encoded_gradient` with the wraparound
         joint randomness, sampled from the XOF `wr_joint_rand_xof`. `eval()`
@@ -348,10 +346,7 @@ class PineValid(Valid):
             wr_dot_prods[wr_check_index] += rand_field * x
         return wr_dot_prods
 
-    def run_wr_checks(self,
-                      encoded_gradient: list[Field],
-                      wr_joint_rand_xof: Xof) -> tuple[list[Field],
-                                                       list[Field]]:
+    def encode_wr_checks(self, encoded_gradient, wr_joint_rand_xof):
         """
         Run the wraparound checks and return the dot product for each check
         (`wr_dot_prods`) and the range-checked result for each check
@@ -366,7 +361,7 @@ class PineValid(Valid):
         # wraparound joint randomness field elements in each wraparound check,
         # sampled from the XOF `wr_joint_rand_xof`.
         wr_dot_prods = \
-            self.wr_check_dot_prod(encoded_gradient, wr_joint_rand_xof)
+            self.run_wr_checks(encoded_gradient, wr_joint_rand_xof)
 
         # Stores wraparound check result bits, and success bits.
         wr_check_bits = []
