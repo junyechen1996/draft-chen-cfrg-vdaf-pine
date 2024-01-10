@@ -10,7 +10,7 @@ sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import Unsigned, front, next_power_of_2
 from field import Field
 from flp_generic import Mul, ParallelSum, Valid
-from xof import Xof, XofFixedKeyAes128
+from xof import Xof, XofTurboShake128
 
 # TODO(junyechen1996): Pick values for these that provide sufficient soundness
 # and completeness (#39).
@@ -20,13 +20,7 @@ NUM_WR_SUCCESSES = math.floor(0.75 * NUM_WR_CHECKS)
 
 class PineValid(Valid):
     # XOF for `PineValid`.
-    # Note we currently use `XofFixedKeyAes128` by default, because
-    # `XofTurboShake128` in VDAF poc has a limit of how many bytes can be
-    # sampled:
-    # https://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/fd7a2dc4993babbf3acffc7d498cd7925890064b/poc/xof.py#L18-L21.
-    # TODO(junyechen1996): Switch to TurboShake128 after
-    # https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/322 is merged.
-    Xof = XofFixedKeyAes128
+    Xof = XofTurboShake128
 
     # Associated types for `Valid`.
     Measurement = list[float]

@@ -12,7 +12,6 @@ from common import gen_rand
 from flp_pine import PineValid, bit_chunks
 from field import Field64, Field128
 from flp_generic import FlpGeneric, test_flp_generic
-from xof import XofFixedKeyAes128
 
 import unittest
 
@@ -117,7 +116,7 @@ class TestCircuit(unittest.TestCase):
             flp = FlpGeneric(pine_valid)
 
             # Test PINE FLP with verification.
-            xof = XofFixedKeyAes128(gen_rand(16), b"", b"")
+            xof = PineValid.Xof(gen_rand(16), b"", b"")
             encoded_gradient = flp.encode(measurement)
             (wr_check_bits, wr_dot_prods) = \
                 pine_valid.run_wr_checks(encoded_gradient, xof)
