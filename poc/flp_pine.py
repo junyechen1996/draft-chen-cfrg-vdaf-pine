@@ -141,7 +141,7 @@ class PineValid(Valid):
         (or too small) may appear to be in range when in fact it is not.
 
         Wraparound enforcement is accomplished by a sequence of probabilistic
-        tests devised by [ROCK23]. A successful wraparound test indicates,
+        tests devised by [ROCT23]. A successful wraparound test indicates,
         w.h.p., that the squared norm of the gradient, as it is represented in
         the field, is a value between 0 and an upper bound that depends on the
         circuit parameters.
@@ -188,18 +188,18 @@ class PineValid(Valid):
                                                  bit_checked,
                                                  shares_inv)
 
-        (sq_norm_equality_check_result, sq_norm_range_check_result) = \
-            self.eval_norm_check(encoded_gradient,
-                                 sq_norm_v_bits,
-                                 sq_norm_u_bits,
-                                 shares_inv)
-
         (wr_checks_result, wr_success_count_check_result) = \
             self.eval_wr_checks(r_wr_check,
                                 wr_check_v_bits,
                                 wr_check_g,
                                 wr_check_results,
                                 shares_inv)
+
+        (sq_norm_equality_check_result, sq_norm_range_check_result) = \
+            self.eval_norm_check(encoded_gradient,
+                                 sq_norm_v_bits,
+                                 sq_norm_u_bits,
+                                 shares_inv)
 
         return bit_checks_result + \
             r_final * sq_norm_equality_check_result + \
@@ -216,7 +216,7 @@ class PineValid(Valid):
 
            f(x) = B[0]*(B[0]-1) + x*B[1]*(B[1]-1) + x^2*B[2]*(B[2]-1) + ...
 
-        where `B[i]` is the `(i-1)`-th bit. The value of `B[i](B[i]-1)` is 0 if
+        where `B[i]` is the `i`-th bit. The value of `B[i](B[i]-1)` is 0 if
         and only if `B[i]` is 0 or 1. Thus if one of the bits is non-zero, then
         `f(r_bit_check)` will be non-zero w.h.p.
         """
@@ -250,7 +250,7 @@ class PineValid(Valid):
             # Check that the computed squared L2-norm result matches
             # the value claimed by the Client.
             sq_norm_v - computed_sq_norm,
-            # Check the squared L2-norm is in range (see [ROCK23], Figure 1).
+            # Check the squared L2-norm is in range (see [ROCT23], Figure 1).
             sq_norm_v + sq_norm_u - self.encoded_sq_norm_bound * shares_inv,
         )
 
@@ -270,11 +270,11 @@ class PineValid(Valid):
         (2) The number of reported successes is equal to the expected number of
             successes.
 
-        See [ROCK23], Figure 2 for details.
+        See [ROCT23], Figure 2 for details.
 
         A test is only successful if the reported result is in the specified
         range. The range is chosen so that it is sufficient to bit-check the
-        reported result. See [ROCK23], Remark 3.2 for details.
+        reported result. See [ROCT23], Remark 3.2 for details.
 
         These checks are only valid if the bit checks were successful.
         """
