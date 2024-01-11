@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-09T01:18:01.681954+00:00",
+  "timestamp": "2024-01-11T01:18:06.708992+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -486,15 +486,17 @@
       "id": "I_kwDOJWdxls56Xw3L",
       "title": "Use of `Flp.encode()` is slightly abusive",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/43",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
-      "assignees": [],
+      "assignees": [
+        "cjpatton"
+      ],
       "labels": [],
       "body": "The circuit expects a string of length `MEAS_LEN` [which is meant to match the output length of `Flp.encode()`](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.1-2.1.1). But our `Flp.encode()` produces a shorter string (that is missing the `wr_dot_prods`.\r\n\r\nI'd suggest we not overload `encode()` and simply use a function with a different name. `encode_gradient()` would probably make sense.",
       "createdAt": "2023-12-21T20:56:53Z",
-      "updatedAt": "2023-12-21T20:56:53Z",
-      "closedAt": null,
+      "updatedAt": "2024-01-10T23:00:13Z",
+      "closedAt": "2024-01-10T23:00:13Z",
       "comments": []
     },
     {
@@ -502,32 +504,83 @@
       "id": "I_kwDOJWdxls56Yk3t",
       "title": "How should we implement `Pine.domain_separation_tag()`?",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/44",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
-      "assignees": [],
+      "assignees": [
+        "junyechen1996"
+      ],
       "labels": [],
       "body": "This depends on variable `VERSION` in the base draft: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2.3-4\r\n\r\nIs this intended? We probably should avoid this dependency.",
       "createdAt": "2023-12-22T01:59:26Z",
-      "updatedAt": "2023-12-22T01:59:26Z",
-      "closedAt": null,
-      "comments": []
+      "updatedAt": "2024-01-10T21:56:58Z",
+      "closedAt": "2024-01-10T21:56:58Z",
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Resolution: define VERSION ourselves and don't use the method from the base draft.",
+          "createdAt": "2024-01-09T16:25:29Z",
+          "updatedAt": "2024-01-09T16:25:29Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Addressed by #49 .",
+          "createdAt": "2024-01-10T21:56:58Z",
+          "updatedAt": "2024-01-10T21:56:58Z"
+        }
+      ]
     },
     {
       "number": 46,
       "id": "I_kwDOJWdxls57cw4t",
       "title": "Bounds for gradient coordinates (i.e., how to pick the upper bound for `num_frac_bits`)",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/46",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Currently we require that `num_frac_bits` is at most 128, but [double precision floats only have 53 bits for the fractional part](https://en.wikipedia.org/wiki/Double-precision_floating-point_format#/media/File:IEEE_754_Double_Floating_Point_Format.svg). \r\n\r\nIn fact, the largest value we can accommodate is probably smaller than 53:\r\n\r\n1. `x * 2**num_frac_bits` might be too big to represent as a float.\r\n2. `x * 2**num_frac_bits` might be too large to represent as a field element (the unsigned part must be smaller than 1/2 of the field modulus).\r\n\r\nI think what we really want to do is come up with a bounds check for each coordinate and the field modulus.",
       "createdAt": "2024-01-08T20:04:41Z",
-      "updatedAt": "2024-01-08T20:04:42Z",
+      "updatedAt": "2024-01-09T16:34:50Z",
+      "closedAt": "2024-01-09T16:34:50Z",
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "ACtually, you can represent really big numbers as floating point numbers, but not with useful precision when doing arithmetic.",
+          "createdAt": "2024-01-09T16:33:46Z",
+          "updatedAt": "2024-01-09T16:33:46Z"
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "id": "I_kwDOJWdxls57qr-C",
+      "title": "FLP: Run the gadget calls in dependency order",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/50",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [
+        "cjpatton"
+      ],
+      "labels": [],
+      "body": "Right now we do the bit checks, then the norm checks, then the wraparound checks. The validity of each check depends on the validity of other checks:\r\n1. wraparound checks are only valid if the bit checks succeeded\r\n2. norm check is only valid if the bit checks and the wrap around checks succeeded\r\n\r\nLogically I think it makes sense to order the checks such that all dependencies are satisfied before a check is made:\r\n1. bit checks\r\n2. wraparound checks\r\n3. norm check\r\n\r\nThis ought to improve readability.\r\n\r\nNote that this is a breaking change since it changes the order of the gadget calls.\r\n",
+      "createdAt": "2024-01-10T16:57:51Z",
+      "updatedAt": "2024-01-10T20:15:53Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Breaking change is fine. And I think 2 and 3 can run in parallel theoretically, so I don't have a strong opinion which runs first.",
+          "createdAt": "2024-01-10T19:35:02Z",
+          "updatedAt": "2024-01-10T19:35:02Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -5979,26 +6032,290 @@
       "id": "PR_kwDOJWdxls5jhSw4",
       "title": "Code clean up",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/47",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
-      "body": "See commit messages for details.",
+      "body": "See commit messages for details. It's best to review commit by commit.",
       "createdAt": "2024-01-08T21:49:02Z",
-      "updatedAt": "2024-01-09T00:53:33Z",
+      "updatedAt": "2024-01-09T15:57:00Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "e73d4d34f6c7653409cd0d285742fc456a81bdf4",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/2",
-      "headRefOid": "3df431d1ffa8d7738fbab1aa0cc2e661c7a2de78",
+      "headRefOid": "bcbfad585ee7c5c578ee44372ec7466709f05175",
+      "closedAt": "2024-01-09T15:57:00Z",
+      "mergedAt": "2024-01-09T15:57:00Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "04d300626817537417de28549e5768a6f5315c21"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5r6XAv",
+          "commit": {
+            "abbreviatedOid": "bcbfad5"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "Thanks!",
+          "createdAt": "2024-01-09T06:09:57Z",
+          "updatedAt": "2024-01-09T06:09:57Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 48,
+      "id": "PR_kwDOJWdxls5jpRqE",
+      "title": "Use Turboshake128 as XOF",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/48",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-01-10T05:36:50Z",
+      "updatedAt": "2024-01-10T19:33:40Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "04d300626817537417de28549e5768a6f5315c21",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/use-turboshake",
+      "headRefOid": "b8a955c51913a75dbb2e78c4757b9b6473c4920d",
+      "closedAt": "2024-01-10T19:33:37Z",
+      "mergedAt": "2024-01-10T19:33:37Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "5234c9d03f962db55a540dd3b72fb9d563d62189"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "> Let's also remove this from the test code (see flp_pine_test.py)\r\n\r\noops. I missed this. Changed the one in `flp_pine_test.py` to use `PineValid.Xof`.",
+          "createdAt": "2024-01-10T19:21:23Z",
+          "updatedAt": "2024-01-10T19:21:23Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5sGyIH",
+          "commit": {
+            "abbreviatedOid": "5641eac"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "Let's also remove this from the test code (see flp_pine_test.py)",
+          "createdAt": "2024-01-10T17:12:52Z",
+          "updatedAt": "2024-01-10T17:12:52Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sHz_9",
+          "commit": {
+            "abbreviatedOid": "b8a955c"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-10T19:28:18Z",
+          "updatedAt": "2024-01-10T19:31:00Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 49,
+      "id": "PR_kwDOJWdxls5jpbnL",
+      "title": "Override domain_separation_tag",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/49",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Addresses issue #44 .\r\n\r\nWe don't want to use the base VDAF draft version in domain separation tag, since PINE won't always evolve with base draft changes, which will be relatively stable from now on. Instead PINE draft may change often earlier, so we will at least include the PINE draft version in domain separation tag.",
+      "createdAt": "2024-01-10T06:17:04Z",
+      "updatedAt": "2024-01-10T21:56:26Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "5234c9d03f962db55a540dd3b72fb9d563d62189",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/domain-separation-tag",
+      "headRefOid": "152b05843e5e63fbed8114f577fad5da0b8bca56",
+      "closedAt": "2024-01-10T21:56:23Z",
+      "mergedAt": "2024-01-10T21:56:23Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "9d68a5ee80e3376a258ca310e426c0b5de69a55a"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5sCFSN",
+          "commit": {
+            "abbreviatedOid": "93d42a0"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-10T06:18:23Z",
+          "updatedAt": "2024-01-10T06:18:36Z",
+          "comments": [
+            {
+              "originalPosition": 43,
+              "body": "The base draft also includes an \"algorithm class\" string, which I'm entirely clear what it is. Seems like for Prio3, the base draft uses a class 0, and for Poplar, it uses a class 1. I don't think there is too much value including it in the domain separation tag here, since PINE draft version + PINE ID is enough to make sure this is a PINE VDAF. Thoughts @cjpatton ?",
+              "createdAt": "2024-01-10T06:18:23Z",
+              "updatedAt": "2024-01-10T06:18:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sIMtz",
+          "commit": {
+            "abbreviatedOid": "152b058"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-10T20:13:57Z",
+          "updatedAt": "2024-01-10T21:52:41Z",
+          "comments": [
+            {
+              "originalPosition": 43,
+              "body": "The intent there was to provide domain separation for different \"types\" of objects. For example, IDPF and Poplar1 both use an XOF, but have different algorithm classes.\r\n\r\nI agree, this isn't going to come up in PINE.",
+              "createdAt": "2024-01-10T20:13:57Z",
+              "updatedAt": "2024-01-10T20:14:29Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 51,
+      "id": "PR_kwDOJWdxls5juiHi",
+      "title": "Don't overload `Flp.encode()`",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/51",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #43.\r\n\r\nThe output of this method is meant to be the input the `prove()` or `query()` algorithm, but in PIne, we have more encoding steps to do before we have the complete input.",
+      "createdAt": "2024-01-10T20:37:34Z",
+      "updatedAt": "2024-01-10T23:00:12Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "5234c9d03f962db55a540dd3b72fb9d563d62189",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/43",
+      "headRefOid": "80a56e5fdfc989df97ea6e6a5792e8e1ffad5a1d",
+      "closedAt": "2024-01-10T23:00:12Z",
+      "mergedAt": "2024-01-10T23:00:12Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "e0ab8b5b66d343119131337d1e9c3154bbde3cac"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5sI1Sc",
+          "commit": {
+            "abbreviatedOid": "80a56e5"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-10T21:50:11Z",
+          "updatedAt": "2024-01-10T21:50:52Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Should we still have the `encode` method that throws an error, because this is defined by `Flp`?",
+              "createdAt": "2024-01-10T21:50:11Z",
+              "updatedAt": "2024-01-10T21:50:52Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sJMmJ",
+          "commit": {
+            "abbreviatedOid": "80a56e5"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-10T23:00:03Z",
+          "updatedAt": "2024-01-10T23:00:03Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "It already does (see flp.rs in the base repo)",
+              "createdAt": "2024-01-10T23:00:03Z",
+              "updatedAt": "2024-01-10T23:00:03Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 52,
+      "id": "PR_kwDOJWdxls5jvOz3",
+      "title": "More clean up",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/52",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #50.",
+      "createdAt": "2024-01-10T22:59:12Z",
+      "updatedAt": "2024-01-10T23:01:42Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "e0ab8b5b66d343119131337d1e9c3154bbde3cac",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/50",
+      "headRefOid": "76670018009119d19d1000ab91f6c8cd7aaa8920",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5sJM-0",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-10T23:01:42Z",
+          "updatedAt": "2024-01-10T23:01:42Z",
+          "comments": [
+            {
+              "originalPosition": 490,
+              "body": "This is the only (intended!) breaking change.",
+              "createdAt": "2024-01-10T23:01:42Z",
+              "updatedAt": "2024-01-10T23:01:42Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
