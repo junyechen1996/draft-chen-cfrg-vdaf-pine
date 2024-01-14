@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-11T01:18:06.708992+00:00",
+  "timestamp": "2024-01-14T01:23:32.394219+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -561,7 +561,7 @@
       "id": "I_kwDOJWdxls57qr-C",
       "title": "FLP: Run the gadget calls in dependency order",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/50",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [
@@ -570,8 +570,8 @@
       "labels": [],
       "body": "Right now we do the bit checks, then the norm checks, then the wraparound checks. The validity of each check depends on the validity of other checks:\r\n1. wraparound checks are only valid if the bit checks succeeded\r\n2. norm check is only valid if the bit checks and the wrap around checks succeeded\r\n\r\nLogically I think it makes sense to order the checks such that all dependencies are satisfied before a check is made:\r\n1. bit checks\r\n2. wraparound checks\r\n3. norm check\r\n\r\nThis ought to improve readability.\r\n\r\nNote that this is a breaking change since it changes the order of the gadget calls.\r\n",
       "createdAt": "2024-01-10T16:57:51Z",
-      "updatedAt": "2024-01-10T20:15:53Z",
-      "closedAt": null,
+      "updatedAt": "2024-01-12T20:23:53Z",
+      "closedAt": "2024-01-12T20:23:53Z",
       "comments": [
         {
           "author": "junyechen1996",
@@ -6275,24 +6275,26 @@
       "id": "PR_kwDOJWdxls5jvOz3",
       "title": "More clean up",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/52",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #50.",
       "createdAt": "2024-01-10T22:59:12Z",
-      "updatedAt": "2024-01-10T23:01:42Z",
+      "updatedAt": "2024-01-12T20:23:52Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "e0ab8b5b66d343119131337d1e9c3154bbde3cac",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/50",
-      "headRefOid": "76670018009119d19d1000ab91f6c8cd7aaa8920",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "80ff22e94ac1e0a05f8369cd7db9432fddda7022",
+      "closedAt": "2024-01-12T20:23:52Z",
+      "mergedAt": "2024-01-12T20:23:52Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "4ef945a5a9a406959cbab8ea31b5728c82ca2b93"
+      },
       "comments": [],
       "reviews": [
         {
@@ -6314,6 +6316,137 @@
               "updatedAt": "2024-01-10T23:01:42Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sKdtE",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-11T05:22:05Z",
+          "updatedAt": "2024-01-12T20:11:25Z",
+          "comments": [
+            {
+              "originalPosition": 145,
+              "body": "```suggestion\r\n        where `B[i]` is the `(i+1)`-th bit. The value of `B[i](B[i]-1)` is 0 if\r\n```\r\n\r\n?\r\n\r\nOr the `i`-th bit? I'm ok with counting from zero.",
+              "createdAt": "2024-01-12T19:54:39Z",
+              "updatedAt": "2024-01-12T20:11:25Z"
+            },
+            {
+              "originalPosition": 33,
+              "body": "```suggestion\r\n        tests devised by [ROCT23]. A successful wraparound test indicates,\r\n```\r\n\r\nsince we are taking the abbreviation by authors' last names. Also make a pass in this file as well.",
+              "createdAt": "2024-01-12T19:56:29Z",
+              "updatedAt": "2024-01-12T20:11:25Z"
+            },
+            {
+              "originalPosition": 490,
+              "body": "I see, so the client just sends whatever the `wr_check_v` is?",
+              "createdAt": "2024-01-12T20:08:45Z",
+              "updatedAt": "2024-01-12T20:11:25Z"
+            },
+            {
+              "originalPosition": 5,
+              "body": "Thoughts on `num_wr_check_v_bits`?",
+              "createdAt": "2024-01-12T20:10:05Z",
+              "updatedAt": "2024-01-12T20:11:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sa3oJ",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-12T20:17:23Z",
+          "updatedAt": "2024-01-12T20:17:23Z",
+          "comments": [
+            {
+              "originalPosition": 145,
+              "body": "ahh hmmm let's just count from 0! (changed to `i`).",
+              "createdAt": "2024-01-12T20:17:23Z",
+              "updatedAt": "2024-01-12T20:17:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sa3zC",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-12T20:17:57Z",
+          "updatedAt": "2024-01-12T20:17:57Z",
+          "comments": [
+            {
+              "originalPosition": 33,
+              "body": "duh, thanks!",
+              "createdAt": "2024-01-12T20:17:57Z",
+              "updatedAt": "2024-01-12T20:17:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sa35A",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-12T20:18:17Z",
+          "updatedAt": "2024-01-12T20:18:17Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Too wordy.",
+              "createdAt": "2024-01-12T20:18:17Z",
+              "updatedAt": "2024-01-12T20:18:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sa5Or",
+          "commit": {
+            "abbreviatedOid": "7667001"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-12T20:23:09Z",
+          "updatedAt": "2024-01-12T20:23:09Z",
+          "comments": [
+            {
+              "originalPosition": 490,
+              "body": "Yup! This should be sufficient from a security perspective and has the advantage that the prover and verifier compute the same value.",
+              "createdAt": "2024-01-12T20:23:09Z",
+              "updatedAt": "2024-01-12T20:23:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5sa5Zf",
+          "commit": {
+            "abbreviatedOid": "80ff22e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-12T20:23:39Z",
+          "updatedAt": "2024-01-12T20:23:39Z",
+          "comments": []
         }
       ]
     }
