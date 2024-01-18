@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-16T01:17:54.667584+00:00",
+  "timestamp": "2024-01-18T01:17:44.777860+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -594,9 +594,17 @@
       "labels": [],
       "body": "The FLP circuit evaluation is the most expensive part PINE. Since we might generate multiple proofs, we want to de-duplicate any redundant computation that we can.\r\n\r\nOur current FLP circuit is composed of three sub-circuits, which produce five intermediate outputs:\r\n```python\r\n        bit_checks_result = self.eval_bit_checks(r_bit_check,\r\n                                                 bit_checked,\r\n                                                 shares_inv)\r\n\r\n        (wr_checks_result, wr_success_count_check_result) = \\\r\n            self.eval_wr_checks(r_wr_check,\r\n                                wr_check_v_bits,\r\n                                wr_check_g,\r\n                                wr_check_results,\r\n                                shares_inv)\r\n\r\n        (sq_norm_equality_check_result, sq_norm_range_check_result) = \\\r\n            self.eval_norm_check(encoded_gradient,\r\n                                 sq_norm_v_bits,\r\n                                 sq_norm_u_bits,\r\n                                 shares_inv)\r\n```\r\n\r\nConsider the computation of each intermediate output:\r\n* `bit_checks_result`\r\n* `wr_checks_result`\r\n* `wr_success_count_check_result`\r\n* `sq_norm_equality_check_result`\r\n* `sq_norm_range_check_result`\r\n\r\n**Observation 1:** We can't avoid repeating any computation that depends on the joint randomness, as the joint randomness needs to be fresh for each proof. Only `bit_checks_result` and `wr_checks_result` depend on the joint randomness; the others need only be computed once.\r\n\r\n**Observation 2**: Re-computing an intermediate output is only expensive if the computation is non-linear, as this requires calling the gadget, which increases the size of the proof and verifier. Linear computations do not have this side-effect. Only \r\n`bit_checks_result`, `wr_checks_result`, and `sq_norm_equality_check_result` are non-linear.\r\n\r\n**Idea:** We can avoid re-computing `sq_norm_equality_check_result` since it does not depend on the joint randomness. Plus, doing so is worth it because it is non-linear (and particularly expensive because the number of gadget calls depends on the dimension).\r\n\r\nConcretely, we can compute the squared norm check with a separate FLP that is evaluated once and does not take joint randomness. During VDAF preparation, the Aggregators would need to verify two FLPs: one for `sq_norm_equality_check_result` and another for all the intermediate outputs and does the reduction.",
       "createdAt": "2024-01-14T19:15:53Z",
-      "updatedAt": "2024-01-14T19:22:02Z",
+      "updatedAt": "2024-01-16T16:22:08Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Question (raised by @junyechen1996 on 2024/1/16 sync): Is the soundness error for the squared norm FLP good enough if we don't do multiproof? Perhaps since we don't lose any soundness in the circuit and this part is not vulnearble to pre-computation attacks. More analysis needed.",
+          "createdAt": "2024-01-16T16:22:07Z",
+          "updatedAt": "2024-01-16T16:22:07Z"
+        }
+      ]
     }
   ],
   "pulls": [
