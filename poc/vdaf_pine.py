@@ -7,13 +7,12 @@ from typing import Union
 # Access poc folder in submoduled VDAF draft.
 dir_name = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-import xof
-from common import (Unsigned, byte, concat, front, gen_rand, to_be_bytes,
+from common import (Unsigned, byte, concat, front, to_be_bytes,
                     vec_add, vec_sub, zeros)
 from field import Field, Field128, Field64
 from flp_generic import FlpGeneric
 from flp_pine import PineValid, NUM_WR_CHECKS, NUM_WR_SUCCESSES
-from vdaf import Vdaf, test_vdaf
+from vdaf import Vdaf
 from vdaf_prio3 import (
     USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
     USAGE_PROVE_RANDOMNESS, USAGE_QUERY_RANDOMNESS, USAGE_JOINT_RAND_SEED,
@@ -30,7 +29,10 @@ USAGE_WR_JOINT_RAND_SEED = 9
 USAGE_WR_JOINT_RAND_PART = 10
 
 # PINE draft version.
-VERSION = 0
+with open(os.path.join(dir_name, "VERSION")) as f:
+    VERSION = int(f.read())
+    # Sanity check it can be represented with one byte.
+    assert VERSION >= 0 and VERSION <= 255
 
 
 class Pine(Vdaf):
@@ -86,6 +88,9 @@ class Pine(Vdaf):
     # Joint randomness seed check for both wraparound joint randomness
     # and verification joint randomness.
     PrepMessage = tuple[bytes, bytes]
+
+    # Operational parameters for generating test vectors.
+    test_vec_name = "Pine"
 
     @classmethod
     def with_params(Pine,
@@ -620,6 +625,12 @@ class Pine(Vdaf):
     # Methods for generating test vectors:
 
     @classmethod
+    def test_vec_set_type_param(Pine, test_vec):
+        params = Pine.Flp.test_vec_set_type_param(test_vec)
+        test_vec["proofs"] = Pine.PROOFS
+        return params + ["proofs"]
+
+    @classmethod
     def test_vec_encode_input_share(Pine, input_share):
         (
             meas_share,
@@ -658,60 +669,37 @@ class Pine(Vdaf):
         return k_wr_joint_rand_seed + k_vf_joint_rand_seed
 
 
-# Tests:
-def test_shard_result_share_length(Vdaf: Pine):
-    """Check the result shares of `shard()` have the expected lengths. """
-    measurement = [0.0] * Vdaf.Flp.Valid.dimension
-    nonce = gen_rand(Vdaf.NONCE_SIZE)
-    rand = gen_rand(Vdaf.RAND_SIZE)
-    (public_share, input_shares) = Vdaf.shard(measurement, nonce, rand)
-    assert public_share is not None
-    assert input_shares is not None and len(input_shares) == Vdaf.SHARES
+# `Pine` with `Field128` and one proof.
+class Pine128(Pine):
+    @classmethod
+    def with_params(Pine128,
+                    l2_norm_bound: float,
+                    num_frac_bits: Unsigned,
+                    dimension: Unsigned,
+                    chunk_length: Unsigned,
+                    num_shares: Unsigned):
+        return super().with_params(l2_norm_bound = l2_norm_bound,
+                                   num_frac_bits = num_frac_bits,
+                                   dimension = dimension,
+                                   chunk_length = chunk_length,
+                                   num_shares = num_shares,
+                                   field = Field128,
+                                   num_proofs = 1)
 
-    [wr_joint_rand_parts, vf_joint_rand_parts] = public_share
-    assert len(wr_joint_rand_parts) == Vdaf.SHARES
-    assert len(vf_joint_rand_parts) == Vdaf.SHARES
-    assert(all(len(part) == Vdaf.Flp.Valid.Xof.SEED_SIZE
-               for part in wr_joint_rand_parts))
-    assert(all(len(part) == Vdaf.Flp.Valid.Xof.SEED_SIZE
-               for part in vf_joint_rand_parts))
 
-    # Check leader share length.
-    (meas_share, proofs_share, wr_joint_rand_blind, vf_joint_rand_blind) = \
-        input_shares[0]
-    assert len(meas_share) == Vdaf.MEAS_LEN
-    assert len(proofs_share) == Vdaf.Flp.PROOF_LEN * Vdaf.PROOFS
-
-if __name__ == '__main__':
-    usages = [USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
-              USAGE_PROVE_RANDOMNESS, USAGE_QUERY_RANDOMNESS,
-              USAGE_JOINT_RAND_SEED, USAGE_JOINT_RAND_PART]
-    if usages != list(range(1, len(usages) + 1)):
-        raise ValueError("Expect Prio3's usage string in domain separation "
-                         "tag to be unique from 1 to " + str(len(usages)) + ".")
-
-    # Check `Pine.domain_separation_tag` output length: 1 byte for draft
-    # version, 4 bytes for algorithm ID, 2 bytes for usage string.
-    assert(len(Pine.domain_separation_tag(0)) == 7)
-
-    # Instantiate `Pine` with different field sizes and number of proofs, but
-    # with the same user parameters:
-    # `l2_norm_bound = 1.0`, `num_frac_bits = 4`, `dimension = 4`,
-    # `chunk_length = 150`, `num_shares = 2`.
-    args = [1.0, 4, 4, 150, 2]
-
-    # Test happy cases.
-    for (field, num_proofs) in [(Field64, 2), (Field128, 1)]:
-        concrete_pine = Pine.with_params(*args, field, num_proofs)
-        assert concrete_pine.Flp.Field == field
-        assert concrete_pine.PROOFS == num_proofs
-        test_shard_result_share_length(concrete_pine)
-        test_vdaf(
-            concrete_pine,
-            None,
-            [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-            ],
-            [1.0, 1.0, 0.0, 0.0],
-        )
+# `Pine` with `Field64` and three proofs.
+class Pine64(Pine):
+    @classmethod
+    def with_params(Pine64,
+                    l2_norm_bound: float,
+                    num_frac_bits: Unsigned,
+                    dimension: Unsigned,
+                    chunk_length: Unsigned,
+                    num_shares: Unsigned):
+        return super().with_params(l2_norm_bound = l2_norm_bound,
+                                   num_frac_bits = num_frac_bits,
+                                   dimension = dimension,
+                                   chunk_length = chunk_length,
+                                   num_shares = num_shares,
+                                   field = Field64,
+                                   num_proofs = 3)
