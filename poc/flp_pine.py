@@ -480,7 +480,13 @@ class PineValid(Valid):
         test_vec["l2_norm_bound"] = self.l2_norm_bound
         test_vec["num_frac_bits"] = self.num_frac_bits
         test_vec["dimension"] = self.dimension
-        return ["l2_norm_bound", "num_frac_bits", "dimension"]
+        test_vec["chunk_length"] = self.chunk_length
+        test_vec["field"] = self.Field.__name__
+        test_vec["num_wr_checks"] = NUM_WR_CHECKS
+        test_vec["num_wr_successes"] = NUM_WR_SUCCESSES
+        test_vec["alpha"] = ALPHA
+        return ["l2_norm_bound", "num_frac_bits", "dimension", "field",
+                "num_wr_checks", "num_wr_successes", "alpha"]
 
 def bit_chunks(buf: bytes, num_chunk_bits: int):
     """
