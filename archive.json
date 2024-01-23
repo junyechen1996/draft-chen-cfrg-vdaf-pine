@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-21T01:23:49.459102+00:00",
+  "timestamp": "2024-01-23T01:19:39.278782+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -605,6 +605,24 @@
           "updatedAt": "2024-01-16T16:22:07Z"
         }
       ]
+    },
+    {
+      "number": 54,
+      "id": "I_kwDOJWdxls58unCY",
+      "title": "Reduce unit test runtime",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/54",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [
+        "junyechen1996"
+      ],
+      "labels": [],
+      "body": "One way is to add internal operational parameters as optional parameters",
+      "createdAt": "2024-01-21T13:46:49Z",
+      "updatedAt": "2024-01-21T13:46:52Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -6471,6 +6489,159 @@
           "createdAt": "2024-01-12T20:23:39Z",
           "updatedAt": "2024-01-12T20:23:39Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 55,
+      "id": "PR_kwDOJWdxls5kuVv1",
+      "title": "Generate test vectors",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/55",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Add missing methods for generating test vectors in both flp_pine and vdaf_pine, and add instructions for generating test vectors in README file:\r\nTEST_VECTOR=TRUE TEST_VECTOR_PATH=test_vec/00 sage -python generate_test_vector.py",
+      "createdAt": "2024-01-22T13:47:42Z",
+      "updatedAt": "2024-01-22T22:21:30Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4ef945a5a9a406959cbab8ea31b5728c82ca2b93",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/test-vector",
+      "headRefOid": "443017688c9e71e5675c0518781ac8ef110ded45",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "@cjpatton I addressed all the comments except [this thread](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/55#discussion_r1461968769) needs another look from you. I'm not sure if you like the \"improved\" approach that can set `TEST_VECTOR_PATH` for users.",
+          "createdAt": "2024-01-22T22:21:03Z",
+          "updatedAt": "2024-01-22T22:21:30Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5teENF",
+          "commit": {
+            "abbreviatedOid": "9827692"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-22T14:27:00Z",
+          "updatedAt": "2024-01-22T14:27:10Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Included these internal operational parameters as well, so we can test with smaller test vectors after we resolve #54 . ",
+              "createdAt": "2024-01-22T14:27:00Z",
+              "updatedAt": "2024-01-22T14:27:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5tePa8",
+          "commit": {
+            "abbreviatedOid": "9827692"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Excellent!",
+          "createdAt": "2024-01-22T14:46:32Z",
+          "updatedAt": "2024-01-22T14:50:47Z",
+          "comments": [
+            {
+              "originalPosition": 22,
+              "body": "Suggestion: Users are likely to just copy-paste this without inspecting it. I'd suggest having a default `TEST_VECTOR_PATH` and not overwrite the default here such that copy-pasting this always writes top the correct directory.",
+              "createdAt": "2024-01-22T14:46:32Z",
+              "updatedAt": "2024-01-22T14:50:47Z"
+            },
+            {
+              "originalPosition": 15,
+              "body": "My guess is `num_proofs == 2` isn't going to be a safe choice. I'd suggest `3` for tests.\\",
+              "createdAt": "2024-01-22T14:47:32Z",
+              "updatedAt": "2024-01-22T14:50:47Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "`PineField128` and `PineField64` would be more descriptive names.",
+              "createdAt": "2024-01-22T14:48:42Z",
+              "updatedAt": "2024-01-22T14:50:47Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "nit: `generate_test_vectors.py`? (add an `s`?)",
+              "createdAt": "2024-01-22T14:49:56Z",
+              "updatedAt": "2024-01-22T14:50:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5thCmb",
+          "commit": {
+            "abbreviatedOid": "9827692"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-22T21:08:40Z",
+          "updatedAt": "2024-01-22T21:08:41Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "I'm pick a larger dimension, say at least 20",
+              "createdAt": "2024-01-22T21:08:40Z",
+              "updatedAt": "2024-01-22T21:08:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5thOwi",
+          "commit": {
+            "abbreviatedOid": "9827692"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-22T21:42:41Z",
+          "updatedAt": "2024-01-22T21:42:41Z",
+          "comments": [
+            {
+              "originalPosition": 10,
+              "body": "We also need \"chunk_length\".",
+              "createdAt": "2024-01-22T21:42:41Z",
+              "updatedAt": "2024-01-22T21:42:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5thSLx",
+          "commit": {
+            "abbreviatedOid": "4430176"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-22T21:53:14Z",
+          "updatedAt": "2024-01-22T22:13:37Z",
+          "comments": [
+            {
+              "originalPosition": 22,
+              "body": "So I've made some improvements:\r\n\r\n- I got rid of `generate_test_vector.py`, instead rely on `vdaf_pine_test.py` along with `TEST_VECTOR` environmental variable to generate test vectors, same as base VDAF spec.\r\n- Since I need to set the default `TEST_VECTOR_PATH` properly before the base VDAF spec checks the environmental variable, I put the command to generate test vectors in a shell script `generate_test_vectors.sh`, which reads the PINE version from a file called `VERSION`, and exposes the environmental variable `TEST_VECTOR_PATH`. Similarly the domain separation tag derivation will read this `VERSION` file for consistency throughout the repo.",
+              "createdAt": "2024-01-22T21:53:14Z",
+              "updatedAt": "2024-01-22T22:17:38Z"
+            }
+          ]
         }
       ]
     }
