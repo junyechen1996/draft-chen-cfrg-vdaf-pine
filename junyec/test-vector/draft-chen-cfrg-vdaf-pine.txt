@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 25 July 2024                                         Cloudflare
-                                                         22 January 2024
+Expires: 26 July 2024                                         Cloudflare
+                                                         23 January 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 25 July 2024.
+   This Internet-Draft will expire on 26 July 2024.
 
 Copyright Notice
 
