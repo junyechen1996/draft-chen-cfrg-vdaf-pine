@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-23T01:19:39.278782+00:00",
+  "timestamp": "2024-01-25T01:19:43.138956+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -6497,24 +6497,26 @@
       "id": "PR_kwDOJWdxls5kuVv1",
       "title": "Generate test vectors",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/55",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Add missing methods for generating test vectors in both flp_pine and vdaf_pine, and add instructions for generating test vectors in README file:\r\nTEST_VECTOR=TRUE TEST_VECTOR_PATH=test_vec/00 sage -python generate_test_vector.py",
       "createdAt": "2024-01-22T13:47:42Z",
-      "updatedAt": "2024-01-22T22:21:30Z",
+      "updatedAt": "2024-01-23T20:08:21Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "4ef945a5a9a406959cbab8ea31b5728c82ca2b93",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/test-vector",
-      "headRefOid": "443017688c9e71e5675c0518781ac8ef110ded45",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "6386bc03461cf0d6a773dcb1b4614a11f5035aa1",
+      "closedAt": "2024-01-23T20:08:18Z",
+      "mergedAt": "2024-01-23T20:08:18Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "fbf3d9a8e0d04b38c660cf50a5cb0af33ff7ed6c"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -6522,6 +6524,13 @@
           "body": "@cjpatton I addressed all the comments except [this thread](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/55#discussion_r1461968769) needs another look from you. I'm not sure if you like the \"improved\" approach that can set `TEST_VECTOR_PATH` for users.",
           "createdAt": "2024-01-22T22:21:03Z",
           "updatedAt": "2024-01-22T22:21:30Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-01-23T20:02:56Z",
+          "updatedAt": "2024-01-23T20:02:56Z"
         }
       ],
       "reviews": [
@@ -6640,6 +6649,112 @@
               "body": "So I've made some improvements:\r\n\r\n- I got rid of `generate_test_vector.py`, instead rely on `vdaf_pine_test.py` along with `TEST_VECTOR` environmental variable to generate test vectors, same as base VDAF spec.\r\n- Since I need to set the default `TEST_VECTOR_PATH` properly before the base VDAF spec checks the environmental variable, I put the command to generate test vectors in a shell script `generate_test_vectors.sh`, which reads the PINE version from a file called `VERSION`, and exposes the environmental variable `TEST_VECTOR_PATH`. Similarly the domain separation tag derivation will read this `VERSION` file for consistency throughout the repo.",
               "createdAt": "2024-01-22T21:53:14Z",
               "updatedAt": "2024-01-22T22:17:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5tiZ9f",
+          "commit": {
+            "abbreviatedOid": "4430176"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-23T02:02:08Z",
+          "updatedAt": "2024-01-23T02:02:08Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "Uh ohhh I didn't know we were FAAANCY",
+              "createdAt": "2024-01-23T02:02:08Z",
+              "updatedAt": "2024-01-23T02:02:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5tia-q",
+          "commit": {
+            "abbreviatedOid": "4430176"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-01-23T02:07:46Z",
+          "updatedAt": "2024-01-23T02:07:50Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "Suggestion: I think it would be nice to create subclasses of Pine with concrete choices for the filed and number of proofs. What do you think of `Pine128` for Pine with Field128 `Pine64` for Pine with Field64?\r\n\r\n",
+              "createdAt": "2024-01-23T02:07:47Z",
+              "updatedAt": "2024-01-23T02:07:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5tn8ZK",
+          "commit": {
+            "abbreviatedOid": "4430176"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-23T15:59:02Z",
+          "updatedAt": "2024-01-23T15:59:03Z",
+          "comments": [
+            {
+              "originalPosition": 95,
+              "body": "```suggestion\r\n    def test_field64_three_proofs(self):\r\n```",
+              "createdAt": "2024-01-23T15:59:02Z",
+              "updatedAt": "2024-01-23T15:59:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5toABW",
+          "commit": {
+            "abbreviatedOid": "4430176"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-01-23T16:04:58Z",
+          "updatedAt": "2024-01-23T16:04:59Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "Check out main",
+              "createdAt": "2024-01-23T16:04:58Z",
+              "updatedAt": "2024-01-23T16:04:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5tp2-f",
+          "commit": {
+            "abbreviatedOid": "3fa6f6f"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "@cjpatton I addressed all the comments.",
+          "createdAt": "2024-01-23T18:55:53Z",
+          "updatedAt": "2024-01-23T18:57:37Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "I just checked again, the commit hash matches.",
+              "createdAt": "2024-01-23T18:55:53Z",
+              "updatedAt": "2024-01-23T18:57:37Z"
+            },
+            {
+              "originalPosition": 28,
+              "body": "I added them now.",
+              "createdAt": "2024-01-23T18:56:09Z",
+              "updatedAt": "2024-01-23T18:57:37Z"
             }
           ]
         }
