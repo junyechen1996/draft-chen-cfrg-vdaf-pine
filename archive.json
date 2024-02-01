@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-01-30T01:12:06.224346+00:00",
+  "timestamp": "2024-02-01T01:16:20.675751+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -3605,35 +3605,27 @@
     {
       "number": 32,
       "id": "PR_kwDOJWdxls5abIBE",
-      "title": "Script to search wraparound check parameters",
+      "title": "Script to analyze PINE soundness and zero-knowledge error",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/32",
       "state": "OPEN",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
-      "body": "Search over a range of number of wraparound checks, a range of alpha, and a range of tau, to find the set of the parameters that can meet the target soundness and completeness error.",
+      "body": "",
       "createdAt": "2023-09-15T10:01:25Z",
-      "updatedAt": "2023-09-15T10:10:39Z",
+      "updatedAt": "2024-01-30T14:58:10Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
-      "baseRefOid": "29d6424891d875dcbc0ee9941381a981cf095e1f",
+      "baseRefOid": "fbf3d9a8e0d04b38c660cf50a5cb0af33ff7ed6c",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/wr-param-search",
-      "headRefOid": "add7ed33f0afc3d53e9460906d75f6b0df5db2a7",
+      "headRefOid": "cd77c9c178b1797ac8bf1d60311ff8a1b33905e8",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [
-        {
-          "author": "junyechen1996",
-          "authorAssociation": "OWNER",
-          "body": "Here is the output from running the script:\r\n\r\n```\r\n(py3.9) junyec@Junyes-MacBook-Pro draft-chen-cfrg-vdaf-pine % python poc/search_wr_check_params.py \r\nFound a feasible set of parameters: alpha = 3, tau = 0.9, num_wr_checks = 180, overall log2 soundness error = -101.94440115219831, overall log2 completeness error = -143.58565143234125.\r\nFound a feasible set of parameters: alpha = 4, tau = 0.9, num_wr_checks = 180, overall log2 soundness error = -101.94440115219831, overall log2 completeness error = -335.4096744434586.\r\nFound a feasible set of parameters: alpha = 5, tau = 0.9, num_wr_checks = 180, overall log2 soundness error = -101.94440115219831, overall log2 completeness error = -582.1104718793835.\r\nFound a feasible set of parameters: alpha = 6, tau = 0.9, num_wr_checks = 180, overall log2 soundness error = -101.94440115219831, overall log2 completeness error = -884.8303323528335.\r\nFound a feasible set of parameters: alpha = 7, tau = 0.95, num_wr_checks = 135, overall log2 soundness error = -102.12588345655605, overall log2 completeness error = -inf.\r\nFound a feasible set of parameters: alpha = 8, tau = 0.95, num_wr_checks = 135, overall log2 soundness error = -102.12588345655605, overall log2 completeness error = -inf.\r\nFound a feasible set of parameters: alpha = 9, tau = 0.95, num_wr_checks = 135, overall log2 soundness error = -102.12588345655605, overall log2 completeness error = -inf.\r\nFound a feasible set of parameters: alpha = 10, tau = 0.95, num_wr_checks = 135, overall log2 soundness error = -102.12588345655605, overall log2 completeness error = -inf.\r\n```\r\n\r\nSome observations:\r\nIf we want soundness error < 2^-100, completeness error < 2^-50, then we need `NUM_WR_CHECKS` to be at least 135, `tau` at least 0.9, which aligns with the parameters in the paper. Setting `ALPHA` to be 7 can make the completeness error almost 0 (`-inf` in log2). The final choice of `alpha` depends on user's choice of `l2_norm_bound` and `num_frac_bits`, because the optimal communication cost between Client and Aggregators is when `alpha * l2_norm_bound * (2 ** num_frac_bits) + 1` is a power of 2, i.e., we can avoid sending the bits of `u` in the range check.\r\n\r\nIn conclusion, I think it's safe to hardcode `NUM_WR_CHECKS = 135` and `TAU = 0.9` in `flp_pine.py`, and we can set a minimum `ALPHA` (likely 7), and compute the exact alpha based on user's choice of `l2_norm_bound` and `num_frac_bits`. We do need to make sure the field size is large enough, given the final choice of alpha, `l2_norm_bound`, and `num_frac_bits`, see Lemma 4.3 in the paper.",
-          "createdAt": "2023-09-15T10:08:15Z",
-          "updatedAt": "2023-09-15T10:10:32Z"
-        }
-      ],
+      "comments": [],
       "reviews": []
     },
     {
