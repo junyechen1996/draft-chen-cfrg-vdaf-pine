@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-08T01:10:56.587458+00:00",
+  "timestamp": "2024-02-11T01:16:58.496992+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -6747,6 +6747,161 @@
               "body": "I added them now.",
               "createdAt": "2024-01-23T18:56:09Z",
               "updatedAt": "2024-01-23T18:57:37Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 56,
+      "id": "PR_kwDOJWdxls5mbiIo",
+      "title": "Add script for finding wraparound parameters",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/56",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-02-08T22:28:25Z",
+      "updatedAt": "2024-02-09T19:15:02Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "fbf3d9a8e0d04b38c660cf50a5cb0af33ff7ed6c",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/parameters",
+      "headRefOid": "c63b630e767e4e4bd15543d186d60eadff730db1",
+      "closedAt": "2024-02-09T19:15:02Z",
+      "mergedAt": "2024-02-09T19:15:02Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "230da39dbeb6d7e20aa07cb461f625ed9d5971f4"
+      },
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Addressed comments and squashed.",
+          "createdAt": "2024-02-09T17:24:30Z",
+          "updatedAt": "2024-02-09T17:24:30Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5viysG",
+          "commit": {
+            "abbreviatedOid": "ebf050f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-08T22:43:18Z",
+          "updatedAt": "2024-02-08T22:43:18Z",
+          "comments": [
+            {
+              "originalPosition": 46,
+              "body": "@junyechen1996 please review this part carefully!",
+              "createdAt": "2024-02-08T22:43:18Z",
+              "updatedAt": "2024-02-08T22:43:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5vne2j",
+          "commit": {
+            "abbreviatedOid": "ebf050f"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-09T15:13:09Z",
+          "updatedAt": "2024-02-09T17:12:02Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Why adding this file to .gitignore?",
+              "createdAt": "2024-02-09T15:13:09Z",
+              "updatedAt": "2024-02-09T17:12:02Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "```suggestion\r\n    l2_norm_bound_encoded = floor(l2_norm_bound * 2**num_frac_bits)\r\n```",
+              "createdAt": "2024-02-09T15:13:39Z",
+              "updatedAt": "2024-02-09T17:12:02Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "I think ^ might mean xor or some other things in python at least..",
+              "createdAt": "2024-02-09T15:31:13Z",
+              "updatedAt": "2024-02-09T17:12:02Z"
+            },
+            {
+              "originalPosition": 46,
+              "body": "LGTM.",
+              "createdAt": "2024-02-09T17:11:53Z",
+              "updatedAt": "2024-02-09T17:12:02Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5vocFX",
+          "commit": {
+            "abbreviatedOid": "ebf050f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-09T17:20:51Z",
+          "updatedAt": "2024-02-09T17:20:52Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "sage produces this file when you run `sage find_wr_params.sage` and we don't actually want to check this in.",
+              "createdAt": "2024-02-09T17:20:52Z",
+              "updatedAt": "2024-02-09T17:20:52Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5vocVY",
+          "commit": {
+            "abbreviatedOid": "ebf050f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-09T17:21:33Z",
+          "updatedAt": "2024-02-09T17:21:33Z",
+          "comments": [
+            {
+              "originalPosition": 43,
+              "body": "Yeah since this is a sage script this is correct, by sage also is fine with `**` so let's just do that. I'll take this and make sure we're consistent throughout this script.",
+              "createdAt": "2024-02-09T17:21:33Z",
+              "updatedAt": "2024-02-09T17:21:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5voiog",
+          "commit": {
+            "abbreviatedOid": "c63b630"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "LGTM. Let's start with this, I can rebase my PR if needed.",
+          "createdAt": "2024-02-09T17:36:53Z",
+          "updatedAt": "2024-02-09T17:37:09Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "oh I see.. so it's a generated python file. Interesting.",
+              "createdAt": "2024-02-09T17:36:53Z",
+              "updatedAt": "2024-02-09T17:37:09Z"
             }
           ]
         }
