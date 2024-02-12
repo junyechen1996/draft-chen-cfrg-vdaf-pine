@@ -37,7 +37,7 @@ class PineValid(Valid):
                  l2_norm_bound: float,
                  num_frac_bits: Unsigned,
                  dimension: Unsigned,
-                 chunk_length: Unsigned,
+                 chunk_length: Unsigned = None,
                  alpha: float = ALPHA,
                  num_wr_checks: Unsigned = NUM_WR_CHECKS,
                  num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
@@ -126,13 +126,17 @@ class PineValid(Valid):
         self.JOINT_RAND_LEN = 1 + 1 + 1
         self.OUTPUT_LEN = dimension
 
-        self.chunk_length = chunk_length
+        if chunk_length is None:
+            self.chunk_length = \
+                int((self.bit_checked_len + dimension + num_wr_checks)**0.5)
+        else:
+            self.chunk_length = chunk_length
         self.GADGET_CALLS = [
-            chunk_count(chunk_length, self.bit_checked_len) + \
-            chunk_count(chunk_length, dimension) + \
-            chunk_count(chunk_length, num_wr_checks)
+            chunk_count(self.chunk_length, self.bit_checked_len) + \
+            chunk_count(self.chunk_length, dimension) + \
+            chunk_count(self.chunk_length, num_wr_checks)
         ]
-        self.GADGETS = [ParallelSum(Mul(), chunk_length)]
+        self.GADGETS = [ParallelSum(Mul(), self.chunk_length)]
 
     def eval(self,
              meas: list[Field],
