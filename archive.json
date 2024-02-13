@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-11T01:16:58.496992+00:00",
+  "timestamp": "2024-02-13T01:12:30.715811+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -3607,21 +3607,21 @@
       "id": "PR_kwDOJWdxls5abIBE",
       "title": "Script to analyze PINE soundness and zero-knowledge error",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/32",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2023-09-15T10:01:25Z",
-      "updatedAt": "2024-01-30T14:58:10Z",
+      "updatedAt": "2024-02-12T16:20:10Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "fbf3d9a8e0d04b38c660cf50a5cb0af33ff7ed6c",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/wr-param-search",
       "headRefOid": "cd77c9c178b1797ac8bf1d60311ff8a1b33905e8",
-      "closedAt": null,
+      "closedAt": "2024-02-12T16:20:06Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
@@ -6902,6 +6902,81 @@
               "body": "oh I see.. so it's a generated python file. Interesting.",
               "createdAt": "2024-02-09T17:36:53Z",
               "updatedAt": "2024-02-09T17:37:09Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 57,
+      "id": "PR_kwDOJWdxls5mo-6x",
+      "title": "Improvements to ZK error analysis script",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/57",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Change tau to r_succ since r_succ is the ultimate value that determines ZK error and soundness error.\r\nReuse code in PineValid to compute the number of bits needed for wraparound checks in find_wr_params.sage script.\r\nPrint parameters into a table, so it's easier to view and we may put it into the draft.",
+      "createdAt": "2024-02-12T14:10:02Z",
+      "updatedAt": "2024-02-12T16:11:41Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "230da39dbeb6d7e20aa07cb461f625ed9d5971f4",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/zk-script-improvement",
+      "headRefOid": "3d85f5d450f1958f459173334e5bd2fec2cfd724",
+      "closedAt": "2024-02-12T16:11:38Z",
+      "mergedAt": "2024-02-12T16:11:38Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "21c43447f9b3ed283cc44500001ab4e9411a72c7"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5vylnO",
+          "commit": {
+            "abbreviatedOid": "fdc3ad1"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-12T15:40:22Z",
+          "updatedAt": "2024-02-12T15:43:30Z",
+          "comments": [
+            {
+              "originalPosition": 56,
+              "body": "I agree with the comment, but it seems sensible to compute this properly, i.e., using `r * eta`.",
+              "createdAt": "2024-02-12T15:40:22Z",
+              "updatedAt": "2024-02-12T15:43:30Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "Consider passing `r_succ` here instead of `eta` for consistency.",
+              "createdAt": "2024-02-12T15:41:19Z",
+              "updatedAt": "2024-02-12T15:43:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5vy1NM",
+          "commit": {
+            "abbreviatedOid": "3d85f5d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-12T16:06:13Z",
+          "updatedAt": "2024-02-12T16:11:23Z",
+          "comments": [
+            {
+              "originalPosition": 41,
+              "body": "We need `eta` as well to compute `alpha`. I'm going to pass in both now.",
+              "createdAt": "2024-02-12T16:06:13Z",
+              "updatedAt": "2024-02-12T16:11:23Z"
             }
           ]
         }
