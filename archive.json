@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-18T01:16:14.008538+00:00",
+  "timestamp": "2024-02-20T01:10:56.159615+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -6981,6 +6981,32 @@
           ]
         }
       ]
+    },
+    {
+      "number": 58,
+      "id": "PR_kwDOJWdxls5nUEul",
+      "title": "Analyze overall soundness error of PINE",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/58",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Some results:\r\n\r\n```\r\n------- Target soundness error: 2^(-32)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|32        |32        |134            |129            |32             |672       |9.673410431465864   |\r\n|37        |36        |69             |128            |31             |740       |6.965651630622664   |\r\n|41        |39        |48             |130            |31             |820       |5.827882278103885   |\r\n|86        |71        |12             |135            |31             |1634      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |42        |Field64   |1         |32        |32        |134       |129       |32                  |54                  |\r\n|1         |15        |1000      |42        |Field128  |1         |32        |32        |134       |129       |32                  |118                 |\r\n|1         |15        |10000     |103       |Field64   |1         |32        |32        |134       |129       |32                  |54                  |\r\n|1         |15        |10000     |103       |Field128  |1         |32        |32        |134       |129       |32                  |118                 |\r\n|1         |15        |100000    |317       |Field64   |1         |32        |32        |134       |129       |32                  |53                  |\r\n|1         |15        |100000    |317       |Field128  |1         |32        |32        |134       |129       |32                  |117                 |\r\n\r\n------- Target soundness error: 2^(-64)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|64        |64        |134            |128            |64             |1344      |9.673410431465864   |\r\n|70        |69        |69             |126            |63             |1400      |6.965651630622664   |\r\n|75        |73        |48             |127            |63             |1500      |5.827882278103885   |\r\n|101       |93        |19             |130            |63             |1919      |3.723297411059034   |\r\n|127       |112       |12             |125            |63             |2413      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |49        |Field64   |2         |64        |64        |134       |128       |64                  |106                 |\r\n|1         |15        |1000      |49        |Field128  |1         |64        |64        |134       |128       |64                  |117                 |\r\n|1         |15        |10000     |107       |Field64   |2         |64        |64        |134       |128       |64                  |106                 |\r\n|1         |15        |10000     |107       |Field128  |1         |64        |64        |134       |128       |64                  |117                 |\r\n|1         |15        |100000    |318       |Field64   |2         |64        |64        |134       |128       |64                  |105                 |\r\n|1         |15        |100000    |318       |Field128  |1         |64        |64        |134       |128       |64                  |116                 |\r\n\r\n------- Target soundness error: 2^(-80)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|80        |80        |134            |127            |80             |1680      |9.673410431465864   |\r\n|86        |85        |69             |126            |79             |1720      |6.965651630622664   |\r\n|92        |90        |48             |127            |79             |1840      |5.827882278103885   |\r\n|146       |131       |12             |122            |79             |2774      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |53        |Field64   |2         |80        |80        |134       |127       |80                  |106                 |\r\n|1         |15        |1000      |53        |Field128  |1         |80        |80        |134       |127       |80                  |117                 |\r\n|1         |15        |10000     |108       |Field64   |2         |80        |80        |134       |127       |80                  |106                 |\r\n|1         |15        |10000     |108       |Field128  |1         |80        |80        |134       |127       |80                  |117                 |\r\n|1         |15        |100000    |319       |Field64   |2         |80        |80        |134       |127       |80                  |105                 |\r\n|1         |15        |100000    |319       |Field128  |1         |80        |80        |134       |127       |80                  |116                 |\r\n```\r\n",
+      "createdAt": "2024-02-19T17:15:05Z",
+      "updatedAt": "2024-02-19T17:15:26Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "21c43447f9b3ed283cc44500001ab4e9411a72c7",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/soundness",
+      "headRefOid": "905263321e97de40bb60fa232c174315f6ccd931",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
