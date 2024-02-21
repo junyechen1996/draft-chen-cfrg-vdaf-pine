@@ -8,18 +8,19 @@
 <meta content="Junye Chen" name="author">
 <meta content="Christopher Patton" name="author">
 <meta content="
-       A Verifiable Distributed Aggregation Function (VDAF) named
-Private Inexpensive Norm Enforcement (PINE) that supports aggregating
-high-dimensional real number vectors bounded by a configurable L2-norm bound,
-which is a fundamental primitive to support private federated learning. 
+       This document describes PINE, a Verifiable Distributed Aggregation Function
+(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
+to aggregation, each input vector is determined to have a bounded L2-norm,
+where the bound is determined by the applicaiton. Such a primitive can be used
+to facilitiate robust, federated machine learning. 
     " name="description">
-<meta content="xml2rfc 3.19.2" name="generator">
+<meta content="xml2rfc 3.19.4" name="generator">
 <meta content="next generation" name="keyword">
 <meta content="unicorn" name="keyword">
 <meta content="sparkling distributed ledger" name="keyword">
 <meta content="draft-chen-cfrg-vdaf-pine-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.19.2
+  xml2rfc 3.19.4
     Python 3.11.6
     ConfigArgParse 1.7
     google-i18n-address 3.1.0
@@ -1035,7 +1036,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Chen &amp; Patton</td>
-<td class="center">Expires 15 August 2024</td>
+<td class="center">Expires 24 August 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1048,12 +1049,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-chen-cfrg-vdaf-pine-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-02-12" class="published">12 February 2024</time>
+<time datetime="2024-02-21" class="published">21 February 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-08-15">15 August 2024</time></dd>
+<dd class="expires"><time datetime="2024-08-24">24 August 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1070,10 +1071,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Private Inexpensive Norm Enforcement (PINE) VDAF</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">A Verifiable Distributed Aggregation Function (VDAF) named
-Private Inexpensive Norm Enforcement (PINE) that supports aggregating
-high-dimensional real number vectors bounded by a configurable L2-norm bound,
-which is a fundamental primitive to support private federated learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document describes PINE, a Verifiable Distributed Aggregation Function
+(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
+to aggregation, each input vector is determined to have a bounded L2-norm,
+where the bound is determined by the applicaiton. Such a primitive can be used
+to facilitiate robust, federated machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1110,7 +1112,7 @@ which is a fundamental primitive to support private federated learning.<a href="
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 15 August 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 24 August 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1294,11 +1296,11 @@ which is a fundamental primitive to support private federated learning.<a href="
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">The goal of federated learning <span>[<a href="#MR17" class="cite xref">MR17</a>]</span> is to enable training of machine
-learning models from data stored on users' devices. The bulk of the computation
-is carried out on-device: each user trains the model on its data locally, then
-sends a model update to a central server. These model updates are commonly
-referred to as "gradients" <span>[<a href="#Lem12" class="cite xref">Lem12</a>]</span>. The server then aggregates the
+<p id="section-1-1">The goal of federated machine learning <span>[<a href="#MR17" class="cite xref">MR17</a>]</span> is to enable training of
+machine learning models from data stored on users' devices. The bulk of the
+computation is carried out on-device: each user trains the model on its data
+locally, then sends a model update to a central server. These model updates are
+commonly referred to as "gradients" <span>[<a href="#Lem12" class="cite xref">Lem12</a>]</span>. The server then aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <ul class="normal ulEmpty">
@@ -1319,57 +1321,32 @@ shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
 of the aggregate with the other servers to get the aggregate result.<a href="#section-1-4" class="pilcrow">¶</a></p>
 <p id="section-1-5">Along with keeping the gradients' privacy, it is also desirable to ensure
-robustness of the overall computation by preventing Clients from "poisoning"
-the aggregate and corrupting the trained machine learning model. A Client's
+robustness of the overall computation by preventing clients from "poisoning"
+the aggregate and corrupting the trained machine learning model. A client's
 gradient is typically expressed a vector of real numbers. A common goal is to
-ensure each gradient has a bounded Euclidean norm, also known as L2-norm,
-which is defined as the square root of the sum of square of all vector
-entries. L2-norm bound allows limiting the contribution from each Client
-across all entries, without imposing a limit on each entry,
-or the distribution of the Client vector.
-&gt; TODO(issue #22) add a formal reference about why using L2-norm.<a href="#section-1-5" class="pilcrow">¶</a></p>
-<p id="section-1-6">There have been various prior approaches to support secure aggregation systems
-for federated learning with the desired privacy and robustness guarantee,
-but they have various tradeoffs and limitations.
-For example, a proposed VDAF implementation in <span>[<a href="#DivviUpVDAF" class="cite xref">DivviUpVDAF</a>]</span> requires Clients
-to secret-share each bit of each vector value as a finite field element,
-which incurs a high communication overhead between Client and servers.
-The work of <span>[<a href="#Tal22" class="cite xref">Tal22</a>]</span> explores a more communication-efficient approach by
-secret sharing the real number directly to implement an approximate verification
-with differential privacy guarantee. However, the robustness guarantee is weak,
-and is ineffective in preventing malicious Clients in some use cases.
-&gt; TODO(issue #23) The proposed VDAF implementation in libprio-rs that achieves
-&gt; the same goal as PINE is not standardized. Is it better to just sketch
-&gt; out the approach, or mention some other prior work?<a href="#section-1-6" class="pilcrow">¶</a></p>
-<p id="section-1-7">This dcoument describes PINE ("P"rivate "I"nexpensive "N"orm
-"E"forcement"), a VDAF for secure aggregation of gradients with bounded
-L2-norm for federated learning. It achieves the above-mentioned privacy and
-robustness guarantees, by using many of the same techniques as
-Prio3 <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, including the use of Fully Linear Proofs (FLP)
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> for validating the gradients. However, PINE introduces
-a new technique and supporting analysis <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> that, for high-dimensional
-data, significantly improves communication cost compared to what appears to be
-possible for Prio3. The cost of this improvement is a modest loss in
-completeness: there is a non-zero, but negligible chance that Aggregators
-reject an honestly generated measurement.<a href="#section-1-7" class="pilcrow">¶</a></p>
-<p id="section-1-8">We give an overview of this technique in <a href="#overview" class="auto internal xref">Section 3</a>. In <a href="#flp" class="auto internal xref">Section 4</a>
-we describe our FLP for bounded L2 norm. In <a href="#vdaf" class="auto internal xref">Section 5</a> we describe the complete
-PINE VDAF. We aim to achieve the following properties in our VDAF:<a href="#section-1-8" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-1-9.1">
-          <p id="section-1-9.1.1">Gradients with invalid L2-norm from malicious Clients should be rejected with
-overwhelming probability.<a href="#section-1-9.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-9.2">
-          <p id="section-1-9.2.1">Gradients generated by honest Clients should be accepted with overwhelming
-probability.<a href="#section-1-9.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-9.3">
-          <p id="section-1-9.3.1">An attacker that controls the Collector, a subset of Clients, and all but one
-Aggregators, learns statistically close to nothing about the measurements of
-honest Clients.<a href="#section-1-9.3.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
+ensure each gradient has a bounded "L2-norm", sometimes called Euclidean norm:
+the square root of the sum of the squares of each entry of the input vector.
+Bounding the L2 norm is used in federated learning to limit the contribution of
+each client to the aggregate, without over constraining the distribution of
+inputs. [CP: Add a relevant reference.]<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">In theory, Prio3 (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be adapted to support this
+functionality, but the concrete cost in terms of runtime and communication
+would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
+Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be specified that computes the
+L2-norm of the gradient and checks that the result is in the desired range.
+This computation is not easy to do efficiently: the challenge lies in ensuring that
+the computation itself was carried out correctly, while properly accounting for
+the relevant mathematical details of the proof system (that is, the choice of
+finite field) and the range of possible inputs.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
+for secure aggregation of gradients with bounded L2-norm <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. Its design
+is based largely on Prio3 in that the norm is computed and verified using
+an FLP. However, PINE uses a new technique for verifying the correctness of
+the norm computation that is incompatible with Prio3.<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-8">We give an overview of this technique in <a href="#overview" class="auto internal xref">Section 3</a>. In <a href="#flp" class="auto internal xref">Section 4</a> we specify an
+FLP circuit and accompanying encoding scheme for computing and verifying the L2
+norm of each gradient. Finally, in <a href="#vdaf" class="auto internal xref">Section 5</a> we specify the complete
+multi-party, 1-round VDAF.<a href="#section-1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1384,20 +1361,20 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-2-2">This document uses the same parameters and conventions specified for:<a href="#section-2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2-3.1">
-          <p id="section-2-3.1.1">Definitions for VDAF in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.1.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.1.1">Clients, Aggregators, and Collectors from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-2-3.2">
-          <p id="section-2-3.2.1">Field elements in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.2.1">Finite fields from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-2-3.3">
-          <p id="section-2-3.3.1">Pseudorandom Generators in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-2-3.4">
-          <p id="section-2-3.4.1">Prio3 FLP system in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, with some extensions.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.3.1">XOFs ("eXtendable Output Functions") from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-2-4">The user-specified parameters to initialize PINE are defined in
-<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-4">A floating point number is XXX. [CP: Specify, with a relvant reference.]<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-5">A "gradient" is a vector of floating point numbers. Each coordinate of this
+vector is called an "entry".<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">The user-specified parameters to initialize PINE are defined in
+<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-6" class="pilcrow">¶</a></p>
 <span id="name-user-parameters-for-pine"></span><div id="pine-user-param">
 <table class="center" id="table-1">
         <caption>
@@ -1417,21 +1394,21 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <code>l2_norm_bound</code>
 </td>
             <td class="text-left" rowspan="1" colspan="1">float</td>
-            <td class="text-left" rowspan="1" colspan="1">L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors.</td>
+            <td class="text-left" rowspan="1" colspan="1">The L2-norm upper bound (inclusive).</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
               <code>dimension</code>
 </td>
-            <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-            <td class="text-left" rowspan="1" colspan="1">Client vector dimension.</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Dimension of each gradient.</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
               <code>num_frac_bits</code>
 </td>
-            <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-            <td class="text-left" rowspan="1" colspan="1">Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in <a href="#fp-encoding" class="auto internal xref">Section 4.2.1</a>.</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">The number of bits of precision to use when encoding each gradient entry into the field. At most XXX</td>
           </tr>
         </tbody>
       </table>
@@ -1444,37 +1421,33 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pine-overview" class="section-name selfRef">PINE Overview</a>
       </h2>
 <p id="section-3-1">In this section, we will give an overview of the main technical contribution of
-<span>[<a href="#PINE" class="cite xref">PINE</a>]</span> that allows the Aggregators holding secret shares of the Client
-measurement (e.g. gradient in federated learning) to verify it has a bounded
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> that allows the Aggregators holding secret shares of the Client
+measurement (e.g., a gradient in federated learning) to verify it has a bounded
 L2-norm, which is the square root of the sum of square of all vector entries.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">One way to achieve this is to use a Fully Linear Proof (FLP)
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. An FLP is an assertion about the validity of some
-input that can be checked by the Aggregator (or jointly by the Aggregators
-in our case) without learning the input. Validity is typically expressed as a
-circuit evaluated on the input over a finite field, denoted by <code>Field</code> in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. Let <code>q</code> denote the field size. In our case, the
-circuit would compute the sum of square of all entries, i.e. squared L2-norm,
-modulo field size <code>q</code>, and check the result is in the desired range.
-Note we don't take the square root, because it's more efficient and
-mathematically equivalent to verify the result in squared L2-norm.<a href="#section-3-2" class="pilcrow">¶</a></p>
-<p id="section-3-3">However, it is challenging to bound each field element in the vector, which
-allows a malicious Client to send a vector that causes the computation of sum
-of squares to overflow, or "wrap around" field size. When Aggregators evaluate
-this computation over secret shares of field integer vector, there is no way
-for the Aggregators to determine if wraparound has happened, and Aggregators
-may accept the vector from the malicious Client, which causes the final
-aggregate to be corrupted.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">One way to resolve this issue is to encode each coordinate of the vector
-as its binary representation, send each bit as an individual field element,
-and enforce a dimension limit on the Client vector.
-By checking each field element is indeed a bit, the Aggregators can naturally
-bound each vector entry, and with a dimension limit, Aggregators can ensure
-that computing sum of squares won't wrap around field size <code>q</code>. However,
-this approach results in a significant amount of communication overhead
-between Client and Aggregators, because the Client needs to send at least
-<code>num_frac_bits * dimension</code> field elements, with <code>num_frac_bits</code> and
-<code>dimension</code> specified by users in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">PINE takes a different approach. Instead of encoding the coordinates of a
+<p id="section-3-2">One way to achieve this is to use an FLP ("Fully Linear Proof"; see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>). An FLP is an assertion about the validity of some input that
+can be checked jointly by the Aggregators who only hold secret shares of the
+input. Validity is expressed as a circuit evaluated on the input over a finite
+field, denoted by <code>Field</code> in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. Let <code>q</code> denote the field
+size. In our case, the circuit would compute the sum of the squares of the
+entries of the gradient vector, that is the squared L2-norm, and check that the
+result is in the desired range. Note that there is no need to compute the exact
+L2-norm (i.e., the square root of the sum); it suffices to compute the squared
+L2-norm and check that it is smaller than the square of the bound.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">Crucially, arithmetic in this computation is modulo the field size <code>q</code>. This
+means that, for a given gradient, the norm may have a different result when
+computed in our finite field versus the ring of integers. For example, suppose
+our bound is <code>10</code>: the gradient <code>[99, 0, 7]</code> has squared L2-norm of <code>9850</code> over
+the integers (out of range), but only <code>6</code> modulo <code>q = 23</code> (in range). This is
+because the sum of the squares "wraps around" the field modulus <code>q</code>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">Thus the central challenge of adapting FLPs to this problem is preventing such
+"wraparounds".<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">One way to do this is to encode each entry of the gradient such that the
+Aggregators are assured that each entry falls in a range that ensures the norm
+does not wrap around the field modulus. However, this approach has relatively
+high communication overhead between the Client and Aggregators, roughly
+<code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">[CP: Got here.]<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">PINE takes a different approach. Instead of encoding the coordinates of a
 vector in their binary representation, we devise a randomized test that can
 detect whether there is a wraparound when computing the sum of squares over
 a finite field. After Aggregators have carried out L2-norm check on the
@@ -1482,37 +1455,37 @@ secret-shared field integer vector, we know either the Client vector is
 bounded by the desired L2-norm, or the L2-norm is at least <code>q</code>.
 Then we test for this wraparound by taking a dot product of the Client's
 vector, with a random vector, each element of which is -1 (or <code>q-1</code>), <code>0</code>,
-or <code>1</code> with respective probability. In <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> it is demonstrated
+or <code>1</code> with respective probability. In <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> it is demonstrated
 that if there is wraparound, the dot product is likely to be large. On the
 other hand, if the sum of the squared entries was small to begin with, then
-the dot product will be small with high probability.<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">It's worth noting that each wraparound check has a probability of a false
+the dot product will be small with high probability.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8">It's worth noting that each wraparound check has a probability of a false
 negative that the measurement from a malicious Client is accepted, and the
 probability of a false positive that the measurement from an honest Client
 is rejected. Therefore, in order to make both probabilities negligible, we
-run the wraparound checks multiple times.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">It's also worth noting the following differences between PINE and other
-standardized VDAFs like Prio3:<a href="#section-3-7" class="pilcrow">¶</a></p>
+run the wraparound checks multiple times.<a href="#section-3-8" class="pilcrow">¶</a></p>
+<p id="section-3-9">It's also worth noting the following differences between PINE and other
+standardized VDAFs like Prio3:<a href="#section-3-9" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3-8.1">
-          <p id="section-3-8.1.1">There is a negligible probability of false positives that a valid Client
+<li class="normal" id="section-3-10.1">
+          <p id="section-3-10.1.1">There is a negligible probability of false positives that a valid Client
 measurement is rejected by the Aggregators, while Prio3 VDAFs always
-accept valid Client measurements.<a href="#section-3-8.1.1" class="pilcrow">¶</a></p>
+accept valid Client measurements.<a href="#section-3-10.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-8.2">
-          <p id="section-3-8.2.1">Due to the negligible probability of false positives, PINE provides a
+        <li class="normal" id="section-3-10.2">
+          <p id="section-3-10.2.1">Due to the negligible probability of false positives, PINE provides a
 strong, statistical zero-knowledge guarantee, instead of the perfect
 zero-knowledge guarantee provided by Prio3 VDAFs, because a false
 positive case can leak "some" information about the measurement from an
 honest Client. The internal parameters in PINE are thus chosen to make
-the probability of false positives negligible.<a href="#section-3-8.2.1" class="pilcrow">¶</a></p>
+the probability of false positives negligible.<a href="#section-3-10.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-8.3">
-          <p id="section-3-8.3.1">The random vectors in wraparound check need to be generated in a
+        <li class="normal" id="section-3-10.3">
+          <p id="section-3-10.3.1">The random vectors in wraparound check need to be generated in a
 non-interactive way and agreed by both the Client and Aggregators.
 The randomness generation technique is very similar to the technique
 used for joint randomness in Prio3 (Fiat-Shamir heuristic), and we
-refer to it as "wraparound joint randomness".<a href="#section-3-8.3.1" class="pilcrow">¶</a></p>
+refer to it as "wraparound joint randomness".<a href="#section-3-10.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
@@ -1548,9 +1521,9 @@ user-specified parameters, and the soundness and completeness error target.<a hr
               <td class="text-left" rowspan="1" colspan="1">
                 <code>Field</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Type in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.1.3" class="relref">Section 6.1.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
+              <td class="text-left" rowspan="1" colspan="1">Type in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1.3" class="relref">Section 6.1.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Field element type chosen for an instantiation of PINE. Field modulus is referred to as <code>q</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Field element type chosen for an instantiation of PINE. Field modulus is referred to as <code>q</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1564,7 +1537,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>encoded_sq_l2_norm_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Equal to <code>encoded_l2_norm_bound * encoded_l2_norm_bound</code>. It is referred to as <code>B</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Equal to <code>encoded_l2_norm_bound * encoded_l2_norm_bound</code>. It is referred to as <code>B</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1578,7 +1551,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>num_wr_reps</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-              <td class="text-left" rowspan="1" colspan="1">Number of wraparound check repetitions. It is referred to as <code>r</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Number of wraparound check repetitions. It is referred to as <code>r</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1613,14 +1586,14 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>abs_wr_lower_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of <code>L</code> in Remark 4.11 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of <code>L</code> in Remark 4.11 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>abs_wr_upper_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive upper bound of wraparound check result. It is referred to as <code>H</code> in Remark 4.11 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive upper bound of wraparound check result. It is referred to as <code>H</code> in Remark 4.11 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1640,7 +1613,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
         </table>
 </div>
 <p id="section-4.1-3">The operational parameters to instantiate an FLP for PINE include all the FLP
-parameters in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, except for <code>JOINT_RAND_LEN</code>, which now
+parameters in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, except for <code>JOINT_RAND_LEN</code>, which now
 includes the number of field elements for both wraparound joint randomness
 needed to compute wraparound check <a href="#wraparound" class="auto internal xref">Section 7.1.3</a> and verification joint
 randomness to reduce over multiple circuit outputs. The new operational
@@ -1668,7 +1641,7 @@ parameters for PINE FLP are listed in <a href="#pine-flp-param" class="auto inte
               <td class="text-left" rowspan="1" colspan="1">
                 <code>VERIFICATION_JOINT_RAND_LEN</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Length of joint randomness used to reduce over multiple circuit outputs in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, to trade a small soundness error for a shorter proof, as described in Remark 4.8 of <span>[<a href="#BBCGGI19" class="cite xref">BBCGGI19</a>]</span>.</td>
+              <td class="text-left" rowspan="1" colspan="1">Length of joint randomness used to reduce over multiple circuit outputs in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, to trade a small soundness error for a shorter proof, as described in Remark 4.8 of <span>[<a href="#BBCGGI19" class="cite xref">BBCGGI19</a>]</span>.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1686,7 +1659,7 @@ parameters for PINE FLP are listed in <a href="#pine-flp-param" class="auto inte
 describe the end-to-end FLP, including the wraparound check, the bit checks,
 and the norm check.<a href="#section-4.1-5.1.1" class="pilcrow">¶</a></p>
 <p id="section-4.1-5.1.2">Say up front that we're describing an instance of FlpGeneric
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, i.e., we're describing an arithmetic circuit.<a href="#section-4.1-5.1.2" class="pilcrow">¶</a></p>
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, i.e., we're describing an arithmetic circuit.<a href="#section-4.1-5.1.2" class="pilcrow">¶</a></p>
 <p id="section-4.1-5.1.3">Assume you get the wraparound randomness and joint randomness from the sky.
 (We'll describe how it's derived in the next section.) Then put them together
 into an implementation of the Flp interface.<a href="#section-4.1-5.1.3" class="pilcrow">¶</a></p>
@@ -1701,7 +1674,7 @@ into an implementation of the Flp interface.<a href="#section-4.1-5.1.3" class="
         </h3>
 <p id="section-4.2-1">The Client measurement in PINE is expressed as a vector of real numbers, but
 the computations required to verify L2-norm and perform aggregation are carried
-out in field integers <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. Therefore, Clients are expected
+out in field integers <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. Therefore, Clients are expected
 to encode their vectors of real numbers into vectors of field integers, and the
 final aggregation is presented as a vector of IEEE-754 compatible float64
 <span>[<a href="#IEEE754-2019" class="cite xref">IEEE754-2019</a>]</span> values.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
@@ -1824,7 +1797,7 @@ Therefore, we must check that
                 <code>num_gadget_proof_reps</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-              <td class="text-left" rowspan="1" colspan="1">Number of proof repetitions of using gadgets <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as <code>t</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Number of proof repetitions of using gadgets <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as <code>t</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
           </tbody>
         </table>
@@ -1888,7 +1861,7 @@ and submit them to the Aggregators.<a href="#section-7.1.1-1" class="pilcrow">¶
 <p id="section-7.1.1-2">The Aggregators <span class="bcp14">MUST</span> verify the indices that are expected to be bits are
 indeed 0 or 1.<a href="#section-7.1.1-2" class="pilcrow">¶</a></p>
 <p id="section-7.1.1-3">The Client and Aggregators can follow the proof system constructed in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> that computes a random linear combination of
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> that computes a random linear combination of
 the <code>Range2</code> polynomial (<code>Range2(x) = x^2 - x</code>) evaluated at all indices
 that are expected to be bits, with the verification joint randomness derived
 in <a href="#pine-verification-joint-randomness" class="auto internal xref">Section 8.2.2</a>.<a href="#section-7.1.1-3" class="pilcrow">¶</a></p>
@@ -1923,7 +1896,7 @@ with respect to <code>t</code>, i.e. <code>(2 * sqrt(n_b) / (q - sqrt(n_b)) + n_
 L2-norm) of values in <code>X</code> modulo field size <code>q</code> is at most <code>B</code>, which is the
 squared L2-norm bound in field integer.<a href="#section-7.1.2-1" class="pilcrow">¶</a></p>
 <p id="section-7.1.2-2">To verify this inequality, we will first turn this inequality check into an
-equality check, per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>, with <code>\beta_1</code> equal to 0,
+equality check, per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>, with <code>\beta_1</code> equal to 0,
 and <code>\beta_2</code> equal to <code>B</code>. Additionally, the minimum field size requirement for
 this protocol <span class="bcp14">MUST</span> be at least <code>3 * B + 2</code>.<a href="#section-7.1.2-2" class="pilcrow">¶</a></p>
 <p id="section-7.1.2-3">Clients are expected to compute <code>V0 = \SUM_i X[i]^2</code>, and also the difference
@@ -1943,18 +1916,18 @@ achieved by 0/1 bit check protocol <a href="#bit-check" class="auto internal xre
 </li>
             <li id="section-7.1.2-7.2">
               <p id="section-7.1.2-7.2.1">The computed squared L2-norm from the secret shares of <code>X</code> matches the
-secret-shared bit representation of <code>V0</code>, as per Section 4.3 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.2-7.2.1" class="pilcrow">¶</a></p>
+secret-shared bit representation of <code>V0</code>, as per Section 4.3 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.2-7.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.2-7.3">
               <p id="section-7.1.2-7.3.1"><code>V0 + U0 = B</code>, based on the secret-shared bit representation of <code>V0</code>
-and <code>U0</code>, as per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.2-7.3.1" class="pilcrow">¶</a></p>
+and <code>U0</code>, as per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.2-7.3.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 <p id="section-7.1.2-8">It's important to recognize that verifying property 2 involves a
 non-affine operation, that is a degree-2 polynomial to square each value in <code>X</code>,
 <code>Sq(x) = x^2</code>. Then we verify the summation of the polynomials is equal to
-<code>V0</code>. We will again use the same proof system in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> and
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, by constructing a degree-2 polynomial gadget
+<code>V0</code>. We will again use the same proof system in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> and
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, by constructing a degree-2 polynomial gadget
 at each value of <code>X</code> and computing the summations of the gadgets. Specifically,
 assume <code>inp</code> is the final vector from the Client, and the vector has the first
 <code>d</code> entries for <code>X</code>, and next <code>b0</code> entries for <code>V0</code>, and next <code>b0</code> entries
@@ -2044,7 +2017,7 @@ modulo <code>q</code> falls in <code>[q - abs(L), q)</code> or <code>[0, H]</cod
 repetition, and fails otherwise.<a href="#section-7.1.3-4" class="pilcrow">¶</a></p>
 <p id="section-7.1.3-5">We ask Clients to repeat the procedure for <code>r</code> number of times, to reduce the
 overall soundness and completeness error of this protocol, with motivations
-described in Section 4.2 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>. We define a threshold <code>TAU</code>, so that
+described in Section 4.2 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. We define a threshold <code>TAU</code>, so that
 the Clients are required to pass at least <code>TAU * r</code> repetitions. Otherwise,
 Clients <span class="bcp14">SHOULD</span> retry, but Aggregators <span class="bcp14">MUST</span> reject.<a href="#section-7.1.3-5" class="pilcrow">¶</a></p>
 <p id="section-7.1.3-6">To be more specific about each repetition <code>k</code> of wraparound protocol, assuming
@@ -2056,7 +2029,7 @@ following:<a href="#section-7.1.3-6" class="pilcrow">¶</a></p>
 encodes its bit representation. Now <code>V1_k</code> <span class="bcp14">MUST</span> be in <code>[0, H + abs(L)]</code>.
 In order for Aggregators to verify <code>V1_k</code> doesn't exceed <code>H + abs(L)</code>, the
 Client also computes <code>U1_k = H + abs(L) - V1_k</code>, so Aggregators can run the
-protocol in Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> to turn this inequality check into
+protocol in Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> to turn this inequality check into
 equality check.<a href="#section-7.1.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.3-7.2">
@@ -2088,7 +2061,7 @@ achieved by <a href="#bit-check" class="auto internal xref">Section 7.1.1</a>.<a
 </li>
             <li id="section-7.1.3-11.2">
               <p id="section-7.1.3-11.2.1">For each repetition <code>k</code>, verify the linear equality
-<code>V1_k + U1_k = H + abs(L)</code>, per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+<code>V1_k + U1_k = H + abs(L)</code>, per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 This verifies <code>V1_k</code> doesn't exceed <code>H + abs(L)</code>.<a href="#section-7.1.3-11.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.3-11.3">
@@ -2106,7 +2079,7 @@ ensures at least one of <code>g_k</code> and <code>S_k</code> is 0, i.e. if succ
               <p id="section-7.1.3-11.5.1"><code>\SUM_k g_k = TAU * r</code>, the Client has passed at least <code>TAU * r</code> repetitions.<a href="#section-7.1.3-11.5.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
-<p id="section-7.1.3-12">It is important to notice an optimization proposed in Remark 4.12 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>,
+<p id="section-7.1.3-12">It is important to notice an optimization proposed in Remark 4.12 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>,
 that if we can come up with wraparound protocol bounds
 <code>L &gt;= -ALPHA * sqrt(B)</code> and <code>H &lt;= ALPHA * sqrt(B)</code>, such that <code>H + L + 1</code> is a
 power of 2, we can avoid asking Clients to send <code>U1_k</code> for each repetition, and
@@ -2181,8 +2154,8 @@ when the number of Aggregators is <code>SHARES</code>.<a href="#section-7.1.3-26
 <p id="section-7.1.3-27"><code>WC_0</code> and <code>WC_2</code> only contain affine operations, so each Aggregator
 can compute its local outputs and exchange them with other Aggregators, but
 <code>WC_1</code> contains a non-affine operation, on two variables that are both
-secret-shared. We will again use the proof system in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
-and <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> to construct a <code>Mul</code> gadget between <code>g_k</code> and
+secret-shared. We will again use the proof system in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
+and <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> to construct a <code>Mul</code> gadget between <code>g_k</code> and
 <code>S_k</code>, and computes a random linear combination of all <code>Mul</code> gadget results.
 That is, with verification joint randomness <code>r_v</code> derived in
 <a href="#pine-verification-joint-randomness" class="auto internal xref">Section 8.2.2</a>, the following circuit is expected
@@ -2199,7 +2172,7 @@ characterized from the following aspects:<a href="#section-7.1.3-29" class="pilc
 <li class="normal" id="section-7.1.3-30.1">
               <p id="section-7.1.3-30.1.1">Soundness: The soundness error of one repetition of wraparound protocol is
 1/2. Over <code>r</code> repetitions, the soundness error is therefore
-<code>Bin((TAU * r); r, 1/2)</code>, see Lemma 4.3 and also Claim 4.9 in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+<code>Bin((TAU * r); r, 1/2)</code>, see Lemma 4.3 and also Claim 4.9 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 There is also a soundness error when we verify the degree-2 polynomial in
 <code>WC_1</code> over all <code>r</code> repetitions. The soundness error is computed based on
 Corollary 4.7 and Remark 4.8 of <span>[<a href="#BBCGGI19" class="cite xref">BBCGGI19</a>]</span>,
@@ -2210,17 +2183,17 @@ over <code>t</code> repetitions, the overall soundness error is
             <li class="normal" id="section-7.1.3-30.2">
               <p id="section-7.1.3-30.2.1">Completeness: The completeness error of one repetition of wraparound protocol
 is <code>ETA</code>, or <code>2 / e^(ALPHA' ^ 2)</code>, where <code>ALPHA'</code> is the actual parameter used
-after applying optimization in Remark 4.12 in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+after applying optimization in Remark 4.12 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 Therefore, the completeness error over all repetitions is
 <code>1 - Bin((TAU * r); r, 1 - ETA)</code>, see Lemma 4.3 and also Claim 4.9 in
-<span>[<a href="#PINE" class="cite xref">PINE</a>]</span>. This is the probability that a Client fails more than
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. This is the probability that a Client fails more than
 <code>(1 - TAU) * r</code> repetitions.<a href="#section-7.1.3-30.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-7.1.3-30.3">
               <p id="section-7.1.3-30.3.1"><code>rho</code>-Statistical Zero-Knowledge: Aggregators learn close to nothing about
 an honest Client. The zero knowledge leakage is quantified by the
 completeness error <code>rho</code> from above, which is negligible. See discussion in
-Lemma 4.3 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.3-30.3.1" class="pilcrow">¶</a></p>
+Lemma 4.3 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.3-30.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>
@@ -2290,7 +2263,7 @@ evaluate to 0:<a href="#section-7.1.4-5" class="pilcrow">¶</a></p>
 <a href="#section-8" class="section-number selfRef">8. </a><a href="#name-pine-fully-linear-proof-flp" class="section-name selfRef">PINE Fully Linear Proof (FLP) in VDAF</a>
       </h2>
 <p id="section-8-1">We aim to define a FLP for PINE that reuses most of Prio3 FLP components in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, with a new type of joint randomness named
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1" class="relref">Section 7.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, with a new type of joint randomness named
 "wraparound joint randomness" to support wraparound protocol <a href="#wraparound" class="auto internal xref">Section 7.1.3</a>
 in PINE.<a href="#section-8-1" class="pilcrow">¶</a></p>
 <p id="section-8-2">We will introduce PINE FLP in the following steps:<a href="#section-8-2" class="pilcrow">¶</a></p>
@@ -2379,7 +2352,7 @@ a prime, and not divisible by 2 or 4.<a href="#section-8.1-7.1.1" class="pilcrow
 </li>
         </ul>
 <p id="section-8.1-8">We would like to directly reuse these two functions from Prio3 FLP in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.1.1" class="relref">Section 7.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, specifically:<a href="#section-8.1-8" class="pilcrow">¶</a></p>
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.1" class="relref">Section 7.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, specifically:<a href="#section-8.1-8" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.1-9.1">
             <p id="section-8.1-9.1.1"><code>Flp.truncate(input: Vec[Field]) -&gt; Vec[Field]</code> takes the first <code>OUTPUT_LEN</code>
@@ -2462,7 +2435,7 @@ Aggregator can use the joint randomness seed to generate the <code>Z</code> vect
 <a href="#section-8.2.2" class="section-number selfRef">8.2.2. </a><a href="#name-verification-joint-randomne" class="section-name selfRef">Verification Joint Randomness</a>
           </h4>
 <p id="section-8.2.2-1">In 0/1 bit check protocol and wraparound protocol, we use the extensions in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> to compute a random linear combination of multiple
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> to compute a random linear combination of multiple
 repeated degree-2 polynomials, which allows us to trade a small soundness error
 for a shorter proof, as described in Remark 4.8 of <span>[<a href="#BBCGGI19" class="cite xref">BBCGGI19</a>]</span>. We call the
 coefficient of the random linear combination as "verification joint randomness",
@@ -2501,7 +2474,7 @@ to derive its verification joint randomness seed part.<a href="#section-8.2.2-4"
         <h3 id="name-pine-flp-instantiation">
 <a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-pine-flp-instantiation" class="section-name selfRef">PINE FLP Instantiation</a>
         </h3>
-<p id="section-8.3-1">This section instantiates <code>FlpGeneric</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.2" class="relref">Section 7.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) for PINE
+<p id="section-8.3-1">This section instantiates <code>FlpGeneric</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.2" class="relref">Section 7.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) for PINE
 by specifying the validity circuit and parameters.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <p id="section-8.3-2">The encoding and decoding interface for PINE are defined as the following
 based on <a href="#pine-flp-encoding" class="auto internal xref">Section 8.1</a>:<a href="#section-8.3-2" class="pilcrow">¶</a></p>
@@ -2568,7 +2541,7 @@ def finalize_encoding_with_wraparound_joint_rand(
     # Keep track of the "difference" field elements for each
     # repetition, i.e. the difference between the shifted wraparound
     # check result and the shifted upper bound.
-    # It is referred to as `s` in {{PINE}} paper.
+    # It is referred to as `s` in {{ROCT23}} paper.
     diff_field_elems = []
     # Keep track of the number of passing repetitions in
     # `num_passed_wr_reps`. If the Client has passed more than
@@ -2779,7 +2752,7 @@ def wraparound_check(Pine,
         # repetition.
         diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
         # This equation should be equal to 0, i.e. bullet point 3
-        # in Figure 2 in {{PINE}} paper.
+        # in Figure 2 in {{ROCT23}} paper.
         check = dot_prod_res + abs_wr_lower_bound_shares - \
             shifted_wr_res - diff_field_elem
         checks.append(check)
@@ -2911,7 +2884,7 @@ def pine_valid(Pine,
               <td class="text-left" rowspan="1" colspan="1">
                 <code>Field</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Defined during instantiation of PINE, based on the parameters in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
+              <td class="text-left" rowspan="1" colspan="1">Defined during instantiation of PINE, based on the parameters in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
 </td>
             </tr>
           </tbody>
@@ -2939,7 +2912,7 @@ includes both wraparound joint randomness and verification joint randomness.<a h
             <p id="section-8.4-2.2.1"><code>Flp.query(input: Vec[Field], proof: Vec[Field], query_rand: Vec[Field],
 joint_rand: Vec[Field], num_shares: Unsigned) -&gt; Vec[Field]</code> is the
 query-generation algorithm run by the verifier, as described in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.3.3.2" class="relref">Section 7.3.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. This allows verifiers to verify all the protocol
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.3.2" class="relref">Section 7.3.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. This allows verifiers to verify all the protocol
 outputs in PINE, and also verify each degree-2 polynomial is well-formed.<a href="#section-8.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.4-2.3">
@@ -2988,8 +2961,8 @@ def run_pine_flp(Pine.Flp,
 <a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-flp-construction-in-vdaf" class="section-name selfRef">FLP Construction in VDAF</a>
         </h3>
 <p id="section-8.5-1">Putting everything together, we will describe how PINE fits into the <code>Vdaf</code>
-interface <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. It reuses the same VDAF parameters and
-constants in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.2" class="relref">Section 7.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> as Prio3.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+interface <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. It reuses the same VDAF parameters and
+constants in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.2" class="relref">Section 7.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> as Prio3.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 <div id="pine-flp-sharding">
 <section id="section-8.5.1">
           <h4 id="name-sharding">
@@ -3032,8 +3005,8 @@ joint randomness and verification joint randomness.<a href="#section-8.5.1-2.7.1
 shares (called the "leader" shares below) are vectors of field elements. The
 other shares (called the "helper" shares) are represented instead by PRG seeds,
 which are expanded into vectors of field elements.<a href="#section-8.5.1-3" class="pilcrow">¶</a></p>
-<p id="section-8.5.1-4">We reuse the <code>Prg</code> interface in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, the parameters and
-constants in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.2" class="relref">Section 7.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> for Prio3.
+<p id="section-8.5.1-4">We reuse the <code>Prg</code> interface in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, the parameters and
+constants in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.2" class="relref">Section 7.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> for Prio3.
 We also define some auxiliary functions in <a href="#pine-auxiliary" class="auto internal xref">Section 8.6</a> for joint
 randomness derivation and message serialization.<a href="#section-8.5.1-4" class="pilcrow">¶</a></p>
 <span id="name-input-distribution-algorith"></span><div id="pine-eval-input">
@@ -3185,7 +3158,7 @@ def measurement_to_input_shares(Pine, measurement, nonce, rand):
 <a href="#section-8.5.2" class="section-number selfRef">8.5.2. </a><a href="#name-preparation" class="section-name selfRef">Preparation</a>
           </h4>
 <p id="section-8.5.2-1">This section is similar to the preparation step specified in
-<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.2.2" class="relref">Section 7.2.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, except Aggregators need to derive the same
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.2.2" class="relref">Section 7.2.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, except Aggregators need to derive the same
 wraparound joint randomness and the verification joint randomness as the Client,
 specified in <a href="#pine-joint-randomness" class="auto internal xref">Section 8.2</a>.<a href="#section-8.5.2-1" class="pilcrow">¶</a></p>
 <p id="section-8.5.2-2">It is important that Aggregators compute the same joint randomness seed.
@@ -3346,7 +3319,7 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
           <h4 id="name-aggregation">
 <a href="#section-8.5.3" class="section-number selfRef">8.5.3. </a><a href="#name-aggregation" class="section-name selfRef">Aggregation</a>
           </h4>
-<p id="section-8.5.3-1">Similar to Prio3 aggregation in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06#section-7.2.4" class="relref">Section 7.2.4</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, aggregating a set of
+<p id="section-8.5.3-1">Similar to Prio3 aggregation in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.2.4" class="relref">Section 7.2.4</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, aggregating a set of
 output shares is simply a matter of adding up the vectors element-wise.<a href="#section-8.5.3-1" class="pilcrow">¶</a></p>
 <span id="name-aggregation-algorithm-for-p"></span><div id="pine-out2agg">
 <figure id="figure-4">
@@ -3858,7 +3831,7 @@ measurements of honest Clients.<a href="#section-9-2.3.1" class="pilcrow">¶</a>
 <dd class="break"></dd>
 <dt id="VDAF">[VDAF]</dt>
       <dd>
-<span class="refAuthor">Barnes, R.</span>, <span class="refAuthor">Cook, D.</span>, <span class="refAuthor">Patton, C.</span>, and <span class="refAuthor">P. Schoppmann</span>, <span class="refTitle">"Verifiable Distributed Aggregation Functions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-vdaf-06</span>, <time datetime="2023-06-15" class="refDate">15 June 2023</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-06</a>&gt;</span>. </dd>
+<span class="refAuthor">Barnes, R.</span>, <span class="refAuthor">Cook, D.</span>, <span class="refAuthor">Patton, C.</span>, and <span class="refAuthor">P. Schoppmann</span>, <span class="refTitle">"Verifiable Distributed Aggregation Functions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-vdaf-08</span>, <time datetime="2023-11-20" class="refDate">20 November 2023</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -3889,9 +3862,9 @@ measurements of honest Clients.<a href="#section-9-2.3.1" class="pilcrow">¶</a>
         <dd>
 <span class="refAuthor">McMahan, B.</span> and <span class="refAuthor">D. Ramage</span>, <span class="refTitle">"Federated Learning: Collaborative Machine Learning without Centralized Training Data"</span>, <time datetime="2017" class="refDate">2017</time>, <span>&lt;<a href="https://ai.googleblog.com/2017/04/federated-learning-collaborative.html">https://ai.googleblog.com/2017/04/federated-learning-collaborative.html</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="PINE">[PINE]</dt>
+<dt id="ROCT23">[ROCT23]</dt>
         <dd>
-<span class="refTitle">"[TODO: Add arxiv link when it's ready]"</span>, <span>n.d.</span>. </dd>
+<span class="refTitle">"PINE: Efficient Norm-Bound Verification for Secret-Shared Vectors"</span>, <time datetime="2023" class="refDate">2023</time>, <span>&lt;<a href="https://arxiv.org/abs/2311.10237">https://arxiv.org/abs/2311.10237</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="Tal22">[Tal22]</dt>
       <dd>
