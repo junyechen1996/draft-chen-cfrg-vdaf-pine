@@ -66,8 +66,15 @@ informative:
     date: 2012
     target: https://www.elibm.org/article/10011456
 
-  PINE:
-    title: "[TODO: Add arxiv link when it's ready]"
+  ROCT23:
+    title: "PINE: Efficient Norm-Bound Verification for Secret-Shared Vectors"
+    auhtor:
+      - ins: G.N. Rothblum
+      - ins: E. Omri
+      - ins: J. Chen
+      - ins: K. Talwar
+    date: 2023
+    target: https://arxiv.org/abs/2311.10237
 
   Tal22:
     title: "Differential Secrecy for Distributed Data and Applications to Robust Differentially Secure Vector Summation"
@@ -87,21 +94,21 @@ informative:
 
 --- abstract
 
-A Verifiable Distributed Aggregation Function (VDAF) named
-Private Inexpensive Norm Enforcement (PINE) that supports aggregating
-high-dimensional real number vectors bounded by a configurable L2-norm bound,
-which is a fundamental primitive to support private federated learning.
-
+This document describes PINE, a Verifiable Distributed Aggregation Function
+(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
+to aggregation, each input vector is determined to have a bounded L2-norm,
+where the bound is determined by the applicaiton. Such a primitive can be used
+to facilitiate robust, federated machine learning.
 
 --- middle
 
 # Introduction
 
-The goal of federated learning {{MR17}} is to enable training of machine
-learning models from data stored on users' devices. The bulk of the computation
-is carried out on-device: each user trains the model on its data locally, then
-sends a model update to a central server. These model updates are commonly
-referred to as "gradients" {{Lem12}}. The server then aggregates the
+The goal of federated machine learning {{MR17}} is to enable training of
+machine learning models from data stored on users' devices. The bulk of the
+computation is carried out on-device: each user trains the model on its data
+locally, then sends a model update to a central server. These model updates are
+commonly referred to as "gradients" {{Lem12}}. The server then aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.
 
@@ -116,61 +123,41 @@ the aggregation step across multiple servers such that no server sees any
 gradient in the clear.
 
 In a Verifiable Distributed Aggregation Function
-{{!VDAF=I-D.draft-irtf-cfrg-vdaf-06}}, this is achieved by having each user
+{{!VDAF=I-D.draft-irtf-cfrg-vdaf-08}}, this is achieved by having each user
 shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
 of the aggregate with the other servers to get the aggregate result.
 
 Along with keeping the gradients' privacy, it is also desirable to ensure
-robustness of the overall computation by preventing Clients from "poisoning"
-the aggregate and corrupting the trained machine learning model. A Client's
+robustness of the overall computation by preventing clients from "poisoning"
+the aggregate and corrupting the trained machine learning model. A client's
 gradient is typically expressed a vector of real numbers. A common goal is to
-ensure each gradient has a bounded Euclidean norm, also known as L2-norm,
-which is defined as the square root of the sum of square of all vector
-entries. L2-norm bound allows limiting the contribution from each Client
-across all entries, without imposing a limit on each entry,
-or the distribution of the Client vector.
-> TODO(issue #22) add a formal reference about why using L2-norm.
+ensure each gradient has a bounded "L2-norm", sometimes called Euclidean norm:
+the square root of the sum of the squares of each entry of the input vector.
+Bounding the L2 norm is used in federated learning to limit the contribution of
+each client to the aggregate, without over constraining the distribution of
+inputs. [CP: Add a relevant reference.]
 
-There have been various prior approaches to support secure aggregation systems
-for federated learning with the desired privacy and robustness guarantee,
-but they have various tradeoffs and limitations.
-For example, a proposed VDAF implementation in {{DivviUpVDAF}} requires Clients
-to secret-share each bit of each vector value as a finite field element,
-which incurs a high communication overhead between Client and servers.
-The work of {{Tal22}} explores a more communication-efficient approach by
-secret sharing the real number directly to implement an approximate verification
-with differential privacy guarantee. However, the robustness guarantee is weak,
-and is ineffective in preventing malicious Clients in some use cases.
-> TODO(issue #23) The proposed VDAF implementation in libprio-rs that achieves
-> the same goal as PINE is not standardized. Is it better to just sketch
-> out the approach, or mention some other prior work?
+In theory, Prio3 ({{Section 7 of !VDAF}}) could be adapted to support this
+functionality, but the concrete cost in terms of runtime and communication
+would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
+Proof", see {{Section 7.3 of !VDAF}}) could be specified that computes the
+L2-norm of the gradient and checks that the result is in the desired range.
+This computation is not easy to do efficiently: the challenge lies in ensuring that
+the computation itself was carried out correctly, while properly accounting for
+the relevant mathematical details of the proof system (that is, the choice of
+finite field) and the range of possible inputs.
 
-This dcoument describes PINE ("P"rivate "I"nexpensive "N"orm
-"E"forcement"), a VDAF for secure aggregation of gradients with bounded
-L2-norm for federated learning. It achieves the above-mentioned privacy and
-robustness guarantees, by using many of the same techniques as
-Prio3 {{Section 7 of !VDAF}}, including the use of Fully Linear Proofs (FLP)
-{{Section 7.1 of !VDAF}} for validating the gradients. However, PINE introduces
-a new technique and supporting analysis {{PINE}} that, for high-dimensional
-data, significantly improves communication cost compared to what appears to be
-possible for Prio3. The cost of this improvement is a modest loss in
-completeness: there is a non-zero, but negligible chance that Aggregators
-reject an honestly generated measurement.
+This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
+for secure aggregation of gradients with bounded L2-norm {{ROCT23}}. Its design
+is based largely on Prio3 in that the norm is computed and verified using
+an FLP. However, PINE uses a new technique for verifying the correctness of
+the norm computation that is incompatible with Prio3.
 
-We give an overview of this technique in {{overview}}. In {{flp}}
-we describe our FLP for bounded L2 norm. In {{vdaf}} we describe the complete
-PINE VDAF. We aim to achieve the following properties in our VDAF:
-
-* Gradients with invalid L2-norm from malicious Clients should be rejected with
-  overwhelming probability.
-
-* Gradients generated by honest Clients should be accepted with overwhelming
-  probability.
-
-* An attacker that controls the Collector, a subset of Clients, and all but one
-  Aggregators, learns statistically close to nothing about the measurements of
-  honest Clients.
+We give an overview of this technique in {{overview}}. In {{flp}} we specify an
+FLP circuit and accompanying encoding scheme for computing and verifying the L2
+norm of each gradient. Finally, in {{vdaf}} we specify the complete
+multi-party, 1-round VDAF.
 
 # Conventions and Definitions
 
@@ -178,60 +165,62 @@ PINE VDAF. We aim to achieve the following properties in our VDAF:
 
 This document uses the same parameters and conventions specified for:
 
-* Definitions for VDAF in {{Section 5 of !VDAF}}.
+* Clients, Aggregators, and Collectors from {{Section 5 of !VDAF}}.
 
-* Field elements in {{Section 6.1 of !VDAF}}.
+* Finite fields from {{Section 6.1 of !VDAF}}.
 
-* Pseudorandom Generators in {{Section 6.2 of !VDAF}}.
+* XOFs ("eXtendable Output Functions") from {{Section 6.2 of !VDAF}}.
 
-* Prio3 FLP system in {{Section 7 of !VDAF}}, with some extensions.
+A floating point number is XXX. [CP: Specify, with a relvant reference.]
+
+A "gradient" is a vector of floating point numbers. Each coordinate of this
+vector is called an "entry".
 
 The user-specified parameters to initialize PINE are defined in
 {{pine-user-param}}.
 
-| Parameter       | Type     | Description    |
-|:----------------|:---------|:---------------|
-| `l2_norm_bound` | float    | L2-norm bound. This is an inclusive upper bound. Users of PINE can use this parameter to control the L2-norm bound of its Client vectors. |
-| `dimension`     | Unsigned | Client vector dimension. |
-| `num_frac_bits` | Unsigned | Number of binary fractional bits to keep in Client vector values. Users of PINE can use this parameter to control the precision. We require this parameter to be less than 128 as specified in {{fp-encoding}}. |
+| Parameter       | Type  | Description    |
+|:----------------|:------|:---------------|
+| `l2_norm_bound` | float | The L2-norm upper bound (inclusive). |
+| `dimension`     | int   | Dimension of each gradient. |
+| `num_frac_bits` | int   | The number of bits of precision to use when encoding each gradient entry into the field. At most XXX |
 {: #pine-user-param title="User parameters for PINE."}
 
 # PINE Overview {#overview}
 
 In this section, we will give an overview of the main technical contribution of
-{{PINE}} that allows the Aggregators holding secret shares of the Client
-measurement (e.g. gradient in federated learning) to verify it has a bounded
+{{ROCT23}} that allows the Aggregators holding secret shares of the Client
+measurement (e.g., a gradient in federated learning) to verify it has a bounded
 L2-norm, which is the square root of the sum of square of all vector entries.
 
-One way to achieve this is to use a Fully Linear Proof (FLP)
-{{Section 7.1 of !VDAF}}. An FLP is an assertion about the validity of some
-input that can be checked by the Aggregator (or jointly by the Aggregators
-in our case) without learning the input. Validity is typically expressed as a
-circuit evaluated on the input over a finite field, denoted by `Field` in
-{{Section 6.1 of !VDAF}}. Let `q` denote the field size. In our case, the
-circuit would compute the sum of square of all entries, i.e. squared L2-norm,
-modulo field size `q`, and check the result is in the desired range.
-Note we don't take the square root, because it's more efficient and
-mathematically equivalent to verify the result in squared L2-norm.
+One way to achieve this is to use an FLP ("Fully Linear Proof"; see {{Section
+7.3 of !VDAF}}). An FLP is an assertion about the validity of some input that
+can be checked jointly by the Aggregators who only hold secret shares of the
+input. Validity is expressed as a circuit evaluated on the input over a finite
+field, denoted by `Field` in {{Section 6.1 of !VDAF}}. Let `q` denote the field
+size. In our case, the circuit would compute the sum of the squares of the
+entries of the gradient vector, that is the squared L2-norm, and check that the
+result is in the desired range. Note that there is no need to compute the exact
+L2-norm (i.e., the square root of the sum); it suffices to compute the squared
+L2-norm and check that it is smaller than the square of the bound.
 
-However, it is challenging to bound each field element in the vector, which
-allows a malicious Client to send a vector that causes the computation of sum
-of squares to overflow, or "wrap around" field size. When Aggregators evaluate
-this computation over secret shares of field integer vector, there is no way
-for the Aggregators to determine if wraparound has happened, and Aggregators
-may accept the vector from the malicious Client, which causes the final
-aggregate to be corrupted.
+Crucially, arithmetic in this computation is modulo the field size `q`. This
+means that, for a given gradient, the norm may have a different result when
+computed in our finite field versus the ring of integers. For example, suppose
+our bound is `10`: the gradient `[99, 0, 7]` has squared L2-norm of `9850` over
+the integers (out of range), but only `6` modulo `q = 23` (in range). This is
+because the sum of the squares "wraps around" the field modulus `q`.
 
-One way to resolve this issue is to encode each coordinate of the vector
-as its binary representation, send each bit as an individual field element,
-and enforce a dimension limit on the Client vector.
-By checking each field element is indeed a bit, the Aggregators can naturally
-bound each vector entry, and with a dimension limit, Aggregators can ensure
-that computing sum of squares won't wrap around field size `q`. However,
-this approach results in a significant amount of communication overhead
-between Client and Aggregators, because the Client needs to send at least
-`num_frac_bits * dimension` field elements, with `num_frac_bits` and
-`dimension` specified by users in {{pine-user-param}}.
+Thus the central challenge of adapting FLPs to this problem is preventing such
+"wraparounds".
+
+One way to do this is to encode each entry of the gradient such that the
+Aggregators are assured that each entry falls in a range that ensures the norm
+does not wrap around the field modulus. However, this approach has relatively
+high communication overhead between the Client and Aggregators, roughly
+`num_frac_bits * dimension` field elements (see {{pine-user-param}}).
+
+[CP: Got here.]
 
 PINE takes a different approach. Instead of encoding the coordinates of a
 vector in their binary representation, we devise a randomized test that can
@@ -241,7 +230,7 @@ secret-shared field integer vector, we know either the Client vector is
 bounded by the desired L2-norm, or the L2-norm is at least `q`.
 Then we test for this wraparound by taking a dot product of the Client's
 vector, with a random vector, each element of which is -1 (or `q-1`), `0`,
-or `1` with respective probability. In {{PINE}} it is demonstrated
+or `1` with respective probability. In {{ROCT23}} it is demonstrated
 that if there is wraparound, the dot product is likely to be large. On the
 other hand, if the sum of the squared entries was small to begin with, then
 the dot product will be small with high probability.
@@ -280,17 +269,17 @@ user-specified parameters, and the soundness and completeness error target.
 
 | Parameter                     | Type                               | Description |
 |:------------------------------|:-----------------------------------|:------------|
-| `Field`                       | Type in {{Section 6.1.3 of !VDAF}} | Field element type chosen for an instantiation of PINE. Field modulus is referred to as `q` in {{PINE}} paper. |
+| `Field`                       | Type in {{Section 6.1.3 of !VDAF}} | Field element type chosen for an instantiation of PINE. Field modulus is referred to as `q` in {{ROCT23}} paper. |
 | `encoded_l2_norm_bound`       | Field                              | Inclusive, L2-norm bound in field integer, encoded from `floor(l2_norm_bound * (2 ** num_frac_bits)` per {{fp-encoding}}. |
-| `encoded_sq_l2_norm_bound`    | Field                              | Equal to `encoded_l2_norm_bound * encoded_l2_norm_bound`. It is referred to as `B` in {{PINE}} paper. |
+| `encoded_sq_l2_norm_bound`    | Field                              | Equal to `encoded_l2_norm_bound * encoded_l2_norm_bound`. It is referred to as `B` in {{ROCT23}} paper. |
 | `num_bits_for_sq_l2_norm`     | Unsigned                           | Maximum number of bits to represent the squared L2-norm, i.e. `ceil(log2(encoded_sq_l2_norm_bound.as_unsigned() + 1))`. |
-| `num_wr_reps`                 | Unsigned                           | Number of wraparound check repetitions. It is referred to as `r` in {{PINE}} paper. |
+| `num_wr_reps`                 | Unsigned                           | Number of wraparound check repetitions. It is referred to as `r` in {{ROCT23}} paper. |
 | `tau`                         | float                              | Proportion of `num_wr_reps` that the Clients are required to pass. |
 | `num_pass_wr_reps`            | Unsigned                           | Number of wraparound check repetitions that the Clients are required to pass. This is equal to `floor(num_wr_reps * tau)`. |
 | `eta`                         | float                              | Completeness error in one repetition of wraparound check, i.e. the probability of a valid Client measurement failing a wraparound check repetition. |
 | `alpha`                       | float                              | Parameter in wraparound check that is expressed as a function of completeness error `eta`: `sqrt(ln(2 / eta))`. |
-| `abs_wr_lower_bound`          | Field                              | Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of `L` in Remark 4.11 of {{PINE}} paper. |
-| `abs_wr_upper_bound`          | Field                              | Absolute value of the inclusive upper bound of wraparound check result. It is referred to as `H` in Remark 4.11 of {{PINE}} paper. |
+| `abs_wr_lower_bound`          | Field                              | Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of `L` in Remark 4.11 of {{ROCT23}} paper. |
+| `abs_wr_upper_bound`          | Field                              | Absolute value of the inclusive upper bound of wraparound check result. It is referred to as `H` in Remark 4.11 of {{ROCT23}} paper. |
 | `shifted_wr_upper_bound`      | Field                              | Inclusive upper bound of the shifted wraparound check result. This is equal to `abs_wr_lower_bound + abs_wr_upper_bound`. |
 | `num_bits_for_shifted_wr_res` | Unsigned                           | Maximum number of bits to represent the shifted wraparound check result, for one repetition, i.e. `ceil(log2(shifted_wr_upper_bound.as_unsigned() + 1))`. |
 {: #pine-circuit-param title="Operational Parameters in Validity Circuit for PINE."}
@@ -403,7 +392,7 @@ Therefore, we must check that
 
 | Parameter               | Type     | Description |
 |:------------------------|:---------|:------------|
-| `num_gadget_proof_reps` | Unsigned | Number of proof repetitions of using gadgets {{Section 7.3.1 of !VDAF}} in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as `t` in {{PINE}} paper. |
+| `num_gadget_proof_reps` | Unsigned | Number of proof repetitions of using gadgets {{Section 7.3.1 of !VDAF}} in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as `t` in {{ROCT23}} paper. |
 
 > TODO Assume `num_gadget_proof_reps` is always 1 for now until we are ready
 to work on multiple proof repetitions in gadgets.
@@ -465,7 +454,7 @@ L2-norm) of values in `X` modulo field size `q` is at most `B`, which is the
 squared L2-norm bound in field integer.
 
 To verify this inequality, we will first turn this inequality check into an
-equality check, per Section 4.1 of {{PINE}}, with `\beta_1` equal to 0,
+equality check, per Section 4.1 of {{ROCT23}}, with `\beta_1` equal to 0,
 and `\beta_2` equal to `B`. Additionally, the minimum field size requirement for
 this protocol MUST be at least `3 * B + 2`.
 
@@ -485,10 +474,10 @@ Aggregators then collectively verify the following:
    achieved by 0/1 bit check protocol {{bit-check}}.
 
 1. The computed squared L2-norm from the secret shares of `X` matches the
-   secret-shared bit representation of `V0`, as per Section 4.3 of {{PINE}}.
+   secret-shared bit representation of `V0`, as per Section 4.3 of {{ROCT23}}.
 
 1. `V0 + U0 = B`, based on the secret-shared bit representation of `V0`
-   and `U0`, as per Section 4.1 of {{PINE}}.
+   and `U0`, as per Section 4.1 of {{ROCT23}}.
 
 It's important to recognize that verifying property 2 involves a
 non-affine operation, that is a degree-2 polynomial to square each value in `X`,
@@ -575,7 +564,7 @@ repetition, and fails otherwise.
 
 We ask Clients to repeat the procedure for `r` number of times, to reduce the
 overall soundness and completeness error of this protocol, with motivations
-described in Section 4.2 of {{PINE}}. We define a threshold `TAU`, so that
+described in Section 4.2 of {{ROCT23}}. We define a threshold `TAU`, so that
 the Clients are required to pass at least `TAU * r` repetitions. Otherwise,
 Clients SHOULD retry, but Aggregators MUST reject.
 
@@ -587,7 +576,7 @@ following:
    encodes its bit representation. Now `V1_k` MUST be in `[0, H + abs(L)]`.
    In order for Aggregators to verify `V1_k` doesn't exceed `H + abs(L)`, the
    Client also computes `U1_k = H + abs(L) - V1_k`, so Aggregators can run the
-   protocol in Section 4.1 of {{PINE}} to turn this inequality check into
+   protocol in Section 4.1 of {{ROCT23}} to turn this inequality check into
    equality check.
 1. It records a success bit `g_k` of 1, indicating it has passed.
 1. It sets `S_k = 0`. This is a single field element being secret-shared.
@@ -606,7 +595,7 @@ Aggregators then collectively verify the following properties:
    achieved by {{bit-check}}.
 
 1. For each repetition `k`, verify the linear equality
-   `V1_k + U1_k = H + abs(L)`, per Section 4.1 of {{PINE}}.
+   `V1_k + U1_k = H + abs(L)`, per Section 4.1 of {{ROCT23}}.
    This verifies `V1_k` doesn't exceed `H + abs(L)`.
 
 1. For each repetition `k`, verify the linear equality
@@ -620,7 +609,7 @@ Aggregators then collectively verify the following properties:
 
 1. `\SUM_k g_k = TAU * r`, the Client has passed at least `TAU * r` repetitions.
 
-It is important to notice an optimization proposed in Remark 4.12 of {{PINE}},
+It is important to notice an optimization proposed in Remark 4.12 of {{ROCT23}},
 that if we can come up with wraparound protocol bounds
 `L >= -ALPHA * sqrt(B)` and `H <= ALPHA * sqrt(B)`, such that `H + L + 1` is a
 power of 2, we can avoid asking Clients to send `U1_k` for each repetition, and
@@ -712,7 +701,7 @@ characterized from the following aspects:
 
 * Soundness: The soundness error of one repetition of wraparound protocol is
   1/2. Over `r` repetitions, the soundness error is therefore
-  `Bin((TAU * r); r, 1/2)`, see Lemma 4.3 and also Claim 4.9 in {{PINE}}.
+  `Bin((TAU * r); r, 1/2)`, see Lemma 4.3 and also Claim 4.9 in {{ROCT23}}.
   There is also a soundness error when we verify the degree-2 polynomial in
   `WC_1` over all `r` repetitions. The soundness error is computed based on
   Corollary 4.7 and Remark 4.8 of {{BBCGGI19}},
@@ -722,16 +711,16 @@ characterized from the following aspects:
 
 * Completeness: The completeness error of one repetition of wraparound protocol
   is `ETA`, or `2 / e^(ALPHA' ^ 2)`, where `ALPHA'` is the actual parameter used
-  after applying optimization in Remark 4.12 in {{PINE}}.
+  after applying optimization in Remark 4.12 in {{ROCT23}}.
   Therefore, the completeness error over all repetitions is
   `1 - Bin((TAU * r); r, 1 - ETA)`, see Lemma 4.3 and also Claim 4.9 in
-  {{PINE}}. This is the probability that a Client fails more than
+  {{ROCT23}}. This is the probability that a Client fails more than
   `(1 - TAU) * r` repetitions.
 
 * `rho`-Statistical Zero-Knowledge: Aggregators learn close to nothing about
   an honest Client. The zero knowledge leakage is quantified by the
   completeness error `rho` from above, which is negligible. See discussion in
-  Lemma 4.3 of {{PINE}}.
+  Lemma 4.3 of {{ROCT23}}.
 
 ### Summary of PINE Protocols {#summary-protocols}
 
@@ -1001,7 +990,7 @@ def finalize_encoding_with_wraparound_joint_rand(
     # Keep track of the "difference" field elements for each
     # repetition, i.e. the difference between the shifted wraparound
     # check result and the shifted upper bound.
-    # It is referred to as `s` in {{PINE}} paper.
+    # It is referred to as `s` in {{ROCT23}} paper.
     diff_field_elems = []
     # Keep track of the number of passing repetitions in
     # `num_passed_wr_reps`. If the Client has passed more than
@@ -1207,7 +1196,7 @@ def wraparound_check(Pine,
         # repetition.
         diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
         # This equation should be equal to 0, i.e. bullet point 3
-        # in Figure 2 in {{PINE}} paper.
+        # in Figure 2 in {{ROCT23}} paper.
         check = dot_prod_res + abs_wr_lower_bound_shares - \
             shifted_wr_res - diff_field_elem
         checks.append(check)
