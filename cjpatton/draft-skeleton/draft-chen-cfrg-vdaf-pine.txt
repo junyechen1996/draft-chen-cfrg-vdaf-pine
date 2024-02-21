@@ -159,8 +159,8 @@ Table of Contents
    communication would be prohibitively high.  The basic idea is simple:
    an FLP ("Fully Linear Proof", see Section 7.3 of [VDAF]) could be
    specified that computes the L2-norm of the gradient and checks that
-   the result is in the desired range.  This computation is easy to do
-   efficiently: the challenge lies in ensuring that the computation
+   the result is in the desired range.  This computation is not easy to
+   do efficiently: the challenge lies in ensuring that the computation
    itself was carried out correctly, while properly accounting for the
    relevant mathematical details of the proof system (that is, the
    choice of finite field) and the range of possible inputs.
@@ -205,12 +205,12 @@ Table of Contents
       +===============+=======+====================================+
       | Parameter     | Type  | Description                        |
       +===============+=======+====================================+
-      | l2_norm_bound | float | The L2-norm upper bound bound      |
+      | l2_norm_bound | float | The L2-norm upper bound            |
       |               |       | (inclusive).                       |
       +---------------+-------+------------------------------------+
       | dimension     | int   | Dimension of each gradient.        |
       +---------------+-------+------------------------------------+
-      | num_frac_bits | int   | The number of bits to precision to |
+      | num_frac_bits | int   | The number of bits of precision to |
       |               |       | use when encoding each gradient    |
       |               |       | entry into the field.  At most XXX |
       +---------------+-------+------------------------------------+
@@ -238,19 +238,19 @@ Table of Contents
    suffices to compute the squared L2-norm and check that it is smaller
    than the square of the bound.
 
-   Crucially, arithemtic in this computation is modulo the field size q.
+   Crucially, arithmetic in this computation is modulo the field size q.
    This means that, for a given gradient, the norm may have a different
    result when computed in our finite field versus the ring of integers.
    For example, suppose our bound is 10: the gradient [99, 0, 7] has
    squared L2-norm of 9850 over the integers (out of range), but only 6
-   modulo q = 23 (in range).  This is becuase the sum of the squares
+   modulo q = 23 (in range).  This is because the sum of the squares
    "wraps around" the field modulus q.
 
    Thus the central challenge of adapting FLPs to this problem is
    preventing such "wraparounds".
 
    One way to do this is to encode each entry of the gradient such that
-   the Aggregators can ensure each falls in a range that ensures
+   the Aggregators can ensure each falls in a range, which ensures
    wraparounds do not occur during the norm computation.  However, this
    approach has relatively high communication overhead between the
    Client and Aggregators, roughly num_frac_bits * dimension field

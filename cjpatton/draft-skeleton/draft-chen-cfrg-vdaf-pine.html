@@ -1334,7 +1334,7 @@ functionality, but the concrete cost in terms of runtime and communication
 would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
 Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be specified that computes the
 L2-norm of the gradient and checks that the result is in the desired range.
-This computation is easy to do efficiently: the challenge lies in ensuring that
+This computation is not easy to do efficiently: the challenge lies in ensuring that
 the computation itself was carried out correctly, while properly accounting for
 the relevant mathematical details of the proof system (that is, the choice of
 finite field) and the range of possible inputs.<a href="#section-1-6" class="pilcrow">¶</a></p>
@@ -1394,7 +1394,7 @@ vector is called an "entry".<a href="#section-2-5" class="pilcrow">¶</a></p>
               <code>l2_norm_bound</code>
 </td>
             <td class="text-left" rowspan="1" colspan="1">float</td>
-            <td class="text-left" rowspan="1" colspan="1">The L2-norm upper bound bound (inclusive).</td>
+            <td class="text-left" rowspan="1" colspan="1">The L2-norm upper bound (inclusive).</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
@@ -1408,7 +1408,7 @@ vector is called an "entry".<a href="#section-2-5" class="pilcrow">¶</a></p>
               <code>num_frac_bits</code>
 </td>
             <td class="text-left" rowspan="1" colspan="1">int</td>
-            <td class="text-left" rowspan="1" colspan="1">The number of bits to precision to use when encoding each gradient entry into the field. At most XXX</td>
+            <td class="text-left" rowspan="1" colspan="1">The number of bits of precision to use when encoding each gradient entry into the field. At most XXX</td>
           </tr>
         </tbody>
       </table>
@@ -1433,16 +1433,16 @@ entries of the gradient vector, that is the squared L2-norm, and check that the
 result is in the desired range. Note that there is no need to compute the exact
 L2-norm (i.e., the square root of the sum); it suffices to compute the squared
 L2-norm and check that it is smaller than the square of the bound.<a href="#section-3-2" class="pilcrow">¶</a></p>
-<p id="section-3-3">Crucially, arithemtic in this computation is modulo the field size <code>q</code>. This
+<p id="section-3-3">Crucially, arithmetic in this computation is modulo the field size <code>q</code>. This
 means that, for a given gradient, the norm may have a different result when
 computed in our finite field versus the ring of integers. For example, suppose
 our bound is <code>10</code>: the gradient <code>[99, 0, 7]</code> has squared L2-norm of <code>9850</code> over
 the integers (out of range), but only <code>6</code> modulo <code>q = 23</code> (in range). This is
-becuase the sum of the squares "wraps around" the field modulus <code>q</code>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+because the sum of the squares "wraps around" the field modulus <code>q</code>.<a href="#section-3-3" class="pilcrow">¶</a></p>
 <p id="section-3-4">Thus the central challenge of adapting FLPs to this problem is preventing such
 "wraparounds".<a href="#section-3-4" class="pilcrow">¶</a></p>
 <p id="section-3-5">One way to do this is to encode each entry of the gradient such that the
-Aggregators can ensure each falls in a range that ensures wraparounds do not
+Aggregators can ensure each falls in a range, which ensures wraparounds do not
 occur during the norm computation. However, this approach has relatively high
 communication overhead between the Client and Aggregators, roughly
 <code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
