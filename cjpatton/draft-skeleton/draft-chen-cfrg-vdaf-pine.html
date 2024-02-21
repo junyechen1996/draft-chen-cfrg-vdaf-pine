@@ -1339,7 +1339,7 @@ the computation itself was carried out correctly, while properly accounting for
 the relevant mathematical details of the proof system (that is, the choice of
 finite field) and the range of possible inputs.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <p id="section-1-7">This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
-for secure aggregation of gradients with bounded L2-norm <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>. Its design
+for secure aggregation of gradients with bounded L2-norm <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. Its design
 is based largely on Prio3 in that the norm is computed and verified using
 an FLP. However, PINE uses a new technique for verifying the correctness of
 the norm computation that is incompatible with Prio3.<a href="#section-1-7" class="pilcrow">¶</a></p>
@@ -1421,7 +1421,7 @@ vector is called an "entry".<a href="#section-2-5" class="pilcrow">¶</a></p>
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pine-overview" class="section-name selfRef">PINE Overview</a>
       </h2>
 <p id="section-3-1">In this section, we will give an overview of the main technical contribution of
-<span>[<a href="#PINE" class="cite xref">PINE</a>]</span> that allows the Aggregators holding secret shares of the Client
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> that allows the Aggregators holding secret shares of the Client
 measurement (e.g., a gradient in federated learning) to verify it has a bounded
 L2-norm, which is the square root of the sum of square of all vector entries.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <p id="section-3-2">One way to achieve this is to use an FLP ("Fully Linear Proof"; see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>). An FLP is an assertion about the validity of some input that
@@ -1442,9 +1442,9 @@ because the sum of the squares "wraps around" the field modulus <code>q</code>.<
 <p id="section-3-4">Thus the central challenge of adapting FLPs to this problem is preventing such
 "wraparounds".<a href="#section-3-4" class="pilcrow">¶</a></p>
 <p id="section-3-5">One way to do this is to encode each entry of the gradient such that the
-Aggregators can ensure each falls in a range, which ensures wraparounds do not
-occur during the norm computation. However, this approach has relatively high
-communication overhead between the Client and Aggregators, roughly
+Aggregators are assured that each entry falls in a range that ensures the norm
+does not wrap around the field modulus. However, this approach has relatively
+high communication overhead between the Client and Aggregators, roughly
 <code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">[CP: Got here.]<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">PINE takes a different approach. Instead of encoding the coordinates of a
@@ -1455,7 +1455,7 @@ secret-shared field integer vector, we know either the Client vector is
 bounded by the desired L2-norm, or the L2-norm is at least <code>q</code>.
 Then we test for this wraparound by taking a dot product of the Client's
 vector, with a random vector, each element of which is -1 (or <code>q-1</code>), <code>0</code>,
-or <code>1</code> with respective probability. In <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> it is demonstrated
+or <code>1</code> with respective probability. In <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> it is demonstrated
 that if there is wraparound, the dot product is likely to be large. On the
 other hand, if the sum of the squared entries was small to begin with, then
 the dot product will be small with high probability.<a href="#section-3-7" class="pilcrow">¶</a></p>
@@ -1523,7 +1523,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
 </td>
               <td class="text-left" rowspan="1" colspan="1">Type in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1.3" class="relref">Section 6.1.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Field element type chosen for an instantiation of PINE. Field modulus is referred to as <code>q</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Field element type chosen for an instantiation of PINE. Field modulus is referred to as <code>q</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1537,7 +1537,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>encoded_sq_l2_norm_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Equal to <code>encoded_l2_norm_bound * encoded_l2_norm_bound</code>. It is referred to as <code>B</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Equal to <code>encoded_l2_norm_bound * encoded_l2_norm_bound</code>. It is referred to as <code>B</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1551,7 +1551,7 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>num_wr_reps</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-              <td class="text-left" rowspan="1" colspan="1">Number of wraparound check repetitions. It is referred to as <code>r</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Number of wraparound check repetitions. It is referred to as <code>r</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1586,14 +1586,14 @@ user-specified parameters, and the soundness and completeness error target.<a hr
                 <code>abs_wr_lower_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of <code>L</code> in Remark 4.11 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive lower bound of wraparound check result. It is referred to as the absolute value of <code>L</code> in Remark 4.11 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>abs_wr_upper_bound</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Field</td>
-              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive upper bound of wraparound check result. It is referred to as <code>H</code> in Remark 4.11 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Absolute value of the inclusive upper bound of wraparound check result. It is referred to as <code>H</code> in Remark 4.11 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1797,7 +1797,7 @@ Therefore, we must check that
                 <code>num_gadget_proof_reps</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Unsigned</td>
-              <td class="text-left" rowspan="1" colspan="1">Number of proof repetitions of using gadgets <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as <code>t</code> in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> paper.</td>
+              <td class="text-left" rowspan="1" colspan="1">Number of proof repetitions of using gadgets <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.1" class="relref">Section 7.3.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> in order to reduce the soundness error of degree-2 polynomial checks. It is referred to as <code>t</code> in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> paper.</td>
             </tr>
           </tbody>
         </table>
@@ -1896,7 +1896,7 @@ with respect to <code>t</code>, i.e. <code>(2 * sqrt(n_b) / (q - sqrt(n_b)) + n_
 L2-norm) of values in <code>X</code> modulo field size <code>q</code> is at most <code>B</code>, which is the
 squared L2-norm bound in field integer.<a href="#section-7.1.2-1" class="pilcrow">¶</a></p>
 <p id="section-7.1.2-2">To verify this inequality, we will first turn this inequality check into an
-equality check, per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>, with <code>\beta_1</code> equal to 0,
+equality check, per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>, with <code>\beta_1</code> equal to 0,
 and <code>\beta_2</code> equal to <code>B</code>. Additionally, the minimum field size requirement for
 this protocol <span class="bcp14">MUST</span> be at least <code>3 * B + 2</code>.<a href="#section-7.1.2-2" class="pilcrow">¶</a></p>
 <p id="section-7.1.2-3">Clients are expected to compute <code>V0 = \SUM_i X[i]^2</code>, and also the difference
@@ -1916,11 +1916,11 @@ achieved by 0/1 bit check protocol <a href="#bit-check" class="auto internal xre
 </li>
             <li id="section-7.1.2-7.2">
               <p id="section-7.1.2-7.2.1">The computed squared L2-norm from the secret shares of <code>X</code> matches the
-secret-shared bit representation of <code>V0</code>, as per Section 4.3 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.2-7.2.1" class="pilcrow">¶</a></p>
+secret-shared bit representation of <code>V0</code>, as per Section 4.3 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.2-7.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.2-7.3">
               <p id="section-7.1.2-7.3.1"><code>V0 + U0 = B</code>, based on the secret-shared bit representation of <code>V0</code>
-and <code>U0</code>, as per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.2-7.3.1" class="pilcrow">¶</a></p>
+and <code>U0</code>, as per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.2-7.3.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 <p id="section-7.1.2-8">It's important to recognize that verifying property 2 involves a
@@ -2017,7 +2017,7 @@ modulo <code>q</code> falls in <code>[q - abs(L), q)</code> or <code>[0, H]</cod
 repetition, and fails otherwise.<a href="#section-7.1.3-4" class="pilcrow">¶</a></p>
 <p id="section-7.1.3-5">We ask Clients to repeat the procedure for <code>r</code> number of times, to reduce the
 overall soundness and completeness error of this protocol, with motivations
-described in Section 4.2 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>. We define a threshold <code>TAU</code>, so that
+described in Section 4.2 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. We define a threshold <code>TAU</code>, so that
 the Clients are required to pass at least <code>TAU * r</code> repetitions. Otherwise,
 Clients <span class="bcp14">SHOULD</span> retry, but Aggregators <span class="bcp14">MUST</span> reject.<a href="#section-7.1.3-5" class="pilcrow">¶</a></p>
 <p id="section-7.1.3-6">To be more specific about each repetition <code>k</code> of wraparound protocol, assuming
@@ -2029,7 +2029,7 @@ following:<a href="#section-7.1.3-6" class="pilcrow">¶</a></p>
 encodes its bit representation. Now <code>V1_k</code> <span class="bcp14">MUST</span> be in <code>[0, H + abs(L)]</code>.
 In order for Aggregators to verify <code>V1_k</code> doesn't exceed <code>H + abs(L)</code>, the
 Client also computes <code>U1_k = H + abs(L) - V1_k</code>, so Aggregators can run the
-protocol in Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span> to turn this inequality check into
+protocol in Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> to turn this inequality check into
 equality check.<a href="#section-7.1.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.3-7.2">
@@ -2061,7 +2061,7 @@ achieved by <a href="#bit-check" class="auto internal xref">Section 7.1.1</a>.<a
 </li>
             <li id="section-7.1.3-11.2">
               <p id="section-7.1.3-11.2.1">For each repetition <code>k</code>, verify the linear equality
-<code>V1_k + U1_k = H + abs(L)</code>, per Section 4.1 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+<code>V1_k + U1_k = H + abs(L)</code>, per Section 4.1 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 This verifies <code>V1_k</code> doesn't exceed <code>H + abs(L)</code>.<a href="#section-7.1.3-11.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-7.1.3-11.3">
@@ -2079,7 +2079,7 @@ ensures at least one of <code>g_k</code> and <code>S_k</code> is 0, i.e. if succ
               <p id="section-7.1.3-11.5.1"><code>\SUM_k g_k = TAU * r</code>, the Client has passed at least <code>TAU * r</code> repetitions.<a href="#section-7.1.3-11.5.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
-<p id="section-7.1.3-12">It is important to notice an optimization proposed in Remark 4.12 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>,
+<p id="section-7.1.3-12">It is important to notice an optimization proposed in Remark 4.12 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>,
 that if we can come up with wraparound protocol bounds
 <code>L &gt;= -ALPHA * sqrt(B)</code> and <code>H &lt;= ALPHA * sqrt(B)</code>, such that <code>H + L + 1</code> is a
 power of 2, we can avoid asking Clients to send <code>U1_k</code> for each repetition, and
@@ -2172,7 +2172,7 @@ characterized from the following aspects:<a href="#section-7.1.3-29" class="pilc
 <li class="normal" id="section-7.1.3-30.1">
               <p id="section-7.1.3-30.1.1">Soundness: The soundness error of one repetition of wraparound protocol is
 1/2. Over <code>r</code> repetitions, the soundness error is therefore
-<code>Bin((TAU * r); r, 1/2)</code>, see Lemma 4.3 and also Claim 4.9 in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+<code>Bin((TAU * r); r, 1/2)</code>, see Lemma 4.3 and also Claim 4.9 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 There is also a soundness error when we verify the degree-2 polynomial in
 <code>WC_1</code> over all <code>r</code> repetitions. The soundness error is computed based on
 Corollary 4.7 and Remark 4.8 of <span>[<a href="#BBCGGI19" class="cite xref">BBCGGI19</a>]</span>,
@@ -2183,17 +2183,17 @@ over <code>t</code> repetitions, the overall soundness error is
             <li class="normal" id="section-7.1.3-30.2">
               <p id="section-7.1.3-30.2.1">Completeness: The completeness error of one repetition of wraparound protocol
 is <code>ETA</code>, or <code>2 / e^(ALPHA' ^ 2)</code>, where <code>ALPHA'</code> is the actual parameter used
-after applying optimization in Remark 4.12 in <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.
+after applying optimization in Remark 4.12 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.
 Therefore, the completeness error over all repetitions is
 <code>1 - Bin((TAU * r); r, 1 - ETA)</code>, see Lemma 4.3 and also Claim 4.9 in
-<span>[<a href="#PINE" class="cite xref">PINE</a>]</span>. This is the probability that a Client fails more than
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. This is the probability that a Client fails more than
 <code>(1 - TAU) * r</code> repetitions.<a href="#section-7.1.3-30.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-7.1.3-30.3">
               <p id="section-7.1.3-30.3.1"><code>rho</code>-Statistical Zero-Knowledge: Aggregators learn close to nothing about
 an honest Client. The zero knowledge leakage is quantified by the
 completeness error <code>rho</code> from above, which is negligible. See discussion in
-Lemma 4.3 of <span>[<a href="#PINE" class="cite xref">PINE</a>]</span>.<a href="#section-7.1.3-30.3.1" class="pilcrow">¶</a></p>
+Lemma 4.3 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>.<a href="#section-7.1.3-30.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>
@@ -2541,7 +2541,7 @@ def finalize_encoding_with_wraparound_joint_rand(
     # Keep track of the "difference" field elements for each
     # repetition, i.e. the difference between the shifted wraparound
     # check result and the shifted upper bound.
-    # It is referred to as `s` in {{PINE}} paper.
+    # It is referred to as `s` in {{ROCT23}} paper.
     diff_field_elems = []
     # Keep track of the number of passing repetitions in
     # `num_passed_wr_reps`. If the Client has passed more than
@@ -2752,7 +2752,7 @@ def wraparound_check(Pine,
         # repetition.
         diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
         # This equation should be equal to 0, i.e. bullet point 3
-        # in Figure 2 in {{PINE}} paper.
+        # in Figure 2 in {{ROCT23}} paper.
         check = dot_prod_res + abs_wr_lower_bound_shares - \
             shifted_wr_res - diff_field_elem
         checks.append(check)
@@ -3862,7 +3862,7 @@ measurements of honest Clients.<a href="#section-9-2.3.1" class="pilcrow">¶</a>
         <dd>
 <span class="refAuthor">McMahan, B.</span> and <span class="refAuthor">D. Ramage</span>, <span class="refTitle">"Federated Learning: Collaborative Machine Learning without Centralized Training Data"</span>, <time datetime="2017" class="refDate">2017</time>, <span>&lt;<a href="https://ai.googleblog.com/2017/04/federated-learning-collaborative.html">https://ai.googleblog.com/2017/04/federated-learning-collaborative.html</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="PINE">[PINE]</dt>
+<dt id="ROCT23">[ROCT23]</dt>
         <dd>
 <span class="refTitle">"PINE: Efficient Norm-Bound Verification for Secret-Shared Vectors"</span>, <time datetime="2023" class="refDate">2023</time>, <span>&lt;<a href="https://arxiv.org/abs/2311.10237">https://arxiv.org/abs/2311.10237</a>&gt;</span>. </dd>
 <dd class="break"></dd>

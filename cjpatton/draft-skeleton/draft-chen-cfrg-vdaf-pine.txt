@@ -167,10 +167,10 @@ Table of Contents
 
    This dcoument describes PINE ("Private Inexpensive Norm
    Enforcement"), a VDAF for secure aggregation of gradients with
-   bounded L2-norm [PINE].  Its design is based largely on Prio3 in that
-   the norm is computed and verified using an FLP.  However, PINE uses a
-   new technique for verifying the correctness of the norm computation
-   that is incompatible with Prio3.
+   bounded L2-norm [ROCT23].  Its design is based largely on Prio3 in
+   that the norm is computed and verified using an FLP.  However, PINE
+   uses a new technique for verifying the correctness of the norm
+   computation that is incompatible with Prio3.
 
    We give an overview of this technique in Section 3.  In Section 4 we
    specify an FLP circuit and accompanying encoding scheme for computing
@@ -220,7 +220,7 @@ Table of Contents
 3.  PINE Overview
 
    In this section, we will give an overview of the main technical
-   contribution of [PINE] that allows the Aggregators holding secret
+   contribution of [ROCT23] that allows the Aggregators holding secret
    shares of the Client measurement (e.g., a gradient in federated
    learning) to verify it has a bounded L2-norm, which is the square
    root of the sum of square of all vector entries.
@@ -250,9 +250,9 @@ Table of Contents
    preventing such "wraparounds".
 
    One way to do this is to encode each entry of the gradient such that
-   the Aggregators can ensure each falls in a range, which ensures
-   wraparounds do not occur during the norm computation.  However, this
-   approach has relatively high communication overhead between the
+   the Aggregators are assured that each entry falls in a range that
+   ensures the norm does not wrap around the field modulus.  However,
+   this approach has relatively high communication overhead between the
    Client and Aggregators, roughly num_frac_bits * dimension field
    elements (see Table 1).
 
@@ -267,7 +267,7 @@ Table of Contents
    L2-norm is at least q.  Then we test for this wraparound by taking a
    dot product of the Client's vector, with a random vector, each
    element of which is -1 (or q-1), 0, or 1 with respective probability.
-   In [PINE] it is demonstrated that if there is wraparound, the dot
+   In [ROCT23] it is demonstrated that if there is wraparound, the dot
    product is likely to be large.  On the other hand, if the sum of the
    squared entries was small to begin with, then the dot product will be
    small with high probability.
@@ -314,7 +314,7 @@ Table of Contents
    +===========================+========+================================================+
    |Field                      |Type in |Field element type chosen for an instantiation  |
    |                           |Section |of PINE.  Field modulus is referred to as q in  |
-   |                           |6.1.3 of|[PINE] paper.                                   |
+   |                           |6.1.3 of|[ROCT23] paper.                                 |
    |                           |[VDAF]  |                                                |
    +---------------------------+--------+------------------------------------------------+
    |encoded_l2_norm_bound      |Field   |Inclusive, L2-norm bound in field integer,      |
@@ -323,7 +323,7 @@ Table of Contents
    +---------------------------+--------+------------------------------------------------+
    |encoded_sq_l2_norm_bound   |Field   |Equal to encoded_l2_norm_bound *                |
    |                           |        |encoded_l2_norm_bound.  It is referred to as B  |
-   |                           |        |in [PINE] paper.                                |
+   |                           |        |in [ROCT23] paper.                              |
    +---------------------------+--------+------------------------------------------------+
    |num_bits_for_sq_l2_norm    |Unsigned|Maximum number of bits to represent the squared |
    |                           |        |L2-norm, i.e.                                   |
@@ -331,7 +331,7 @@ Table of Contents
    |                           |        |+ 1)).                                          |
    +---------------------------+--------+------------------------------------------------+
    |num_wr_reps                |Unsigned|Number of wraparound check repetitions.  It is  |
-   |                           |        |referred to as r in [PINE] paper.               |
+   |                           |        |referred to as r in [ROCT23] paper.             |
    +---------------------------+--------+------------------------------------------------+
    |tau                        |float   |Proportion of num_wr_reps that the Clients are  |
    |                           |        |required to pass.                               |
@@ -351,12 +351,12 @@ Table of Contents
    +---------------------------+--------+------------------------------------------------+
    |abs_wr_lower_bound         |Field   |Absolute value of the inclusive lower bound of  |
    |                           |        |wraparound check result.  It is referred to as  |
-   |                           |        |the absolute value of L in Remark 4.11 of [PINE]|
-   |                           |        |paper.                                          |
+   |                           |        |the absolute value of L in Remark 4.11 of       |
+   |                           |        |[ROCT23] paper.                                 |
    +---------------------------+--------+------------------------------------------------+
    |abs_wr_upper_bound         |Field   |Absolute value of the inclusive upper bound of  |
    |                           |        |wraparound check result.  It is referred to as H|
-   |                           |        |in Remark 4.11 of [PINE] paper.                 |
+   |                           |        |in Remark 4.11 of [ROCT23] paper.               |
    +---------------------------+--------+------------------------------------------------+
    |shifted_wr_upper_bound     |Field   |Inclusive upper bound of the shifted wraparound |
    |                           |        |check result.  This is equal to                 |
@@ -515,7 +515,7 @@ Table of Contents
    |                       |          | order to reduce the soundness |
    |                       |          | error of degree-2 polynomial  |
    |                       |          | checks.  It is referred to as |
-   |                       |          | t in [PINE] paper.            |
+   |                       |          | t in [ROCT23] paper.          |
    +-----------------------+----------+-------------------------------+
 
                                  Table 4
@@ -588,9 +588,9 @@ Table of Contents
    which is the squared L2-norm bound in field integer.
 
    To verify this inequality, we will first turn this inequality check
-   into an equality check, per Section 4.1 of [PINE], with \beta_1 equal
-   to 0, and \beta_2 equal to B.  Additionally, the minimum field size
-   requirement for this protocol MUST be at least 3 * B + 2.
+   into an equality check, per Section 4.1 of [ROCT23], with \beta_1
+   equal to 0, and \beta_2 equal to B.  Additionally, the minimum field
+   size requirement for this protocol MUST be at least 3 * B + 2.
 
    Clients are expected to compute V0 = \SUM_i X[i]^2, and also the
    difference U0 = B - V0, and send both V0 and U0 as bits in its
@@ -609,10 +609,10 @@ Table of Contents
 
    2.  The computed squared L2-norm from the secret shares of X matches
        the secret-shared bit representation of V0, as per Section 4.3 of
-       [PINE].
+       [ROCT23].
 
    3.  V0 + U0 = B, based on the secret-shared bit representation of V0
-       and U0, as per Section 4.1 of [PINE].
+       and U0, as per Section 4.1 of [ROCT23].
 
    It's important to recognize that verifying property 2 involves a non-
    affine operation, that is a degree-2 polynomial to square each value
@@ -700,7 +700,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
 
    We ask Clients to repeat the procedure for r number of times, to
    reduce the overall soundness and completeness error of this protocol,
-   with motivations described in Section 4.2 of [PINE].  We define a
+   with motivations described in Section 4.2 of [ROCT23].  We define a
    threshold TAU, so that the Clients are required to pass at least TAU
    * r repetitions.  Otherwise, Clients SHOULD retry, but Aggregators
    MUST reject.
@@ -714,7 +714,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
        [0, H + abs(L)].  In order for Aggregators to verify V1_k doesn't
        exceed H + abs(L), the Client also computes U1_k = H + abs(L) -
        V1_k, so Aggregators can run the protocol in Section 4.1 of
-       [PINE] to turn this inequality check into equality check.
+       [ROCT23] to turn this inequality check into equality check.
 
    2.  It records a success bit g_k of 1, indicating it has passed.
 
@@ -737,8 +737,8 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
        be achieved by Section 7.1.1.
 
    2.  For each repetition k, verify the linear equality V1_k + U1_k = H
-       + abs(L), per Section 4.1 of [PINE].  This verifies V1_k doesn't
-       exceed H + abs(L).
+       + abs(L), per Section 4.1 of [ROCT23].  This verifies V1_k
+       doesn't exceed H + abs(L).
 
    3.  For each repetition k, verify the linear equality S_k = (SUM_i
        Z_(k,i) * X_i) + abs(L) - V1_k.  This ensures the Aggregator-
@@ -753,7 +753,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
        repetitions.
 
    It is important to notice an optimization proposed in Remark 4.12 of
-   [PINE], that if we can come up with wraparound protocol bounds L >=
+   [ROCT23], that if we can come up with wraparound protocol bounds L >=
    -ALPHA * sqrt(B) and H <= ALPHA * sqrt(B), such that H + L + 1 is a
    power of 2, we can avoid asking Clients to send U1_k for each
    repetition, and Aggregators don't have to verify property 2 above,
@@ -836,7 +836,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    *  Soundness: The soundness error of one repetition of wraparound
       protocol is 1/2.  Over r repetitions, the soundness error is
       therefore Bin((TAU * r); r, 1/2), see Lemma 4.3 and also Claim 4.9
-      in [PINE].  There is also a soundness error when we verify the
+      in [ROCT23].  There is also a soundness error when we verify the
       degree-2 polynomial in WC_1 over all r repetitions.  The soundness
       error is computed based on Corollary 4.7 and Remark 4.8 of
       [BBCGGI19], 2 * sqrt(r) / (q - sqrt(r)) + r / q.  If we repeat
@@ -847,15 +847,15 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    *  Completeness: The completeness error of one repetition of
       wraparound protocol is ETA, or 2 / e^(ALPHA' ^ 2), where ALPHA' is
       the actual parameter used after applying optimization in Remark
-      4.12 in [PINE].  Therefore, the completeness error over all
+      4.12 in [ROCT23].  Therefore, the completeness error over all
       repetitions is 1 - Bin((TAU * r); r, 1 - ETA), see Lemma 4.3 and
-      also Claim 4.9 in [PINE].  This is the probability that a Client
+      also Claim 4.9 in [ROCT23].  This is the probability that a Client
       fails more than (1 - TAU) * r repetitions.
 
    *  rho-Statistical Zero-Knowledge: Aggregators learn close to nothing
       about an honest Client.  The zero knowledge leakage is quantified
       by the completeness error rho from above, which is negligible.
-      See discussion in Lemma 4.3 of [PINE].
+      See discussion in Lemma 4.3 of [ROCT23].
 
 7.1.4.  Summary of PINE Protocols
 
@@ -1137,7 +1137,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
       # Keep track of the "difference" field elements for each
       # repetition, i.e. the difference between the shifted wraparound
       # check result and the shifted upper bound.
-      # It is referred to as `s` in {{PINE}} paper.
+      # It is referred to as `s` in {{ROCT23}} paper.
       diff_field_elems = []
       # Keep track of the number of passing repetitions in
       # `num_passed_wr_reps`. If the Client has passed more than
@@ -1341,7 +1341,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
            # repetition.
            diff_field_elem = inp[Pine.offset_diff_field_elem(k)]
            # This equation should be equal to 0, i.e. bullet point 3
-           # in Figure 2 in {{PINE}} paper.
+           # in Figure 2 in {{ROCT23}} paper.
            check = dot_prod_res + abs_wr_lower_bound_shares - \
                shifted_wr_res - diff_field_elem
            checks.append(check)
@@ -2263,7 +2263,7 @@ def decode_prep_msg(Pine, encoded):
               Training Data", 2017, <https://ai.googleblog.com/2017/04/
               federated-learning-collaborative.html>.
 
-   [PINE]     "PINE: Efficient Norm-Bound Verification for Secret-Shared
+   [ROCT23]   "PINE: Efficient Norm-Bound Verification for Secret-Shared
               Vectors", 2023, <https://arxiv.org/abs/2311.10237>.
 
    [Tal22]    Talwar, K., "Differential Secrecy for Distributed Data and
