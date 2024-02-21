@@ -83,10 +83,6 @@ informative:
     date: 2022
     target: https://arxiv.org/abs/2202.10618
 
-  DivviUpVDAF:
-    title: "DivviUp LibPrio Rust"
-    target: https://github.com/divviup/libprio-rs
-
   IEEE754-2019:
     title: "IEEE Standard for Floating-Point Arithmetic"
     date: 2019
@@ -159,6 +155,11 @@ FLP circuit and accompanying encoding scheme for computing and verifying the L2
 norm of each gradient. Finally, in {{vdaf}} we specify the complete
 multi-party, 1-round VDAF.
 
+> NOTE As of this draft, the algorithms are not yet fully specified. We are
+> still working out some of the minor details. In the meantime, pllease refer
+> to the reference code on which the spec will be based:
+> https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/tree/main/poc
+
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
@@ -174,7 +175,8 @@ This document uses the same parameters and conventions specified for:
 A floating point number is XXX. [CP: Specify, with a relvant reference.]
 
 A "gradient" is a vector of floating point numbers. Each coordinate of this
-vector is called an "entry".
+vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
+the square root of the sum of the squares of its entries.
 
 The user-specified parameters to initialize PINE are defined in
 {{pine-user-param}}.
@@ -220,46 +222,147 @@ does not wrap around the field modulus. However, this approach has relatively
 high communication overhead between the Client and Aggregators, roughly
 `num_frac_bits * dimension` field elements (see {{pine-user-param}}).
 
-[CP: Got here.]
+In order to detect whether a wraparound has occurred, PINE uses a probabilistic test,
+which works as follows: A
+random vector over the field is generated (via a procedure described in
+{{vdaf}}) where each entry is equal to `1`, `0`, or `q-1`, each with a
+particular probability: to test for wraparound, compute the dot product of this
+vector and the gradient, and check if the result is in a specific range. The range
+is determined by parameters in {{pine-user-param}}.
 
-PINE takes a different approach. Instead of encoding the coordinates of a
-vector in their binary representation, we devise a randomized test that can
-detect whether there is a wraparound when computing the sum of squares over
-a finite field. After Aggregators have carried out L2-norm check on the
-secret-shared field integer vector, we know either the Client vector is
-bounded by the desired L2-norm, or the L2-norm is at least `q`.
-Then we test for this wraparound by taking a dot product of the Client's
-vector, with a random vector, each element of which is -1 (or `q-1`), `0`,
-or `1` with respective probability. In {{ROCT23}} it is demonstrated
-that if there is wraparound, the dot product is likely to be large. On the
-other hand, if the sum of the squared entries was small to begin with, then
-the dot product will be small with high probability.
+If the norm wraps around the field modulus, then the dot product is likely to
+be large. In fact, {{ROCT23}} show that this test correctly detects wraparounds
+with probability `1/2`. To decrease the false negative probability (that is,
+the probability of misclassifying an invalid gradient as valid), we simply
+repeat this test a number of times, each time with a vector sampled from the
+same distribution.
 
-It's worth noting that each wraparound check has a probability of a false
-negative that the measurement from a malicious Client is accepted, and the
-probability of a false positive that the measurement from an honest Client
-is rejected. Therefore, in order to make both probabilities negligible, we
-run the wraparound checks multiple times.
+However, {{ROCT23}} also show that each wraparound test has a non-zero false
+positive probability (the probability of misclassifying a valid gradient as
+invalid). This creates a problem for privacy, as the Aggregators learn
+information about a valid gradient they were not meant to learn: whether its
+dot product with a known vector is in a particular range. [CP: We need a more
+intuitive explanation of the information that's leaked.] The parameters of PINE
+are chosen carefully in order to ensure this leakage is negligible.
 
-It's also worth noting the following differences between PINE and other
-standardized VDAFs like Prio3:
+# The PINE Proof System {#flp}
 
-* There is a negligible probability of false positives that a valid Client
-  measurement is rejected by the Aggregators, while Prio3 VDAFs always
-  accept valid Client measurements.
-* Due to the negligible probability of false positives, PINE provides a
-  strong, statistical zero-knowledge guarantee, instead of the perfect
-  zero-knowledge guarantee provided by Prio3 VDAFs, because a false
-  positive case can leak "some" information about the measurement from an
-  honest Client. The internal parameters in PINE are thus chosen to make
-  the probability of false positives negligible.
-* The random vectors in wraparound check need to be generated in a
-  non-interactive way and agreed by both the Client and Aggregators.
-  The randomness generation technique is very similar to the technique
-  used for joint randomness in Prio3 (Fiat-Shamir heuristic), and we
-  refer to it as "wraparound joint randomness".
+This section specifies a randomized encoding of gradients and FLP circuit
+({{Section 7.3 of !VDAF}}) for checking that (1) the gradient's
+squared L2-norm falls in the desired range and (2) the squared L2-norm does not wrap around the field modulus.
 
-# An FLP for Pine {#flp}
+The encoding algorithm takes as input the gradient and an XOF seed used to
+derive the random vectors for the wraparound tests. The seed must be known
+both to the Client and the Aggregators: {{vdaf}} describes how the seed is
+derived from shares of the gradient.
+
+Operational parameters for the proof system are summarized below in
+{{pine-flp-param}}.
+
+> XXX Finish the table below. Keep the descriptions short: this is table is
+> meant to be used as a reference, not to fully specify things.
+
+| Parameter             | Type     | Description |
+|:----------------------|:---------|:------------|
+| alpha                 | XXX      | XXX         |
+| num_wr_checks         | XXX      | XXX         |
+| num_wr_successes      | XXX      | XXX         |
+| encoded_sq_norm_bound | XXX      | XXX         |
+| wr_check_bound        | XXX      | XXX         |
+| num_bits_for_sq_norm  | XXX      | XXX         |
+| num_bits_for_wr_check | XXX      | XXX         |
+| chunk_len             | XXX      | XXX         |
+{: #pine-flp-param title="Operational parameters of the PINE FLP."}
+
+## Measurement Encoding
+
+> XXX Give an overview of `encode_gradient()` and `encode_wr_checks()`. No need
+> to go into full detail yet. The goal is to give the reader an intuition for
+> what the circuit will do, including the bit checks, norm computation, and
+> wraparound checks. Be sure to emphasize that the wraparound test results are
+> not transmitted: instead the Aggregators derive shares of the tests results
+> by running the wraparound tests themselves.
+
+### Encoding of Floating Point Numbers into Field Elements
+
+> TODO Specify how floating point numbers are represented as field elements.
+
+### Encoding the Range-Checked, Squared Norm
+
+> TODO Specify how the Client encodes the norm such that the Aggregators can
+> check that it is in the desired range.
+
+### Running the Wraparound Tests
+
+> XXX Give an overview of how the wraparound test results are generated from
+> the XOF seed.
+
+### Encoding the Range-Checked, Wraparound Check Results
+
+> TODO Specify how the Client encodes the result of each wraparound check such
+> that the Aggregators can check that each is in the desired range.
+
+## The FLP Circuit
+
+> XXX Give an overview of the circuit's operation. Here it would be appropriate
+> to name all of the intermediate results: the bit checks, the wraparound
+> checks result (the reduction over all of the checks), the wraparound success
+> count, the squred norm equality test, and the squared norm range check.
+
+> TODO Specify the implementation of `Valid` from {{Section 7.3.2 of !VDAF}}.
+
+# The PINE VDAF {#vdaf}
+
+This section specifies the complete VDAF.
+
+> XXX Give a high level overview of how the encoding scheme and FLP are used by
+> PINE. Here we want to define the the "wraparound joint randomness" and the
+> "verification joint randomness" and give some details of how each is derived.
+> We also want to mention the multiproof feature and the relationship between
+> the number of proofs, the field size, and soundness.
+>
+> Remember, keep it short and intuitive. The full specificaiton of the
+> algorithms will come later, in a future draft. If you're using too many
+> variable names, then you're probably not on the right track.
+
+## Sharding
+
+> TODO Specify the implementation of `Vdaf.shard()`.
+
+## Preparation
+
+> TODO Specify the implementations of `Vdaf.prep_init()`,
+> `.prep_shares_to_prep()`, and `.prep_next()`.
+
+## Aggregation
+
+> TODO Specify the implementation of `Vdaf.aggregate()`.
+
+## Unsharding
+
+> TODO Specify the implementation of `Vdaf.unshard()`.
+
+# Variants
+
+> TODO Specify concrete parameterizations of VDAFs, including the choice of
+> field, number of proofs, and valid ranges for the parameters in
+> {{pine-user-param}}.
+
+# Security Considerations
+
+Our security considerations for PINE are the same as those for Prio3 described
+in {{Section 9 of !VDAF}}.
+
+> XXX Given that we can tune the parameters such that the ZK error is
+> negligible, I don't think this needs to be mentioned here.
+>
+> Is there anything else worth mentioning?
+
+# IANA Considerations
+
+> TODO Ask IANA to allocate an algorithm ID from the VDAF algorithm ID registry.
+
+# XXX DELETE EVERYTHING BELOW HERE UP TO ACKNOWLEDGEMENTS.
 
 ## Operational Parameters for FLP {#flp-op-param}
 
@@ -296,7 +399,7 @@ parameters for PINE FLP are listed in {{pine-flp-param}}:
 | `WRAPAROUND_JOINT_RAND_LEN`   | Length of the joint randomness needed during computation of wraparound check {{wraparound}} in PINE. This length should be equal to `dimension * num_wr_reps`. |
 | `VERIFICATION_JOINT_RAND_LEN` | Length of joint randomness used to reduce over multiple circuit outputs in {{Section 7.3.1.1 of !VDAF}}, to trade a small soundness error for a shorter proof, as described in Remark 4.8 of {{BBCGGI19}}. |
 | `JOINT_RAND_LEN`              | Length of the total joint randomness of `WRAPAROUND_JOINT_RAND_LEN` and `VERIFICATION_JOINT_RAND_LEN` |
-{: #pine-flp-param title="Operational Parameters for PINE FLP."}
+{: #pine-flp-param-old title="Operational Parameters for PINE FLP."}
 
 
 > CP: Here is where the most of the technical meat goes. The goal here is to
@@ -386,7 +489,7 @@ causes the positive and negative field integer ranges to overlap.
 Therefore, we must check that
 `c * encoded_l2_norm_bound.as_unsigned() <= floor(Field.MODULUS / 2)`.
 
-# The Pine VDAF {#vdaf}
+# The Pine VDAF {#vdaf-old}
 
 ## Operational Parameters for VDAF {#vdaf-op-param}
 
