@@ -12,11 +12,9 @@ from field import Field
 from flp_generic import Mul, ParallelSum, Valid
 from xof import Xof, XofTurboShake128
 
-# TODO(junyechen1996): Pick values for these that provide sufficient soundness
-# and completeness (#39).
-ALPHA = 7.0
-NUM_WR_CHECKS = 135
-NUM_WR_SUCCESSES = math.floor(0.75 * NUM_WR_CHECKS)
+ALPHA = 8.7
+NUM_WR_CHECKS = 100
+NUM_WR_SUCCESSES = 100
 
 class PineValid(Valid):
     # XOF for `PineValid`.
