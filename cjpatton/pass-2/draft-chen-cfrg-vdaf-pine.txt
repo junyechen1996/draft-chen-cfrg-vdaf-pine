@@ -86,8 +86,7 @@ Table of Contents
    6.  Variants
    7.  Security Considerations
    8.  IANA Considerations
-   9.  EVERYTHING AFTER THIS POINT IS SCRATCH WORK, TO BE COPY-PASTED
-           INTO THE SECTIONS ABOVE.
+   9.  XXX DELETE EVERYTHING BELOW HERE UP TO ACKNOWLEDGEMENTS.
      9.1.  Operational Parameters for FLP
      9.2.  From Real Number to Field Integer
        9.2.1.  Encoding Real Numbers Into Field Integers
@@ -437,8 +436,7 @@ Table of Contents
       TODO Ask IANA to allocate an algorithm ID from the VDAF algorithm
       ID registry.
 
-9.  EVERYTHING AFTER THIS POINT IS SCRATCH WORK, TO BE COPY-PASTED INTO
-    THE SECTIONS ABOVE.
+9.  XXX DELETE EVERYTHING BELOW HERE UP TO ACKNOWLEDGEMENTS.
 
 9.1.  Operational Parameters for FLP
 
