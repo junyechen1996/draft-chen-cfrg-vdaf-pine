@@ -219,8 +219,8 @@ Table of Contents
 
    A "gradient" is a vector of floating point numbers.  Each coordinate
    of this vector is called an "entry".  The "L2-norm", or simply
-   "norm", of as gradient is the square root of the sum of the squares
-   of its entries.
+   "norm", of a gradient is the square root of the sum of the squares of
+   its entries.
 
    The user-specified parameters to initialize PINE are defined in
    Table 1.
@@ -279,42 +279,40 @@ Table of Contents
    Client and Aggregators, roughly num_frac_bits * dimension field
    elements (see Table 1).
 
-   Rather than prevent wraparounds from occuring, PINE uses a
-   probabilistic test to detect whether a wraparound has occured.  This
-   test works as follows.  A random vector over the field is generated
-   (via a procedure described in Section 5) where each entry is equal to
-   1, 0, or q-1, each with a particular probability: to test for
-   wraparound, compute the dot product of this vector and the gradient
-   and check if the result in a specific range.  The range is determined
-   by parameters in Table 1.
+   In order to detect whether a wraparound has occurred, PINE uses a
+   probabilistic test, which works as follows: A random vector over the
+   field is generated (via a procedure described in Section 5) where
+   each entry is equal to 1, 0, or q-1, each with a particular
+   probability: to test for wraparound, compute the dot product of this
+   vector and the gradient, and check if the result is in a specific
+   range.  The range is determined by parameters in Table 1.
 
    If the norm wraps around the field modulus, then the dot product is
    likely to be large.  In fact, [ROCT23] show that this test correctly
-   detects warparounds with probability 1/2.  To decrease the false
-   negative probability (that is, the probability of missclassifying an
+   detects wraparounds with probability 1/2.  To decrease the false
+   negative probability (that is, the probability of misclassifying an
    invalid gradient as valid), we simply repeat this test a number of
    times, each time with a vector sampled from the same distribution.
 
    However, [ROCT23] also show that each wraparound test has a non-zero
-   false positive probability (the probability of missclassifying a
-   valid gradient as invalid).  This creates a problem for privacy, as
-   the Aggregators learn information about a valid gradient they were
-   not meant to learn: whether its dot product with a known vector is in
-   a particular range.  [CP: We need a more intuitive explanation of the
+   false positive probability (the probability of misclassifying a valid
+   gradient as invalid).  This creates a problem for privacy, as the
+   Aggregators learn information about a valid gradient they were not
+   meant to learn: whether its dot product with a known vector is in a
+   particular range.  [CP: We need a more intuitive explanation of the
    information that's leaked.]  The parameters of PINE are chosen
    carefully in order to ensure this leakage is negligible.
 
 4.  The PINE Proof System
 
    This section specifies a randomized encoding of gradients and FLP
-   circuit (Section 7.3 of [VDAF]) for checking that (1) computes the
-   gradient's squared L2-norm and checks that it falls in the desired
-   range and (2) checking that the squared L2-norm does not wrap around
-   the field modulus.
+   circuit (Section 7.3 of [VDAF]) for checking that (1) the gradient's
+   squared L2-norm falls in the desired range and (2) the squared
+   L2-norm does not wrap around the field modulus.
 
    The encoding algorithm takes as input the gradient and an XOF seed
-   used to derive the random vectors for the wraparoundt tests.  The
-   seed must be known both to the Client and the Aggregators: Section 5
+   used to derive the random vectors for the wraparound tests.  The seed
+   must be known both to the Client and the Aggregators: Section 5
    describes how the seed is derived from shares of the gradient.
 
    Operational parameters for the proof system are summarized below in
