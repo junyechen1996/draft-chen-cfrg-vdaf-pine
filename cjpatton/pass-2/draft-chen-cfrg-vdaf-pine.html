@@ -1508,11 +1508,11 @@ high communication overhead between the Client and Aggregators, roughly
 <code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">Rather than prevent wraparounds from occuring, PINE uses a probabilistic test
 to detect whether a wraparound has occured. This test works as follows. A
-random vector over the field is generated (via a procedure described below)
-where each entry is equal to <code>1</code>, <code>0</code>, or <code>q-1</code>, each with a particular
-probability: to test for wraparound, compute the dot product of this vector and
-the gradient and check if the result in a specific range. The range is
-determined by parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-6" class="pilcrow">¶</a></p>
+random vector over the field is generated (via a procedure described in
+<a href="#vdaf" class="auto internal xref">Section 5</a>) where each entry is equal to <code>1</code>, <code>0</code>, or <code>q-1</code>, each with a
+particular probability: to test for wraparound, compute the dot product of this
+vector and the gradient and check if the result in a specific range. The range
+is determined by parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> show that this test correctly detects warparounds
 with probability <code>1/2</code>. To decrease the false negative probability (that is,
@@ -1526,7 +1526,6 @@ information about a valid gradient they were not meant to learn: whether its
 dot product with a known vector is in a particular range. [CP: We need a more
 intuitive explanation of the information that's leaked.] The parameters of PINE
 are chosen carefully in order to ensure this leakage is negligible.<a href="#section-3-8" class="pilcrow">¶</a></p>
-<p id="section-3-9">XXX Give an overview of PINE sharding.<a href="#section-3-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="flp">

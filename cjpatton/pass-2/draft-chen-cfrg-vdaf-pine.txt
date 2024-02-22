@@ -282,11 +282,11 @@ Table of Contents
    Rather than prevent wraparounds from occuring, PINE uses a
    probabilistic test to detect whether a wraparound has occured.  This
    test works as follows.  A random vector over the field is generated
-   (via a procedure described below) where each entry is equal to 1, 0,
-   or q-1, each with a particular probability: to test for wraparound,
-   compute the dot product of this vector and the gradient and check if
-   the result in a specific range.  The range is determined by
-   parameters in Table 1.
+   (via a procedure described in Section 5) where each entry is equal to
+   1, 0, or q-1, each with a particular probability: to test for
+   wraparound, compute the dot product of this vector and the gradient
+   and check if the result in a specific range.  The range is determined
+   by parameters in Table 1.
 
    If the norm wraps around the field modulus, then the dot product is
    likely to be large.  In fact, [ROCT23] show that this test correctly
@@ -303,8 +303,6 @@ Table of Contents
    a particular range.  [CP: We need a more intuitive explanation of the
    information that's leaked.]  The parameters of PINE are chosen
    carefully in order to ensure this leakage is negligible.
-
-   XXX Give an overview of PINE sharding.
 
 4.  The PINE Proof System
 
