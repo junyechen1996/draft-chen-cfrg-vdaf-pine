@@ -224,6 +224,17 @@ user_params = [
     (1, 15, 100000, None, Field128)
 ]
 
+params_100 = [
+    (100, 100, 2**-107),
+]
+print('------- Target soundness error: 2^(-100)')
+print('Wraparound check parameters:')
+display_wr_params(100, params_100)
+print('User parameters:')
+display_user_params(100, user_params, *params_100[0])
+
+
+
 # print(search(32))
 params_32 = [
     (32, 32, 2**-134),
