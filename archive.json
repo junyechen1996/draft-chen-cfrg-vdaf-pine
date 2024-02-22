@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-20T01:10:56.159615+00:00",
+  "timestamp": "2024-02-22T01:11:23.867577+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -103,15 +103,15 @@
       "id": "I_kwDOJWdxls5o_mAx",
       "title": "Chris P.: `Field64` seems too small for robustness",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/5",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "In our analysis of Prio3 (https://eprint.iacr.org/2023/130) we found that robustness requires a field large enough to overcome a computationally bounded attacker that can do offline precomutation with the PRG.\r\n\r\nThe key term is the multipliciative loss via RO queries (the first term): \r\n![image](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/assets/3453007/54ed04af-60d0-45fb-a11c-4daa8035b72d)\r\n\r\nBasically, if the soundness error is $\\epsilon = 2^{128}$, then allowing $2^{64}$ RO queries drops the robustness bound to at least $2^{64}$. We believe this bound is relatively tight.\r\n\r\nRepeating the verification step multiple times might help, but I think you would also need independent joint randomness for each trial.\r\n\r\nI would recommend going with a 128-bit field, i.e., `Field128`.\r\n\r\n ",
       "createdAt": "2023-06-16T23:35:37Z",
-      "updatedAt": "2023-06-16T23:36:06Z",
-      "closedAt": null,
+      "updatedAt": "2024-02-20T22:37:20Z",
+      "closedAt": "2024-02-20T22:37:20Z",
       "comments": []
     },
     {
@@ -207,15 +207,15 @@
       "id": "I_kwDOJWdxls5smKT2",
       "title": "Better parameter names?",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/13",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Currently the draft defines variables to be aligned with what are used in the paper, but it might be better to define better names for them.",
       "createdAt": "2023-07-26T09:16:22Z",
-      "updatedAt": "2023-08-17T00:56:56Z",
-      "closedAt": null,
+      "updatedAt": "2024-02-20T22:37:02Z",
+      "closedAt": "2024-02-20T22:37:02Z",
       "comments": [
         {
           "author": "cjpatton",
@@ -611,7 +611,7 @@
       "id": "I_kwDOJWdxls58unCY",
       "title": "Reduce unit test runtime",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/54",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [
@@ -620,7 +620,62 @@
       "labels": [],
       "body": "One way is to add internal operational parameters as optional parameters",
       "createdAt": "2024-01-21T13:46:49Z",
-      "updatedAt": "2024-01-21T13:46:52Z",
+      "updatedAt": "2024-02-20T22:21:14Z",
+      "closedAt": "2024-02-20T22:21:14Z",
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@junyechen1996 I don't think we need this anymore. The tests finish in a reasonable amount of time (about 6 seconds on my machine). A real implementation of PINE would be much faster; this doesn't need to be fast because it's just the reference code.",
+          "createdAt": "2024-02-20T22:21:14Z",
+          "updatedAt": "2024-02-20T22:21:14Z"
+        }
+      ]
+    },
+    {
+      "number": 59,
+      "id": "I_kwDOJWdxls5_39lU",
+      "title": "Bit lengths seem to be computed incorrectly",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/59",
+      "state": "CLOSED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We compute the bit length for the squared norm and wraparound range checks as `math.ceil(math.log2(m))` where `m` is the largest, valid value:\r\n\r\nhttps://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/21c43447f9b3ed283cc44500001ab4e9411a72c7/poc/flp_pine.py#L82\r\n\r\nhttps://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/21c43447f9b3ed283cc44500001ab4e9411a72c7/poc/flp_pine.py#L101\r\n\r\nThis appears to be incorrect when `m` is a power of 2:\r\n\r\n| m | bit encoding | bit length |\r\n| - | - | - |\r\n| 1 | 1 | 1 |\r\n| 2 | 10 | 2 |\r\n| 4 | 100 | 3 |\r\n| 8 | 1000 | 4 |\r\n| 16 | 10000 | 5 |\r\n\r\nWhat we want instead is `math.floor(math.log2(m)+1)`.\r\n\r\nThanks to @jhoyla for pointing out this bug.\r\n",
+      "createdAt": "2024-02-20T22:10:02Z",
+      "updatedAt": "2024-02-21T17:41:18Z",
+      "closedAt": "2024-02-21T17:41:17Z",
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Both look correct to me?\r\n\r\nm = 1, math.ceil(math.log2(m + 1)) = 1, math.floor(math.log2(m) + 1) = 1\r\nm = 2, math.ceil(math.log2(m + 1)) = 2, math.floor(math.log2(m) + 1) = 2\r\nm = 4, math.ceil(math.log2(m + 1)) = 3, math.floor(math.log2(m) + 1) = 3",
+          "createdAt": "2024-02-21T08:07:58Z",
+          "updatedAt": "2024-02-21T08:07:58Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Ohhh right, the +1 is important.",
+          "createdAt": "2024-02-21T17:41:17Z",
+          "updatedAt": "2024-02-21T17:41:17Z"
+        }
+      ]
+    },
+    {
+      "number": 60,
+      "id": "I_kwDOJWdxls5_4LF_",
+      "title": "Optimization: Require all wraparound checks to pass",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/60",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The FLP circuit runs a number of independent wraparound checks (`NUM_WR_CHECKS`); the input is deemed valid if a fraction of the checks succeed (`NUM_WR_SUCCESSES / NUM_WR_CHECKS`).\r\n\r\nWe are in the midst of choosing parameters for PINE (#39). One potential outcome of this search: there may be no benefit to allowing wraparound checks to fail, either in terms of performance or ZK/soundness error. On the other hand, if we require all checks to succeed, then we can simplify the circuit a bit.\r\n\r\nTo allow a fraction of checks to fail, the prover sends the verifiers shares of a bit (denoted `g` here and [in the paper](https://arxiv.org/abs/2311.10237)) indicating whether the test succeeded. The circuit proves that:\r\n1. _either_ the prover asserted success (i.e., that `g=1`) and the check succeeded _or_ the prover asserted failure (`g=0`).\r\n2. The number of successes asserted by the prover is exactly `NUM_WR_SUCCESSES / NUM_WR_CHECKS`.\r\n\r\nIf instead we require all tests to succeed, then the verifiers simply need to check that every check was successful. In particular, there is no need for the prover to assert success. Not only is the resulting circuit simpler, it leads to some modest performance improvements:\r\n1. Shorter input (no need to send `g` for each wraparound check)\r\n2. Shorter proof (less calls to the FLP gadget)",
+      "createdAt": "2024-02-20T22:57:08Z",
+      "updatedAt": "2024-02-20T22:57:08Z",
       "closedAt": null,
       "comments": []
     }
@@ -6994,19 +7049,187 @@
       "labels": [],
       "body": "Some results:\r\n\r\n```\r\n------- Target soundness error: 2^(-32)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|32        |32        |134            |129            |32             |672       |9.673410431465864   |\r\n|37        |36        |69             |128            |31             |740       |6.965651630622664   |\r\n|41        |39        |48             |130            |31             |820       |5.827882278103885   |\r\n|86        |71        |12             |135            |31             |1634      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |42        |Field64   |1         |32        |32        |134       |129       |32                  |54                  |\r\n|1         |15        |1000      |42        |Field128  |1         |32        |32        |134       |129       |32                  |118                 |\r\n|1         |15        |10000     |103       |Field64   |1         |32        |32        |134       |129       |32                  |54                  |\r\n|1         |15        |10000     |103       |Field128  |1         |32        |32        |134       |129       |32                  |118                 |\r\n|1         |15        |100000    |317       |Field64   |1         |32        |32        |134       |129       |32                  |53                  |\r\n|1         |15        |100000    |317       |Field128  |1         |32        |32        |134       |129       |32                  |117                 |\r\n\r\n------- Target soundness error: 2^(-64)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|64        |64        |134            |128            |64             |1344      |9.673410431465864   |\r\n|70        |69        |69             |126            |63             |1400      |6.965651630622664   |\r\n|75        |73        |48             |127            |63             |1500      |5.827882278103885   |\r\n|101       |93        |19             |130            |63             |1919      |3.723297411059034   |\r\n|127       |112       |12             |125            |63             |2413      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |49        |Field64   |2         |64        |64        |134       |128       |64                  |106                 |\r\n|1         |15        |1000      |49        |Field128  |1         |64        |64        |134       |128       |64                  |117                 |\r\n|1         |15        |10000     |107       |Field64   |2         |64        |64        |134       |128       |64                  |106                 |\r\n|1         |15        |10000     |107       |Field128  |1         |64        |64        |134       |128       |64                  |117                 |\r\n|1         |15        |100000    |318       |Field64   |2         |64        |64        |134       |128       |64                  |105                 |\r\n|1         |15        |100000    |318       |Field128  |1         |64        |64        |134       |128       |64                  |116                 |\r\n\r\n------- Target soundness error: 2^(-80)\r\nWraparound check parameters:\r\n|r         |r_succ    |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|80        |80        |134            |127            |80             |1680      |9.673410431465864   |\r\n|86        |85        |69             |126            |79             |1720      |6.965651630622664   |\r\n|92        |90        |48             |127            |79             |1840      |5.827882278103885   |\r\n|146       |131       |12             |122            |79             |2774      |3.0018183401530623  |\r\n\r\nUser parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(wr_sound)     |-log2(gadget_sound) |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|:-------------------|\r\n|1         |15        |1000      |53        |Field64   |2         |80        |80        |134       |127       |80                  |106                 |\r\n|1         |15        |1000      |53        |Field128  |1         |80        |80        |134       |127       |80                  |117                 |\r\n|1         |15        |10000     |108       |Field64   |2         |80        |80        |134       |127       |80                  |106                 |\r\n|1         |15        |10000     |108       |Field128  |1         |80        |80        |134       |127       |80                  |117                 |\r\n|1         |15        |100000    |319       |Field64   |2         |80        |80        |134       |127       |80                  |105                 |\r\n|1         |15        |100000    |319       |Field128  |1         |80        |80        |134       |127       |80                  |116                 |\r\n```\r\n",
       "createdAt": "2024-02-19T17:15:05Z",
-      "updatedAt": "2024-02-19T17:15:26Z",
+      "updatedAt": "2024-02-21T10:14:13Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "21c43447f9b3ed283cc44500001ab4e9411a72c7",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/soundness",
-      "headRefOid": "905263321e97de40bb60fa232c174315f6ccd931",
+      "headRefOid": "9f8a758e5d540ad69b2b93375d22859d195acad3",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5wvUBg",
+          "commit": {
+            "abbreviatedOid": "9052633"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Looks mostly correct, please confirm and merge if you're comfortable. I also left some suggestions for minor improvments.",
+          "createdAt": "2024-02-20T19:48:19Z",
+          "updatedAt": "2024-02-20T20:09:35Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "nit: break comment blocks at 80 charcters",
+              "createdAt": "2024-02-20T19:48:19Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            },
+            {
+              "originalPosition": 36,
+              "body": "What are the \"constraints\" exactly? Are these the things that we \"compute a random linear combination over\"? If so, this should include:\r\n1. The bit checks (`valid.bit_checked_len`) => bit_checks_result\r\n2. The wraparound test results (`valid.num_wr_checks`) => wr_checks_result\r\n3. The final reduction over bit_checks_result, wr_checks_result, wr_success_count_result, sq_norm_equality_check_result, and sq_norm_range_check_result (`4`?)",
+              "createdAt": "2024-02-20T19:53:19Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            },
+            {
+              "originalPosition": 25,
+              "body": "Would `flp_sound` be more accurate?",
+              "createdAt": "2024-02-20T19:53:45Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            },
+            {
+              "originalPosition": 75,
+              "body": "The output is pretty, but a machine-readable format may be more useful. What about outputting CSV?",
+              "createdAt": "2024-02-20T19:54:32Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            },
+            {
+              "originalPosition": 104,
+              "body": "nit: Give these the same variable names as the arguments to the `PineValid` constructor.",
+              "createdAt": "2024-02-20T19:54:58Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            },
+            {
+              "originalPosition": 133,
+              "body": "I think it would be more useful to combine these as they are in Theorem 3.14.",
+              "createdAt": "2024-02-20T20:05:59Z",
+              "updatedAt": "2024-02-20T20:06:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5wzefQ",
+          "commit": {
+            "abbreviatedOid": "9052633"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-21T09:38:56Z",
+          "updatedAt": "2024-02-21T10:14:13Z",
+          "comments": [
+            {
+              "originalPosition": 36,
+              "body": "Updated to +4.\r\n\r\n1 and 2 are correct for both paper and implementation. I used to put +1 here because we are checking the squared L2-norm equality check (i.e., the squared L2-norm computed from the secret shares of the client gradient is equal to the client-submitted bits of the squared L2-norm). I think +4 is correct for implementation since we are taking a final random linear combination of the things we are checking: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/21c43447f9b3ed283cc44500001ab4e9411a72c7/poc/flp_pine.py#L212-L215. In theory, we can do better by exchanging the secret shares of each check directly instead of taking a random linear combination, which introduces a bit more soundness error, but very negligible.",
+              "createdAt": "2024-02-21T09:38:56Z",
+              "updatedAt": "2024-02-21T10:14:13Z"
+            },
+            {
+              "originalPosition": 75,
+              "body": "Done.",
+              "createdAt": "2024-02-21T10:13:33Z",
+              "updatedAt": "2024-02-21T10:14:13Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 61,
+      "id": "PR_kwDOJWdxls5ndR76",
+      "title": "Begin pass of draft",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/61",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "I'm working my way through the draft and cleaning as I go. The goal for the first pass is to flesh out the skeleton. There are already lots of bits we can use here.\r\n\r\nOne thing I'm doing is de-emphasizing the \"completeness problem\" for PINE. Given how we will choose parameters, it seems to me that the impact on ZK is really going to be negligible.",
+      "createdAt": "2024-02-21T00:31:06Z",
+      "updatedAt": "2024-02-21T19:19:20Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "21c43447f9b3ed283cc44500001ab4e9411a72c7",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/draft-skeleton",
+      "headRefOid": "0a62d4e5de300273ed3558d38973543b22179e94",
+      "closedAt": "2024-02-21T19:19:19Z",
+      "mergedAt": "2024-02-21T19:19:19Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "3f64f59ab5de1c84bf5475e930fc3b66c2b4cf73"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5wz44n",
+          "commit": {
+            "abbreviatedOid": "eb9b01d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-21T10:18:11Z",
+          "updatedAt": "2024-02-21T10:30:55Z",
+          "comments": [
+            {
+              "originalPosition": 3,
+              "body": "I think we should update this to `ROCT23`.",
+              "createdAt": "2024-02-21T10:18:11Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 121,
+              "body": "```suggestion\r\nThis computation is not easy to do efficiently: the challenge lies in ensuring that\r\n```\r\n?",
+              "createdAt": "2024-02-21T10:19:09Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 221,
+              "body": "```suggestion\r\nCrucially, arithmetic in this computation is modulo the field size `q`. This\r\n```",
+              "createdAt": "2024-02-21T10:24:40Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 232,
+              "body": "```suggestion\r\nAggregators can ensure each falls in a range, which ensures wraparounds do not\r\n```",
+              "createdAt": "2024-02-21T10:26:18Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 231,
+              "body": "I think it's quick enough to just mention \"one way to do this is to encode the bit representation of each entry of the gradient such that...\"? Otherwise it's not immediately clear why the communication cost is `O(num_frac_bits * dimension)`?",
+              "createdAt": "2024-02-21T10:27:37Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 168,
+              "body": "```suggestion\r\n| `l2_norm_bound` | float | The L2-norm upper bound (inclusive). |\r\n```",
+              "createdAt": "2024-02-21T10:28:43Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 170,
+              "body": "```suggestion\r\n| `num_frac_bits` | int   | The number of bits of precision to use when encoding each gradient entry into the field. At most XXX |\r\n```",
+              "createdAt": "2024-02-21T10:28:57Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            },
+            {
+              "originalPosition": 226,
+              "body": "```suggestion\r\nbecause the sum of the squares \"wraps around\" the field modulus `q`.\r\n```",
+              "createdAt": "2024-02-21T10:29:39Z",
+              "updatedAt": "2024-02-21T10:30:56Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
