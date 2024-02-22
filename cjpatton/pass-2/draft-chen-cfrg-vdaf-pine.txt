@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 24 August 2024                                       Cloudflare
-                                                        21 February 2024
+Expires: 25 August 2024                                       Cloudflare
+                                                        22 February 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -53,7 +53,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 24 August 2024.
+   This Internet-Draft will expire on 25 August 2024.
 
 Copyright Notice
 
@@ -72,46 +72,62 @@ Table of Contents
    2.  Conventions and Definitions
    3.  PINE Overview
    4.  The PINE Proof System
-     4.1.  Operational Parameters for FLP
-     4.2.  From Real Number to Field Integer
-       4.2.1.  Encoding Real Numbers Into Field Integers
-       4.2.2.  Decoding Field Integers into IEEE-754 Compatible
+     4.1.  Measurement Encoding
+       4.1.1.  Encoding of Floating Point Numbers into Field Elements
+       4.1.2.  Encoding the Range-Checked, Squared Norm
+       4.1.3.  Running the Wraparound Tests
+       4.1.4.  Encoding the Range-Checked, Wraparound Check Results
+     4.2.  The FLP Circuit
+   5.  The PINE VDAF
+     5.1.  Sharding
+     5.2.  Preparation
+     5.3.  Aggregation
+     5.4.  Unsharding
+   6.  Variants
+   7.  Security Considerations
+   8.  IANA Considerations
+   9.  EVERYTHING AFTER THIS POINT IS SCRATCH WORK, TO BE COPY-PASTED
+           INTO THE SECTIONS ABOVE.
+     9.1.  Operational Parameters for FLP
+     9.2.  From Real Number to Field Integer
+       9.2.1.  Encoding Real Numbers Into Field Integers
+       9.2.2.  Decoding Field Integers into IEEE-754 Compatible
                Float64
-   5.  The Pine VDAF
-     5.1.  Operational Parameters for VDAF
-   6.  BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE
+   10. The Pine VDAF
+     10.1.  Operational Parameters for VDAF
+   11. BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE
            SECTIONS ABOVE.
-   7.  Private Inexpensive Norm Enforcement (PINE) VDAF
-     7.1.  Validity Checks for PINE
-       7.1.1.  0/1 Bit Check Protocol
-       7.1.2.  L2-Norm Sum-Check Protocol
-       7.1.3.  Wraparound Protocol
-       7.1.4.  Summary of PINE Protocols
-   8.  PINE Fully Linear Proof (FLP) in VDAF
-     8.1.  Encoding
-     8.2.  Joint Randomness
-       8.2.1.  Wraparound Joint Randomness
-       8.2.2.  Verification Joint Randomness
-     8.3.  PINE FLP Instantiation
-     8.4.  FLP Execution
-     8.5.  FLP Construction in VDAF
-       8.5.1.  Sharding
-       8.5.2.  Preparation
-       8.5.3.  Aggregation
-       8.5.4.  Unsharding
-     8.6.  Auxiliary Functions
-       8.6.1.  Conversion Between Float64 and Field Element
-       8.6.2.  Conversion Between Field Element And Its Bit
+   12. Private Inexpensive Norm Enforcement (PINE) VDAF
+     12.1.  Validity Checks for PINE
+       12.1.1.  0/1 Bit Check Protocol
+       12.1.2.  L2-Norm Sum-Check Protocol
+       12.1.3.  Wraparound Protocol
+       12.1.4.  Summary of PINE Protocols
+   13. PINE Fully Linear Proof (FLP) in VDAF
+     13.1.  Encoding
+     13.2.  Joint Randomness
+       13.2.1.  Wraparound Joint Randomness
+       13.2.2.  Verification Joint Randomness
+     13.3.  PINE FLP Instantiation
+     13.4.  FLP Execution
+     13.5.  FLP Construction in VDAF
+       13.5.1.  Sharding
+       13.5.2.  Preparation
+       13.5.3.  Aggregation
+       13.5.4.  Unsharding
+     13.6.  Auxiliary Functions
+       13.6.1.  Conversion Between Float64 and Field Element
+       13.6.2.  Conversion Between Field Element And Its Bit
                Representation
-       8.6.3.  Operational Parameters Initialization
-       8.6.4.  Wraparound Check Utility Functions
-       8.6.5.  Joint Randomness Derivation
-       8.6.6.  Message Serialization
-   9.  Security Considerations
-   10. IANA Considerations
-   11. References
-     11.1.  Normative References
-     11.2.  Informative References
+       13.6.3.  Operational Parameters Initialization
+       13.6.4.  Wraparound Check Utility Functions
+       13.6.5.  Joint Randomness Derivation
+       13.6.6.  Message Serialization
+   14. Security Considerations
+   15. IANA Considerations
+   16. References
+     16.1.  Normative References
+     16.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -176,6 +192,12 @@ Table of Contents
    specify an FLP circuit and accompanying encoding scheme for computing
    and verifying the L2 norm of each gradient.  Finally, in Section 5 we
    specify the complete multi-party, 1-round VDAF.
+
+      NOTE As of this draft, the algorithms are not yet fully specified.
+      We are still working out some of the minor details.  In the
+      meantime, pllease refer to the reference code on which the spec
+      will be based: https://github.com/junyechen1996/draft-chen-cfrg-
+      vdaf-pine/tree/main/poc
 
 2.  Conventions and Definitions
 
@@ -283,7 +305,7 @@ Table of Contents
    information that's leaked.]  The parameters of PINE are chosen
    carefully in order to ensure this leakage is negligible.
 
-   XXX Overview of sharding
+   XXX Give an overview of PINE sharding.
 
 4.  The PINE Proof System
 
@@ -298,10 +320,130 @@ Table of Contents
    seed must be known both to the Client and the Aggregators: Section 5
    describes how the seed is derived from shares of the gradient.
 
-4.1.  Operational Parameters for FLP
+   Operational parameters for the proof system are summarized below in
+   Table 2.
+
+      XXX In the table below, list attributes of PineValid that are used
+      for encoding and circuit evaluation.  Keep the descriptions short:
+      this is table is meant to be used as a reference, not to fully
+      specify things.
+
+                    +===========+======+=============+
+                    | Parameter | Type | Description |
+                    +===========+======+=============+
+                    | XXX       | XXX  | XXX         |
+                    +-----------+------+-------------+
+                    | XXX       | XXX  | XXX         |
+                    +-----------+------+-------------+
+                    | XXX       | XXX  | XXX         |
+                    +-----------+------+-------------+
+
+                           Table 2: Operational
+                       parameters of the PINE FLP.
+
+4.1.  Measurement Encoding
+
+      XXX Give an overview of encode_gradient() and encode_wr_checks().
+      No need to go into full detail yet.  The goal is to give the
+      reader an intuition for what the circuit will do, including the
+      bit checks, norm computation, and wraparound checks.  Be sure to
+      emphasize that the wraparound test results are not transmitted:
+      instead the Aggregators derive shares of the tests results by
+      running the wraparound tests themselves.
+
+4.1.1.  Encoding of Floating Point Numbers into Field Elements
+
+      TODO Specify how floating point numbers are represented as field
+      elements.
+
+4.1.2.  Encoding the Range-Checked, Squared Norm
+
+      TODO Specify how the Client encodes the norm such that the
+      Aggregators can check that it is in the desired range.
+
+4.1.3.  Running the Wraparound Tests
+
+      XXX Give an overview of how the wraparound test results are
+      generated from the XOF seed.
+
+4.1.4.  Encoding the Range-Checked, Wraparound Check Results
+
+      TODO Specify how the Client encodes the result of each wraparound
+      check such that the Aggregators can check that each is in the
+      desired range.
+
+4.2.  The FLP Circuit
+
+      XXX Give an overview of the circuit's operation.  Here it would be
+      appropriate to name all of the intermediate results: the bit
+      checks, the wraparound checks result (the reduction over all of
+      the checks), the wraparound success count, the squred norm
+      equality test, and the squared norm range check.
+
+      TODO Specify the implementation of Valid from Section 7.3.2 of
+      [VDAF].
+
+5.  The PINE VDAF
+
+   This section specifies the complete VDAF.
+
+      XXX Give a high level overview of how the encoding scheme and FLP
+      are used by PINE.  Here we want to define the the "wraparound
+      joint randomness" and the "verification joint randomness" and give
+      some details of how each is derived.  We also want to mention the
+      multiproof feature and the relationship between the number of
+      proofs, the field size, and soundness.
+
+      Remember, keep it short and intuitive.  The full specificaiton of
+      the algorithms will come later, in a future draft.  If you're
+      using too many variable names, then you're probably not on the
+      right track.
+
+5.1.  Sharding
+
+      TODO Specify the implementation of Vdaf.shard().
+
+5.2.  Preparation
+
+      TODO Specify the implementations of Vdaf.prep_init(),
+      .prep_shares_to_prep(), and .prep_next().
+
+5.3.  Aggregation
+
+      TODO Specify the implementation of Vdaf.aggregate().
+
+5.4.  Unsharding
+
+      TODO Specify the implementation of Vdaf.unshard().
+
+6.  Variants
+
+      TODO Specify concrete parameterizations of VDAFs, including the
+      choice of field, number of proofs, and valid ranges for the
+      parameters in Table 1.
+
+7.  Security Considerations
+
+   Our security considerations for PINE are the same as those for Prio3
+   described in Section 9 of [VDAF].
+
+      XXX Given that we can tune the parameters such that the ZK error
+      is negligible, I don't think this needs to be mentioned here.
+
+      Is there anything else worth mentioning?
+
+8.  IANA Considerations
+
+      TODO Ask IANA to allocate an algorithm ID from the VDAF algorithm
+      ID registry.
+
+9.  EVERYTHING AFTER THIS POINT IS SCRATCH WORK, TO BE COPY-PASTED INTO
+    THE SECTIONS ABOVE.
+
+9.1.  Operational Parameters for FLP
 
    The operational parameters needed to compute the validity circuit for
-   PINE are defined in Table 2, and should be initialized based on the
+   PINE are defined in Table 3, and should be initialized based on the
    user-specified parameters, and the soundness and completeness error
    target.
 
@@ -315,7 +457,7 @@ Table of Contents
    +---------------------------+--------+------------------------------------------------+
    |encoded_l2_norm_bound      |Field   |Inclusive, L2-norm bound in field integer,      |
    |                           |        |encoded from floor(l2_norm_bound * (2 **        |
-   |                           |        |num_frac_bits) per Section 4.2.1.               |
+   |                           |        |num_frac_bits) per Section 9.2.1.               |
    +---------------------------+--------+------------------------------------------------+
    |encoded_sq_l2_norm_bound   |Field   |Equal to encoded_l2_norm_bound *                |
    |                           |        |encoded_l2_norm_bound.  It is referred to as B  |
@@ -365,22 +507,22 @@ Table of Contents
    |                           |        |1)).                                            |
    +---------------------------+--------+------------------------------------------------+
 
-       Table 2: Operational Parameters in Validity Circuit for PINE.
+       Table 3: Operational Parameters in Validity Circuit for PINE.
 
    The operational parameters to instantiate an FLP for PINE include all
    the FLP parameters in Section 7.1 of [VDAF], except for
    JOINT_RAND_LEN, which now includes the number of field elements for
    both wraparound joint randomness needed to compute wraparound check
-   Section 7.1.3 and verification joint randomness to reduce over
+   Section 12.1.3 and verification joint randomness to reduce over
    multiple circuit outputs.  The new operational parameters for PINE
-   FLP are listed in Table 3:
+   FLP are listed in Table 2:
 
      +=============================+=================================+
      | Parameter                   | Description                     |
      +=============================+=================================+
      | WRAPAROUND_JOINT_RAND_LEN   | Length of the joint randomness  |
      |                             | needed during computation of    |
-     |                             | wraparound check Section 7.1.3  |
+     |                             | wraparound check Section 12.1.3 |
      |                             | in PINE.  This length should be |
      |                             | equal to dimension *            |
      |                             | num_wr_reps.                    |
@@ -399,7 +541,7 @@ Table of Contents
      |                             | VERIFICATION_JOINT_RAND_LEN     |
      +-----------------------------+---------------------------------+
 
-               Table 3: Operational Parameters for PINE FLP.
+               Table 4: Operational Parameters for PINE FLP.
 
       CP: Here is where the most of the technical meat goes.  The goal
       here is to describe the end-to-end FLP, including the wraparound
@@ -414,7 +556,7 @@ Table of Contents
       Then put them together into an implementation of the Flp
       interface.
 
-4.2.  From Real Number to Field Integer
+9.2.  From Real Number to Field Integer
 
    The Client measurement in PINE is expressed as a vector of real
    numbers, but the computations required to verify L2-norm and perform
@@ -424,7 +566,7 @@ Table of Contents
    presented as a vector of IEEE-754 compatible float64 [IEEE754-2019]
    values.
 
-4.2.1.  Encoding Real Numbers Into Field Integers
+9.2.1.  Encoding Real Numbers Into Field Integers
 
    To keep the necessary number of binary fractional bits num_frac_bits
    configured in PINE, the high-level idea is to multiply a real number
@@ -481,7 +623,7 @@ Table of Contents
    ranges don't overlap with each other, i.e.
    encoded_l2_norm_bound.as_unsigned() <= floor(Field.MODULUS / 2).
 
-4.2.2.  Decoding Field Integers into IEEE-754 Compatible Float64
+9.2.2.  Decoding Field Integers into IEEE-754 Compatible Float64
 
    To decode a (aggregated) field integer agg back to float:
 
@@ -498,9 +640,9 @@ Table of Contents
    Therefore, we must check that c * encoded_l2_norm_bound.as_unsigned()
    <= floor(Field.MODULUS / 2).
 
-5.  The Pine VDAF
+10.  The Pine VDAF
 
-5.1.  Operational Parameters for VDAF
+10.1.  Operational Parameters for VDAF
 
    +=======================+==========+===============================+
    | Parameter             | Type     | Description                   |
@@ -514,7 +656,7 @@ Table of Contents
    |                       |          | t in [ROCT23] paper.          |
    +-----------------------+----------+-------------------------------+
 
-                                 Table 4
+                                 Table 5
 
       TODO Assume num_gadget_proof_reps is always 1 for now until we are
       ready to work on multiple proof repetitions in gadgets.
@@ -524,12 +666,12 @@ Table of Contents
       described in the previous section and derive the wraparound and
       joint randomness.
 
-6.  BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE SECTIONS
-    ABOVE.
+11.  BELOW HERE IS THE TEXT THAT NEEDS TO BE MASSAGED INTO THE SECTIONS
+     ABOVE.
 
-7.  Private Inexpensive Norm Enforcement (PINE) VDAF
+12.  Private Inexpensive Norm Enforcement (PINE) VDAF
 
-7.1.  Validity Checks for PINE
+12.1.  Validity Checks for PINE
 
    Similar to Prio3, each Client's measurement (a vector of floating
    point numbers) is encoded as a vector over a finite field and secret-
@@ -542,7 +684,7 @@ Table of Contents
 
    3.  Wraparound protocol: TODO(junye)
 
-7.1.1.  0/1 Bit Check Protocol
+12.1.1.  0/1 Bit Check Protocol
 
    The Client will encode the bit representation of results computed in
    L2-norm sum-check protocol and wraparound protocol, secret-share the
@@ -555,7 +697,7 @@ Table of Contents
    Section 7.3.1.1 of [VDAF] that computes a random linear combination
    of the Range2 polynomial (Range2(x) = x^2 - x) evaluated at all
    indices that are expected to be bits, with the verification joint
-   randomness derived in Section 8.2.2.
+   randomness derived in Section 13.2.2.
 
    Assume we have a total of n_b number of indices to verify, the
    security and privacy guarantee of this protocol is characterized by
@@ -577,7 +719,7 @@ Table of Contents
    *  Zero-Knowledge: This protocol is perfect honest-verifier zero-
       knowledge.
 
-7.1.2.  L2-Norm Sum-Check Protocol
+12.1.2.  L2-Norm Sum-Check Protocol
 
    The goal of this protocol is to verify the sum of square (i.e.
    squared L2-norm) of values in X modulo field size q is at most B,
@@ -601,7 +743,7 @@ Table of Contents
    Aggregators then collectively verify the following:
 
    1.  The entries that encode V0 and U0 are indeed bits, which can be
-       achieved by 0/1 bit check protocol Section 7.1.1.
+       achieved by 0/1 bit check protocol Section 12.1.1.
 
    2.  The computed squared L2-norm from the secret shares of X matches
        the secret-shared bit representation of V0, as per Section 4.3 of
@@ -643,7 +785,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
    following:
 
    *  Soundness: We already include the soundness error of verifying
-      property 1 in Section 7.1.1.  Now the soundness error of this
+      property 1 in Section 12.1.1.  Now the soundness error of this
       protocol only comes from verifying property 2.  We again use
       Corollary 4.7 of [BBCGGI19], so the soundness error is 2 * sqrt(d)
       / (q - sqrt(d)).  By repeating the degree-2 check over t
@@ -659,9 +801,9 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
    Note if the Client manages to overflow the field size q with its
    L2-norm, but keeps the L2-norm at most B modulo q, the Client will be
    accepted under this protocol, but will be rejected by wraparound
-   protocol Section 7.1.3 with high probability.
+   protocol Section 12.1.3 with high probability.
 
-7.1.3.  Wraparound Protocol
+12.1.3.  Wraparound Protocol
 
    The goal of this protocol is to verify the sum of square of values in
    X doesn't overflow field size q, i.e. whether there is a
@@ -676,7 +818,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
    Since we don't have any interaction from Aggregators to Clients in
    VDAF, we will generate the pseudorandom generator (PRG) seed for Z
    (i.e. "wraparound joint randomness") based on the derivation in
-   Section 8.2.1.  We will sample each value in Z, by looking at the
+   Section 13.2.1.  We will sample each value in Z, by looking at the
    generated bytes from the PRG seed two bits at a time:
 
    *  If the bits are 00, set the value to be -1, or q-1 in field
@@ -730,7 +872,7 @@ SC_0(inp) = Sq(inp[0]) + Sq(inp[1]) + ... + Sq(inp[d - 1]) - rec_V0(inp)
    Aggregators then collectively verify the following properties:
 
    1.  The entries that encode all V1, U1, g are indeed bits, which can
-       be achieved by Section 7.1.1.
+       be achieved by Section 12.1.1.
 
    2.  For each repetition k, verify the linear equality V1_k + U1_k = H
        + abs(L), per Section 4.1 of [ROCT23].  This verifies V1_k
@@ -820,7 +962,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    Section 7.3.1 of [VDAF] and Section 7.3.1.1 of [VDAF] to construct a
    Mul gadget between g_k and S_k, and computes a random linear
    combination of all Mul gadget results.  That is, with verification
-   joint randomness r_v derived in Section 8.2.2, the following circuit
+   joint randomness r_v derived in Section 13.2.2, the following circuit
    is expected to be 0:
 
    WC_1(inp) = r_v * WC_1(inp, 0) + r_v^2 * WC_1(inp, 1) + ... +
@@ -853,12 +995,12 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
       by the completeness error rho from above, which is negligible.
       See discussion in Lemma 4.3 of [ROCT23].
 
-7.1.4.  Summary of PINE Protocols
+12.1.4.  Summary of PINE Protocols
 
    Aggregators MUST verify the circuits among all of the above protocols
    evaluate to zero.  We just described the final Client vector after
    running all the protocols, we can specify exactly the bits to verify
-   in Section 7.1.1.  These include:
+   in Section 12.1.1.  These include:
 
    *  indices in [d, d + b0) that encode V0,
 
@@ -868,7 +1010,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
       and g over all r repetitions of wraparound protocol.
 
    Assume we compute the verification joint randomness r_v based on
-   Section 8.2.2.  The circuit to compute for Section 7.1.1 is:
+   Section 13.2.2.  The circuit to compute for Section 12.1.1 is:
 
    RC_0(inp) = r_v * Range2(inp[d]) + r_v^2 * Range2(inp[d + 1]) + ... +
                r_v^(b0) * Range2(inp[d + b0 - 1]) +
@@ -883,55 +1025,55 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    Finally, we only consider a Client has passed the protocol if all the
    circuits evaluate to 0:
 
-   *  RC_0, the reduced output of 0/1 bit check protocol Section 7.1.1,
+   *  RC_0, the reduced output of 0/1 bit check protocol Section 12.1.1,
 
    *  SC_0 and SC_1, the outputs of L2-norm sum-check protocol
-      Section 7.1.2,
+      Section 12.1.2,
 
-   *  WC_0 for all repetitions of wraparound protocol Section 7.1.3,
+   *  WC_0 for all repetitions of wraparound protocol Section 12.1.3,
 
-   *  WC_1 and WC_2 in wraparound protocol Section 7.1.3.
+   *  WC_1 and WC_2 in wraparound protocol Section 12.1.3.
 
-8.  PINE Fully Linear Proof (FLP) in VDAF
+13.  PINE Fully Linear Proof (FLP) in VDAF
 
    We aim to define a FLP for PINE that reuses most of Prio3 FLP
    components in Section 7.1 of [VDAF], with a new type of joint
    randomness named "wraparound joint randomness" to support wraparound
-   protocol Section 7.1.3 in PINE.
+   protocol Section 12.1.3 in PINE.
 
    We will introduce PINE FLP in the following steps:
 
    *  The prover encodes its measurement into a vector of field integers
-      as specified in Section 8.1.  The encoded measurement should
-      contain the outputs of running the PINE protocols Section 7.
+      as specified in Section 13.1.  The encoded measurement should
+      contain the outputs of running the PINE protocols Section 12.
 
    *  The prover secret shares the encoded measurement into multiple
       shares.  Each share is sent to a different verifier.  The secret
       shares are also used to derive the wraparound joint randomness and
-      verification joint randomness, specified in Section 8.2.
+      verification joint randomness, specified in Section 13.2.
 
    *  The prover and verifiers execute the FLP as specified in
-      Section 8.4 once the encoded measurement and joint randomness are
+      Section 13.4 once the encoded measurement and joint randomness are
       available.
 
    *  Eventually we put all of the above together in the VDAF context.
 
-8.1.  Encoding
+13.1.  Encoding
 
    PINE FLP encoding is divided into three stages:
 
    1.  The Client first encodes its real number vector into a vector of
-       field integers as described in Section 4.2.1.
+       field integers as described in Section 9.2.1.
 
    2.  In order to fully execute the protocols in PINE, Client and
        Aggregators need to agree on the "wraparound joint randomness",
-       which is necessary for wraparound protocol Section 7.1.3.  The
+       which is necessary for wraparound protocol Section 12.1.3.  The
        derivation of this randomness depends on the secret shares from
-       the previous step, as specified in Section 8.2.1.
+       the previous step, as specified in Section 13.2.1.
 
    3.  After wraparound joint randomness is derived, the Client encodes
-       the results of L2-norm sum-check protocol Section 7.1.2 and
-       wraparound protocol Section 7.1.3, in its vector.
+       the results of L2-norm sum-check protocol Section 12.1.2 and
+       wraparound protocol Section 12.1.3, in its vector.
 
    Therefore, we have the following interfaces in Pine.Flp:
 
@@ -946,17 +1088,17 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
       at the end of partially_encoded. partially_encoded is the output
       of Pine.Flp.encode function, and wraparound_joint_rand is the
       wraparound joint randomness necessary to execute wraparound check
-      Section 7.1.3.  The output length of this function MUST be
+      Section 12.1.3.  The output length of this function MUST be
       INPUT_LEN.
 
-   Wraparound protocol Section 7.1.3 describes a process of sampling
+   Wraparound protocol Section 12.1.3 describes a process of sampling
    wraparound_joint_rand (the Z vector) from a seed stream directly, so
    we will have another interface that allows the FLP to sample the
    field elements from a Prg seed stream:
 
    *  Pine.Flp.sample_wraparound_joint_rand(prg: Prg) -> Vec[Field]
       allows PINE FLP to sample Z vector.  The input Prg is the
-      wraparound joint randomness as derived in Section 8.2.1.  The
+      wraparound joint randomness as derived in Section 13.2.1.  The
       output length of this function MUST be WRAPAROUND_JOINT_RAND_LEN.
 
       TODO We introduce this interface because it allows us to sample
@@ -977,9 +1119,9 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    *  Flp.decode(output: Vec[Field], num_measurements: Unsigned) ->
       AggResult decodes an aggregated vector of field integers into a
       vector of IEEE-754 compatible float64 values, as specified in
-      Section 4.2.2.
+      Section 9.2.2.
 
-8.2.  Joint Randomness
+13.2.  Joint Randomness
 
    Joint randomness is used both by prover and verifiers to make sure
    they use the same randomness to compute the protocols.  Since VDAF
@@ -987,16 +1129,16 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    Fiat-Shamir Heuristic to generate the joint randomness, same as
    Prio3, but for two types of joint randomness.
 
-8.2.1.  Wraparound Joint Randomness
+13.2.1.  Wraparound Joint Randomness
 
-   Wraparound protocol Section 7.1.3 computation needs the Z vector.
+   Wraparound protocol Section 12.1.3 computation needs the Z vector.
    The Client and Aggregators MUST both be able to derive this
    randomness, in order for them to produce consistent outputs.  The
    procedure for the Client is described as the following:
 
    1.  The Client encodes its raw measurement into a vector of field
-       integers as described in Section 4.2.1, which is also the first
-       step of Section 8.1, and produces the secret shares from the
+       integers as described in Section 9.2.1, which is also the first
+       step of Section 13.1, and produces the secret shares from the
        vector, with number of shares equal to the number of Aggregators.
 
    2.  Derive a wraparound joint randomness "part" for each Aggregator,
@@ -1029,7 +1171,7 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
        by the Client.  Then the Aggregator can use the joint randomness
        seed to generate the Z vector.
 
-8.2.2.  Verification Joint Randomness
+13.2.2.  Verification Joint Randomness
 
    In 0/1 bit check protocol and wraparound protocol, we use the
    extensions in Section 7.3.1.1 of [VDAF] to compute a random linear
@@ -1038,14 +1180,14 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    in Remark 4.8 of [BBCGGI19].  We call the coefficient of the random
    linear combination as "verification joint randomness", which is same
    as the joint randomness in Prio3 FLP.  The derivation is similar to
-   Section 8.2.1, but it uses the secret shares of the Client outputs
-   after it has completely finished Section 8.1.
+   Section 13.2.1, but it uses the secret shares of the Client outputs
+   after it has completely finished Section 13.1.
 
    Specifically, the Client does the following:
 
-   1.  The Client produces a vector of field integers from Section 8.1,
+   1.  The Client produces a vector of field integers from Section 13.1,
        and produces the secret shares from the vector.  It should use
-       the same helper seeds as those used in Section 8.2.1.
+       the same helper seeds as those used in Section 13.2.1.
 
    2.  Derive a verification joint randomness "part" for each
        Aggregator, based on the Client nonce, an initial seed "blind"
@@ -1057,20 +1199,20 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
        seed parts.
 
    Each Aggregator follows the same procedure to derive the verification
-   joint randomness as the procedure described in Section 8.2.1, except
+   joint randomness as the procedure described in Section 13.2.1, except
    each Aggregator needs to use the full INPUT_LEN of its secret share
    to derive its verification joint randomness seed part.
 
    The full derivation of joint randomness can also be found in
-   Section 8.6.5.
+   Section 13.6.5.
 
-8.3.  PINE FLP Instantiation
+13.3.  PINE FLP Instantiation
 
    This section instantiates FlpGeneric (Section 7.3.2 of [VDAF]) for
    PINE by specifying the validity circuit and parameters.
 
    The encoding and decoding interface for PINE are defined as the
-   following based on Section 8.1:
+   following based on Section 13.1:
 
   def encode(self, measurement: Measurement) -> Vec[Field]:
       if len(measurement) != self.dimension:
@@ -1214,14 +1356,14 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
    are:
 
    *  Range2(x) = x^2 - x polynomial to verify the expected entries are
-      bits Section 7.1.1.
+      bits Section 12.1.1.
 
    *  Sq(x) = x^2 polynomial to compute the squared L2-norm sum in
-      Section 7.1.2.
+      Section 12.1.2.
 
    *  Mul(g, s) = g * s to verify the multiplication of success bit g
       and difference field element s in each wraparound protocol
-      repetition is 0, as specified in Section 7.1.3.
+      repetition is 0, as specified in Section 12.1.3.
 
    def Range2(x):
        return x ** 2 - x
@@ -1422,14 +1564,14 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
      |                             | [VDAF]                         |
      +-----------------------------+--------------------------------+
 
-           Table 5: Parameters of validity circuit in PINE FLP.
+           Table 6: Parameters of validity circuit in PINE FLP.
 
-8.4.  FLP Execution
+13.4.  FLP Execution
 
-   After the Client has produced its encoded measurement in Section 8.1,
-   and has derived the joint randomness based on Section 8.2, the FLP
-   execution is very similar to that of Prio3.  We reuse the following
-   functions from Prio3 FLP:
+   After the Client has produced its encoded measurement in
+   Section 13.1, and has derived the joint randomness based on
+   Section 13.2, the FLP execution is very similar to that of Prio3.  We
+   reuse the following functions from Prio3 FLP:
 
    *  Flp.prove(input: Vec[Field], prove_rand: Vec[Field], joint_rand:
       Vec[Field]) -> Vec[Field] is the deterministic proof-generation
@@ -1449,9 +1591,9 @@ WC_2(inp) = inp[offset_g(0)] + inp[offset_g(1)] + ... + inp[offset_g(k - 1)] - \
       decision algorithm run by the verifier.
 
    The PINE FLP is executed by the prover and verifier as follows.  Note
-   we assume inp is the encoded Client vector after Section 8.1, and
+   we assume inp is the encoded Client vector after Section 13.1, and
    wraparound_joint_rand is the vector of wraparound joint randomness
-   derived based on Section 8.2.1.
+   derived based on Section 13.2.1.
 
 def run_pine_flp(Pine.Flp,
                  inp: Vec[Pine.Flp.Field],
@@ -1475,30 +1617,30 @@ def run_pine_flp(Pine.Flp,
 
                    Figure 1: Execution of PINE FLP.
 
-8.5.  FLP Construction in VDAF
+13.5.  FLP Construction in VDAF
 
    Putting everything together, we will describe how PINE fits into the
    Vdaf interface Section 5 of [VDAF].  It reuses the same VDAF
    parameters and constants in Section 7.2 of [VDAF] as Prio3.
 
-8.5.1.  Sharding
+13.5.1.  Sharding
 
    Client sharding is done in the following steps:
 
    1.  Encode the Client's raw measurement into a vector of field
-       integers, as described in Section 4.2.1, and the first step in
-       Section 8.1.
+       integers, as described in Section 9.2.1, and the first step in
+       Section 13.1.
 
    2.  Derive the wraparound joint randomness parts and seed, based on
        the output from the previous step, and procedures described in
-       Section 8.2.1.
+       Section 13.2.1.
 
-   3.  Finish rest of the encoding in Section 8.1, which includes
+   3.  Finish rest of the encoding in Section 13.1, which includes
        computing results for protocols in PINE.
 
    4.  Shard the encoded measurement into input shares for the
        Aggregators from the previous step, and derive the verification
-       joint randomness parts and seed as described in Section 8.2.2.
+       joint randomness parts and seed as described in Section 13.2.2.
 
    5.  Run the FLP proof-generation algorithm using both wraparound
        joint randomness and verification joint randomness.
@@ -1517,7 +1659,7 @@ def run_pine_flp(Pine.Flp,
 
    We reuse the Prg interface in Section 6.2 of [VDAF], the parameters
    and constants in Section 7.2 of [VDAF] for Prio3.  We also define
-   some auxiliary functions in Section 8.6 for joint randomness
+   some auxiliary functions in Section 13.6 for joint randomness
    derivation and message serialization.
 
 def measurement_to_input_shares(Pine, measurement, nonce, rand):
@@ -1654,26 +1796,26 @@ def measurement_to_input_shares(Pine, measurement, nonce, rand):
 
            Figure 2: Input-distribution algorithm for PINE.
 
-8.5.2.  Preparation
+13.5.2.  Preparation
 
    This section is similar to the preparation step specified in
    Section 7.2.2 of [VDAF], except Aggregators need to derive the same
    wraparound joint randomness and the verification joint randomness as
-   the Client, specified in Section 8.2.
+   the Client, specified in Section 13.2.
 
    It is important that Aggregators compute the same joint randomness
    seed.  The Client sends each Aggregator the joint randomness seed
    parts from all other Aggregators, so each Aggregator can compute its
    verifier share using the joint randomness seed derived with its
    locally computed seed part and the seed parts of other Aggregators,
-   according to procedure described in Section 8.2.  Aggregators later
+   according to procedure described in Section 13.2.  Aggregators later
    exchange their locally computed joint randomness seed parts along
    with their verifier shares, and all of them can verify that hashing
    together the exchanged joint randomness seed parts gives the same
    joint randomness seed they were using to compute verifier shares.
 
    The definitions of constants and a few auxiliary functions are
-   defined in Section 8.6.
+   defined in Section 13.6.
 
 def prep_init(Pine, verify_key, agg_id, _agg_param,
               nonce, public_share, input_share):
@@ -1807,7 +1949,7 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
 
                 Figure 3: Preparation state for PINE.
 
-8.5.3.  Aggregation
+13.5.3.  Aggregation
 
    Similar to Prio3 aggregation in Section 7.2.4 of [VDAF], aggregating
    a set of output shares is simply a matter of adding up the vectors
@@ -1821,12 +1963,12 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
 
                  Figure 4: Aggregation algorithm for PINE.
 
-8.5.4.  Unsharding
+13.5.4.  Unsharding
 
    To unshard a set of aggregate shares, the Collector first adds up the
    vectors element-wise.  It then decodes the field integer vector based
    on Pine.Flp.decode().  Each field integer decoding is done based on
-   Section 4.2.2.
+   Section 9.2.2.
 
    def agg_shares_to_result(Pine, _agg_param,
                             agg_shares, num_measurements):
@@ -1837,12 +1979,12 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
 
           Figure 5: Computation of the aggregate result for PINE.
 
-8.6.  Auxiliary Functions
+13.6.  Auxiliary Functions
 
    This section defines a number of auxiliary functions referenced by
    the main algorithms for PINE in the preceding sections.
 
-8.6.1.  Conversion Between Float64 and Field Element
+13.6.1.  Conversion Between Float64 and Field Element
 
    def encode_f64_into_field(Field,
                              x: float,
@@ -1871,7 +2013,7 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
        decoded_float = decoded / (2 ** num_frac_bits)
        return decoded_float
 
-8.6.2.  Conversion Between Field Element And Its Bit Representation
+13.6.2.  Conversion Between Field Element And Its Bit Representation
 
    A common subroutine in PINE is to encode a field element into its bit
    representation, as an array of field elements, and vice versa.  So we
@@ -1916,10 +2058,10 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
           result += Field(1 << l) * bit
       return result
 
-8.6.3.  Operational Parameters Initialization
+13.6.3.  Operational Parameters Initialization
 
    We define functions that initialize the operational parameters in
-   Table 2 needed to compute the validity circuit for PINE.
+   Table 3 needed to compute the validity circuit for PINE.
 
       TODO(junye): Check with Guy on whether it's ok to round up the
       default alpha to perform the optimization in wraparound check, so
@@ -1986,7 +2128,7 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
            Pine.shifted_wr_upper_bound.as_unsigned() + 1
        ))
 
-8.6.4.  Wraparound Check Utility Functions
+13.6.4.  Wraparound Check Utility Functions
 
    There are some common subroutines that wraparound checks use, such as
    computing dot product of field element vectors.
@@ -2002,7 +2144,7 @@ def prep_shares_to_prep(Pine, _agg_param, prep_shares):
            result += val1 * val2
        return result
 
-8.6.5.  Joint Randomness Derivation
+13.6.5.  Joint Randomness Derivation
 
    The following methods are called by the sharding and preparation
    algorithms to derive the joint randomness parts and joint randomness
@@ -2063,7 +2205,7 @@ def joint_rand(Pine, k_joint_rand_parts):
         concat(k_joint_rand_parts),
     )
 
-8.6.6.  Message Serialization
+13.6.6.  Message Serialization
 
 def encode_leader_share(Pine,
                         meas_share,
@@ -2198,7 +2340,7 @@ def decode_prep_msg(Pine, encoded):
         encoded[:l], encoded[l:]
     return wraparound_joint_rand_prg_check, verification_joint_rand_prg_check
 
-9.  Security Considerations
+14.  Security Considerations
 
    PINE achieves the following privacy and security guarantees:
 
@@ -2213,13 +2355,13 @@ def decode_prep_msg(Pine, encoded):
       Clients, and all but one Aggregators, learns statistically close
       to nothing about the measurements of honest Clients.
 
-10.  IANA Considerations
+15.  IANA Considerations
 
    This document has no IANA actions.
 
-11.  References
+16.  References
 
-11.1.  Normative References
+16.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -2236,7 +2378,7 @@ def decode_prep_msg(Pine, encoded):
               November 2023, <https://datatracker.ietf.org/doc/html/
               draft-irtf-cfrg-vdaf-08>.
 
-11.2.  Informative References
+16.2.  Informative References
 
    [BBCGGI19] Boneh, D., Boyle, E., Corrigan-Gibbs, H., Gilboa, N., and
               Y. Ishai, "Zero-Knowledge Proofs on Secret-Shared Data via
