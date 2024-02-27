@@ -1616,7 +1616,7 @@ derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a
   modulo <code>q</code>, falls in the desired range of <code>[0, encoded_sq_norm_bound]</code>.
 * <a href="#encode-wr-check" class="auto internal xref">Section 4.1.3</a> involves encoding the results of running wraparound checks
   <a href="#run-wr-check" class="auto internal xref">Section 4.1.2</a>, based on the <code>encoded_gradient</code> from the previous step, and
-  the random vector generated from an initialized <code>Xof</code> in `wr_joint_rand_xof.
+  the vectors derived from a short, random seed using an XOF.
   The result of this step, along with the encoded gradient and the random vector
   that the Aggregators derive on their own, allow the Aggregators to run
   wraparound checks on their own.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
