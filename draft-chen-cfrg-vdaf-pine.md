@@ -139,10 +139,10 @@ functionality, but the concrete cost in terms of runtime and communication
 would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
 Proof", see {{Section 7.3 of !VDAF}}) could be specified that computes the
 L2-norm of the gradient and checks that the result is in the desired range.
-This computation is not easy to do efficiently: the challenge lies in ensuring that
-the computation itself was carried out correctly, while properly accounting for
-the relevant mathematical details of the proof system (that is, the choice of
-finite field) and the range of possible inputs.
+This computation is not easy to do efficiently: the challenge lies in ensuring
+that the computation itself was carried out correctly, while properly accounting
+for the relevant mathematical details of the proof system (that is, the choice
+of finite field) and the range of possible inputs.
 
 This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
 for secure aggregation of gradients with bounded L2-norm {{ROCT23}}. Its design
@@ -172,7 +172,8 @@ This document uses the same parameters and conventions specified for:
 
 * XOFs ("eXtendable Output Functions") from {{Section 6.2 of !VDAF}}.
 
-A floating point number is XXX. [CP: Specify, with a relvant reference.]
+A floating point number, denoted `float`, is a IEEE-754 compatible float64 value
+{{IEEE754-2019}}.
 
 A "gradient" is a vector of floating point numbers. Each coordinate of this
 vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
@@ -181,11 +182,11 @@ the square root of the sum of the squares of its entries.
 The user-specified parameters to initialize PINE are defined in
 {{pine-user-param}}.
 
-| Parameter       | Type  | Description    |
-|:----------------|:------|:---------------|
-| `l2_norm_bound` | float | The L2-norm upper bound (inclusive). |
-| `dimension`     | int   | Dimension of each gradient. |
-| `num_frac_bits` | int   | The number of bits of precision to use when encoding each gradient entry into the field. At most XXX |
+| Parameter       | Type    | Description    |
+|:----------------|:--------|:---------------|
+| `l2_norm_bound` | `float` | The L2-norm upper bound (inclusive). |
+| `dimension`     | int     | Dimension of each gradient. |
+| `num_frac_bits` | int     | The number of bits of precision to use when encoding each gradient entry into the field. |
 {: #pine-user-param title="User parameters for PINE."}
 
 # PINE Overview {#overview}
@@ -222,13 +223,12 @@ does not wrap around the field modulus. However, this approach has relatively
 high communication overhead between the Client and Aggregators, roughly
 `num_frac_bits * dimension` field elements (see {{pine-user-param}}).
 
-In order to detect whether a wraparound has occurred, PINE uses a probabilistic test,
-which works as follows: A
-random vector over the field is generated (via a procedure described in
-{{vdaf}}) where each entry is equal to `1`, `0`, or `q-1`, each with a
-particular probability: to test for wraparound, compute the dot product of this
-vector and the gradient, and check if the result is in a specific range. The range
-is determined by parameters in {{pine-user-param}}.
+In order to detect whether a wraparound has occurred, PINE uses a probabilistic
+test, which works as follows: A random vector over the field is generated (via a
+procedure described in {{vdaf}}) where each entry is equal to `1`, `0`, or
+`q-1`, each with a particular probability: to test for wraparound, compute the
+dot product of this vector and the gradient, and check if the result is in a
+specific range. The range is determined by parameters in {{pine-user-param}}.
 
 If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, {{ROCT23}} show that this test correctly detects wraparounds
@@ -239,7 +239,8 @@ same distribution.
 
 However, {{ROCT23}} also show that each wraparound test has a non-zero false
 positive probability (the probability of misclassifying a valid gradient as
-invalid). This creates a problem for privacy, as the Aggregators learn
+invalid). We refer to this probability as the "zero-knowledge error", or in
+short, "ZK error". This creates a problem for privacy, as the Aggregators learn
 information about a valid gradient they were not meant to learn: whether its
 dot product with a known vector is in a particular range. [CP: We need a more
 intuitive explanation of the information that's leaked.] The parameters of PINE
@@ -249,7 +250,9 @@ are chosen carefully in order to ensure this leakage is negligible.
 
 This section specifies a randomized encoding of gradients and FLP circuit
 ({{Section 7.3 of !VDAF}}) for checking that (1) the gradient's
-squared L2-norm falls in the desired range and (2) the squared L2-norm does not wrap around the field modulus.
+squared L2-norm falls in the desired range and (2) the squared L2-norm does
+not wrap around the field modulus. We specify the encoding and validity
+circuit in a class `PineValid`.
 
 The encoding algorithm takes as input the gradient and an XOF seed used to
 derive the random vectors for the wraparound tests. The seed must be known
@@ -259,45 +262,60 @@ derived from shares of the gradient.
 Operational parameters for the proof system are summarized below in
 {{pine-flp-param}}.
 
-> XXX Finish the table below. Keep the descriptions short: this is table is
-> meant to be used as a reference, not to fully specify things.
-
-| Parameter             | Type     | Description |
-|:----------------------|:---------|:------------|
-| alpha                 | XXX      | XXX         |
-| num_wr_checks         | XXX      | XXX         |
-| num_wr_successes      | XXX      | XXX         |
-| encoded_sq_norm_bound | XXX      | XXX         |
-| wr_check_bound        | XXX      | XXX         |
-| num_bits_for_sq_norm  | XXX      | XXX         |
-| num_bits_for_wr_check | XXX      | XXX         |
-| chunk_len             | XXX      | XXX         |
+| Parameter             | Type    | Description |
+|:----------------------|:--------|:------------|
+| alpha                 | `float` | Parameter in wraparound check that determines the ZK error. The higher `alpha` is, the lower ZK error is. |
+| num_wr_checks         | int     | Number of wraparound checks to run. |
+| num_wr_successes      | int     | Minimum number of wraparound checks that a Client must pass. |
+| encoded_sq_norm_bound | Field   | The square of `l2_norm_bound` encoded into a field element. |
+| wr_check_bound        | Field   | The bound of the range check for each wraparound check. |
+| num_bits_for_sq_norm  | int     | Number of bits to encode the squared L2-norm. |
+| num_bits_for_wr_check | int     | Number of bits to encode the range check in each wraparound check. |
+| chunk_length          | int     | Parameter of the FLP. |
 {: #pine-flp-param title="Operational parameters of the PINE FLP."}
 
 ## Measurement Encoding
 
-> XXX Give an overview of `encode_gradient()` and `encode_wr_checks()`. No need
-> to go into full detail yet. The goal is to give the reader an intuition for
-> what the circuit will do, including the bit checks, norm computation, and
-> wraparound checks. Be sure to emphasize that the wraparound test results are
-> not transmitted: instead the Aggregators derive shares of the tests results
-> by running the wraparound tests themselves.
+The measurement encoding is done in two stages:
+* {{encode-gradient}} involves encoding floating point numbers in the Client
+  gradient into field elements {{float-to-field}}, and encoding the results for
+  L2-norm check {{l2-norm-check}}, by computing the bit representation of the
+  squared L2-norm, modulo `q`, of the field element vector. The result of this
+  step allows Aggregators to check the squared L2-norm of the Client's gradient,
+  modulo `q`, falls in the desired range of `[0, encoded_sq_norm_bound]`.
+* {{encode-wr-check}} involves encoding the results of running wraparound checks
+  {{run-wr-check}}, based on the `encoded_gradient` from the previous step, and
+  the vectors derived from a short, random seed using an XOF. The result of this
+  step, along with the encoded gradient and the random vector that the
+  Aggregators derive on their own, allow the Aggregators to run wraparound
+  checks on their own.
 
-### Encoding of Floating Point Numbers into Field Elements
+### Encoding Gradient {#encode-gradient}
+
+We define a function `PineValid.encode_gradient(self, measurement: list[float])
+-> list[Field]` that implements this encoding step.
+
+#### Encoding of Floating Point Numbers into Field Elements {#float-to-field}
 
 > TODO Specify how floating point numbers are represented as field elements.
 
-### Encoding the Range-Checked, Squared Norm
+#### Encoding the Range-Checked, Squared Norm {#l2-norm-check}
 
 > TODO Specify how the Client encodes the norm such that the Aggregators can
 > check that it is in the desired range.
 
-### Running the Wraparound Tests
+> TODO Put full implementation of `encode_gradient()` here.
+
+### Running the Wraparound Tests {#run-wr-check}
 
 > XXX Give an overview of how the wraparound test results are generated from
 > the XOF seed.
 
-### Encoding the Range-Checked, Wraparound Check Results
+### Encoding the Range-Checked, Wraparound Check Results {#encode-wr-check}
+
+We define a function `PineValid.encode_wr_checks(self,
+encoded_gradient: list[Field], wr_joint_rand_xof: Xof) -> list[Field]` that
+implements this encoding step.
 
 > TODO Specify how the Client encodes the result of each wraparound check such
 > that the Aggregators can check that each is in the desired range.
