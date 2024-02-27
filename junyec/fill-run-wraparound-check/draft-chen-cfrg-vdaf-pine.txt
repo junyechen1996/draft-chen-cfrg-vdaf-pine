@@ -221,6 +221,9 @@ Table of Contents
    "norm", of a gradient is the square root of the sum of the squares of
    its entries.
 
+   The "dot product" of two vectors is to compute the sum of elementwise
+   multiplications of the two vectors.
+
    The user-specified parameters to initialize PINE are defined in
    Table 1.
 
@@ -398,26 +401,26 @@ Table of Contents
    following:
 
    For each test, the Client generates a random vector with the same
-   dimension as the gradient dimension.  Each entry of the random vector
-   is a field element of 1 with probability 1/4, or 0 with probability
-   1/2, or q-1 with probability 1/4, over the field modulus q.  The
-   Client samples each entry by sampling from the XOF output stream two
-   bits at a time: * If the bits are 00, set the entry to be q-1. * If
-   the bits are 01 or 10, set the entry to be 0. * If the bits are 11,
-   set the entry to be 1.
+   dimension as the gradient's dimension.  Each entry of the random
+   vector is a field element of 1 with probability 1/4, or 0 with
+   probability 1/2, or q-1 with probability 1/4, over the field modulus
+   q.  The Client samples each entry by sampling from the XOF output
+   stream two bits at a time: * If the bits are 00, set the entry to be
+   q-1. * If the bits are 01 or 10, set the entry to be 0. * If the bits
+   are 11, set the entry to be 1.
 
-   Then the Client computes the dot product.  If the dot product is in
-   the range of [-wr_check_bound, wr_check_bound+1], then the Client
-   passes that wraparound check, and fails otherwise.  Note the Client
-   does not send this dot product to the Aggregators.  The Aggregators
-   will compute the dot product themselves, based on the encoded
-   gradient and the random vector derived on their own.
+   Then the Client computes the dot product modulo q.  If the dot
+   product is in the range of [-wr_check_bound, wr_check_bound + 1],
+   then the Client passes that wraparound check, and fails otherwise.
+   Note the Client does not send this dot product to the Aggregators.
+   The Aggregators will compute the dot product themselves, based on the
+   encoded gradient and the random vector derived on their own.
 
-   The Client is required to repeat the wraparound check for
-   num_wr_checks times, and keep track of how many wraparound checks it
-   has passed.  If it has passed fewer than number_wr_successes of them,
-   it should retry, by using a new XOF seed to re-generate the random
-   vectors and re-run wraparound checks.
+   The Client is required to repeat the wraparound check num_wr_checks
+   times, and keep track of how many wraparound checks it has passed.
+   If it has passed fewer than num_wr_successes of them, it should
+   retry, by using a new XOF seed to re-generate the random vectors and
+   re-run wraparound checks.
 
 4.1.3.  Encoding the Range-Checked, Wraparound Check Results
 
