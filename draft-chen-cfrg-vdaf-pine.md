@@ -179,6 +179,9 @@ A "gradient" is a vector of floating point numbers. Each coordinate of this
 vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
 the square root of the sum of the squares of its entries.
 
+The "dot product" of two vectors is to compute the sum of elementwise
+multiplications of the two vectors.
+
 The user-specified parameters to initialize PINE are defined in
 {{pine-user-param}}.
 
@@ -225,9 +228,9 @@ high communication overhead between the Client and Aggregators, roughly
 
 In order to detect whether a wraparound has occurred, PINE uses a probabilistic
 test, which works as follows: A random vector over the field is generated (via a
-procedure described in {{vdaf}}) where each entry is equal to `1`, `0`, or
-`q-1`, each with a particular probability: to test for wraparound, compute the
-dot product of this vector and the gradient, and check if the result is in a
+procedure described in {{run-wr-check}}) where each entry is equal to `1`, `0`,
+or `q-1`, each with a particular probability: to test for wraparound, compute
+the dot product of this vector and the gradient, and check if the result is in a
 specific range. The range is determined by parameters in {{pine-user-param}}.
 
 If the norm wraps around the field modulus, then the dot product is likely to
@@ -309,8 +312,31 @@ measurement: list[float]) -> list[Field]` that implements this encoding step.
 
 ### Running the Wraparound Tests {#run-wr-check}
 
-> XXX Give an overview of how the wraparound test results are generated from
-> the XOF seed.
+Given the encoded gradient from {{encode-gradient-and-norm}} and the XOF to
+generate the random vectors, the Client needs to run wraparound check
+`num_wr_checks` times, and is required to pass at least `num_wr_successes`
+of them. Each wraparound check works as the following:
+
+For each test, the Client generates a random vector with the same dimension as
+the gradient's dimension. Each entry of the random vector is a field element of
+`1` with probability `1/4`, or `0` with probability `1/2`, or `q-1` with
+probability `1/4`, over the field modulus `q`. The Client samples each entry by
+sampling from the XOF output stream two bits at a time:
+* If the bits are `00`, set the entry to be `q-1`.
+* If the bits are `01` or `10`, set the entry to be `0`.
+* If the bits are `11`, set the entry to be `1`.
+
+Then the Client computes the dot product modulo `q`. If the dot product is in
+the range of `[-wr_check_bound, wr_check_bound + 1]`, then the Client passes
+that wraparound check, and fails otherwise. Note the Client does not send this
+dot product to the Aggregators. The Aggregators will compute the dot product
+themselves, based on the encoded gradient and the random vector derived on
+their own.
+
+The Client is required to repeat the wraparound check `num_wr_checks` times,
+and keep track of how many wraparound checks it has passed. If it has passed
+fewer than `num_wr_successes` of them, it should retry, by using a new XOF
+seed to re-generate the random vectors and re-run wraparound checks.
 
 ### Encoding the Range-Checked, Wraparound Check Results {#encode-wr-check}
 
