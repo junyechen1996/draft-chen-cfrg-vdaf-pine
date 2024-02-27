@@ -355,8 +355,10 @@ Table of Contents
       |                       |       | the range check in each     |
       |                       |       | wraparound check.           |
       +-----------------------+-------+-----------------------------+
-      | bit_checked_len       | int   | Number of entries that are  |
-      |                       |       | expected to be bits.        |
+      | bit_checked_len       | int   | Number of field elements in |
+      |                       |       | the encoded measurement     |
+      |                       |       | that are expected to be     |
+      |                       |       | bits.                       |
       +-----------------------+-------+-----------------------------+
       | chunk_length          | int   | Parameter of the FLP.       |
       +-----------------------+-------+-----------------------------+
