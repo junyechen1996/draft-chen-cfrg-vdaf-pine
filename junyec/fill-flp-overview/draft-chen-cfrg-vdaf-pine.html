@@ -1520,7 +1520,7 @@ repeat this test a number of times, each time with a vector sampled from the
 same distribution.<a href="#section-3-7" class="pilcrow">¶</a></p>
 <p id="section-3-8">However, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> also show that each wraparound test has a non-zero false
 positive probability (the probability of misclassifying a valid gradient as
-invalid). We denote this probability as the "zero-knowledge error", or in short,
+invalid). We refer to this probability as the "zero-knowledge error", or in short,
 "ZK error". This creates a problem for privacy, as the Aggregators learn
 information about a valid gradient they were not meant to learn: whether its
 dot product with a known vector is in a particular range. [CP: We need a more
@@ -1581,7 +1581,7 @@ derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a
           <tr>
             <td class="text-left" rowspan="1" colspan="1">wr_check_bound</td>
             <td class="text-left" rowspan="1" colspan="1">Field</td>
-            <td class="text-left" rowspan="1" colspan="1">The bound of the range check in wraparound checks.</td>
+            <td class="text-left" rowspan="1" colspan="1">The bound of the range check for each wraparound check.</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">num_bits_for_sq_norm</td>

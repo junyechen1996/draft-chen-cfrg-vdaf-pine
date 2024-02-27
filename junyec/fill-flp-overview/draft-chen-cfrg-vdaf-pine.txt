@@ -296,7 +296,7 @@ Table of Contents
 
    However, [ROCT23] also show that each wraparound test has a non-zero
    false positive probability (the probability of misclassifying a valid
-   gradient as invalid).  We denote this probability as the "zero-
+   gradient as invalid).  We refer to this probability as the "zero-
    knowledge error", or in short, "ZK error".  This creates a problem
    for privacy, as the Aggregators learn information about a valid
    gradient they were not meant to learn: whether its dot product with a
@@ -341,7 +341,8 @@ Table of Contents
       |                       |       | element.                    |
       +-----------------------+-------+-----------------------------+
       | wr_check_bound        | Field | The bound of the range      |
-      |                       |       | check in wraparound checks. |
+      |                       |       | check for each wraparound   |
+      |                       |       | check.                      |
       +-----------------------+-------+-----------------------------+
       | num_bits_for_sq_norm  | int   | Number of bits to encode    |
       |                       |       | the squared L2-norm.        |
