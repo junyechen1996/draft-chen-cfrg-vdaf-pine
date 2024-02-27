@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-25T01:16:03.540120+00:00",
+  "timestamp": "2024-02-27T01:11:00.167698+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -7395,24 +7395,26 @@
       "id": "PR_kwDOJWdxls5nryIV",
       "title": "Update the base parameters for ZK/soundness error of 2^-100",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/63",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "We will target ZK/soundness bounds of at most 2^-100. The following parameters are optimal for communication overhead:\r\n\r\nALPHA = 8.7\r\nNUM_WR_CHECKS = 100\r\nNUM_WR_SUCCESSES = 100",
       "createdAt": "2024-02-22T19:03:36Z",
-      "updatedAt": "2024-02-23T16:25:11Z",
+      "updatedAt": "2024-02-26T15:15:43Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "4d511485de135d898beb7abcf2ec7a7f94660c70",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/initial-parameters",
       "headRefOid": "421a21031f9d4bba5cbce646085b6d9680fbe847",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-02-26T15:15:43Z",
+      "mergedAt": "2024-02-26T15:15:43Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "fb64c4a6b2b1189ba5c0684a797c1f347413cce6"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -7427,6 +7429,13 @@
           "body": "> I saw 2 proofs with Field64 based on our current analysis:\r\n> \r\n> ```\r\n> User parameters:\r\n> |l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |r         |r_succ    |-log2(eta)|-log2(zk) |-log2(sound)        |\r\n> |:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:---------|:-------------------|\r\n> |1         |15        |1000      |57        |Field64   |2         |100       |100       |107       |100       |99                  |\r\n> |1         |15        |1000      |57        |Field128  |1         |100       |100       |107       |100       |99                  |\r\n> |1         |15        |10000     |110       |Field64   |2         |100       |100       |107       |100       |99                  |\r\n> |1         |15        |10000     |110       |Field128  |1         |100       |100       |107       |100       |99                  |\r\n> |1         |15        |100000    |319       |Field64   |2         |100       |100       |107       |100       |99                  |\r\n> |1         |15        |100000    |319       |Field128  |1         |100       |100       |107       |100       |99                  |\r\n> ```\r\n> \r\n> Should we update number of proofs to 2 for now?\r\n\r\nGood catch! The analysis doesn't account for offline attacks against Fiat-Shamir. Personally, I'm more comfortable with three proofs than two, based on our analysis in https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/311.",
           "createdAt": "2024-02-23T16:25:10Z",
           "updatedAt": "2024-02-23T16:25:10Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "LGTM. I'm good with merging this.",
+          "createdAt": "2024-02-25T17:14:07Z",
+          "updatedAt": "2024-02-25T17:14:07Z"
         }
       ],
       "reviews": [
@@ -7442,6 +7451,133 @@
           "createdAt": "2024-02-23T09:56:44Z",
           "updatedAt": "2024-02-23T09:56:44Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 64,
+      "id": "PR_kwDOJWdxls5n2Ik_",
+      "title": "Fill in FLP overview in draft",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/64",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The remaining two sections to fill:\r\n- Wraparound checks and FLP circuit\r\n- VDAF overview",
+      "createdAt": "2024-02-25T17:15:00Z",
+      "updatedAt": "2024-02-26T15:24:55Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4d511485de135d898beb7abcf2ec7a7f94660c70",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/fill-flp-overview",
+      "headRefOid": "5b961d7fad1c444e72652841d0a6e8d1a897d120",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xO2VK",
+          "commit": {
+            "abbreviatedOid": "5b961d7"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-25T17:15:43Z",
+          "updatedAt": "2024-02-25T17:16:47Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Fix to wrap texts after 80 characters",
+              "createdAt": "2024-02-25T17:15:44Z",
+              "updatedAt": "2024-02-25T17:16:47Z"
+            },
+            {
+              "originalPosition": 37,
+              "body": "Fix to wrap texts after 80 characters",
+              "createdAt": "2024-02-25T17:15:53Z",
+              "updatedAt": "2024-02-25T17:16:47Z"
+            },
+            {
+              "originalPosition": 68,
+              "body": "Fix to wrap texts after 80 characters",
+              "createdAt": "2024-02-25T17:15:59Z",
+              "updatedAt": "2024-02-25T17:16:47Z"
+            },
+            {
+              "originalPosition": 58,
+              "body": "The goal is to briefly mention ZK error here.",
+              "createdAt": "2024-02-25T17:16:08Z",
+              "updatedAt": "2024-02-25T17:16:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xUY8l",
+          "commit": {
+            "abbreviatedOid": "5b961d7"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-26T15:19:18Z",
+          "updatedAt": "2024-02-26T15:24:55Z",
+          "comments": [
+            {
+              "originalPosition": 29,
+              "body": "The upper bound depends on the field and norm bound, correct?\r\n\r\nPerhaps we should just say nothing here.\r\n```suggestion\r\n| `num_frac_bits` | int   | The number of bits of precision to use when encoding each gradient entry into the field. |\r\n```",
+              "createdAt": "2024-02-26T15:19:18Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 58,
+              "body": "```suggestion\r\ninvalid). We refer to this probability as the \"zero-knowledge error\", or in short,\r\n```",
+              "createdAt": "2024-02-26T15:19:57Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "```suggestion\r\nA floating point number, denoted `float`, is a IEEE-754 compatible float64 value {{IEEE754-2019}}.\r\n```",
+              "createdAt": "2024-02-26T15:20:59Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 91,
+              "body": "Let's make sure to connect `float` to the spec (see suggestion above).",
+              "createdAt": "2024-02-26T15:21:18Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 95,
+              "body": "```suggestion\r\n| wr_check_bound        | Field    | The bound of the range check for each wraparound check. |\r\n```",
+              "createdAt": "2024-02-26T15:21:47Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 98,
+              "body": "The reader doesn't quite know yet what \"chunk length\" means\r\n```suggestion\r\n| chunk_length          | int      | Parameter of the FLP. |\r\n```",
+              "createdAt": "2024-02-26T15:22:17Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 112,
+              "body": "Don't refer to syntax that hasn't been defined yet. Instead, how about adding a forward reference to the section that describes it?\r\n```suggestion\r\n* \r\n```",
+              "createdAt": "2024-02-26T15:23:53Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            },
+            {
+              "originalPosition": 123,
+              "body": "Instead of speaking of an XOF here, we should only speak of the seed used to derive the random vectors via the XOF.",
+              "createdAt": "2024-02-26T15:24:51Z",
+              "updatedAt": "2024-02-26T15:24:55Z"
+            }
+          ]
         }
       ]
     }
