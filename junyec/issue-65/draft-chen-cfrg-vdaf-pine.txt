@@ -73,7 +73,7 @@ Table of Contents
    3.  PINE Overview
    4.  The PINE Proof System
      4.1.  Measurement Encoding
-       4.1.1.  Encoding Gradient And L2-Norm Check
+       4.1.1.  Encoding Gradient and L2-Norm Check
        4.1.2.  Running the Wraparound Tests
        4.1.3.  Encoding the Range-Checked, Wraparound Check Results
      4.2.  The FLP Circuit
@@ -372,7 +372,7 @@ Table of Contents
    derive on their own, allow the Aggregators to run wraparound checks
    on their own.
 
-4.1.1.  Encoding Gradient And L2-Norm Check
+4.1.1.  Encoding Gradient and L2-Norm Check
 
    We define a function PineValid.encode_gradient_and_norm(self,
    measurement: list[float]) -> list[Field] that implements this
