@@ -225,18 +225,18 @@ Table of Contents
    The user-specified parameters to initialize PINE are defined in
    Table 1.
 
-      +===============+=======+=====================================+
-      | Parameter     | Type  | Description                         |
-      +===============+=======+=====================================+
-      | l2_norm_bound | float | The L2-norm upper bound             |
-      |               |       | (inclusive).                        |
-      +---------------+-------+-------------------------------------+
-      | dimension     | int   | Dimension of each gradient.         |
-      +---------------+-------+-------------------------------------+
-      | num_frac_bits | int   | The number of bits of precision to  |
-      |               |       | use when encoding each gradient     |
-      |               |       | entry into the field.  At most 127. |
-      +---------------+-------+-------------------------------------+
+        +===============+=======+=================================+
+        | Parameter     | Type  | Description                     |
+        +===============+=======+=================================+
+        | l2_norm_bound | float | The L2-norm upper bound         |
+        |               |       | (inclusive).                    |
+        +---------------+-------+---------------------------------+
+        | dimension     | int   | Dimension of each gradient.     |
+        +---------------+-------+---------------------------------+
+        | num_frac_bits | int   | The number of bits of precision |
+        |               |       | to use when encoding each       |
+        |               |       | gradient entry into the field.  |
+        +---------------+-------+---------------------------------+
 
                      Table 1: User parameters for PINE.
 
