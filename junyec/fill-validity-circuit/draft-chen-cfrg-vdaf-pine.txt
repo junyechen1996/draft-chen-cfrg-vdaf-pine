@@ -449,9 +449,9 @@ Table of Contents
       elements encoded from the floating point numbers.
 
    *  The next bit_checked_len entries are expected to be bits, and
-      should contain the bits from L2-norm check, the bits from the
-      range check in wraparound checks, and the success bits in
-      wraparound checks.
+      should contain the bits for the range check of the L2 norm, the
+      bits from the range check in wraparound checks, and the success
+      bits in wraparound checks.
 
    *  The last num_wr_checks are the wraparound check results, i.e., the
       dot products of the encoded gradient and the random vectors.
