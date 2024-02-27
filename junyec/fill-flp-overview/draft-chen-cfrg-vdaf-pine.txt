@@ -351,8 +351,7 @@ Table of Contents
       |                       |       | the range check in each     |
       |                       |       | wraparound check.           |
       +-----------------------+-------+-----------------------------+
-      | chunk_length          | int   | Chunk length used in FLP    |
-      |                       |       | proof.                      |
+      | chunk_length          | int   | Parameter of the FLP.       |
       +-----------------------+-------+-----------------------------+
 
               Table 2: Operational parameters of the PINE FLP.
