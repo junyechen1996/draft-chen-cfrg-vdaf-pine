@@ -485,7 +485,8 @@ Table of Contents
 
 4.2.2.  L2-Norm Check
 
-   The validity circuit verifies two properties for L2-norm check:
+   The validity circuit verifies two properties of the L2 norm reported
+   by the Client:
 
    *  Equality check: The computed sum of squares of encoded_gradient is
       equal to the squared L2-norm decoded from the bit representation
