@@ -156,6 +156,8 @@ class PineValid(Valid):
         circuit parameters.
         """
         self.check_valid_eval(meas, joint_rand)
+        # `shares_inv` is used to normalize constants when we compute the
+        # validity circuit when `num_shares > 1`.
         shares_inv = self.Field(num_shares).inv()
 
         # Unpack the encoded measurement. It is composed of the following
@@ -197,7 +199,7 @@ class PineValid(Valid):
                                                  bit_checked,
                                                  shares_inv)
 
-        (wr_checks_result, wr_success_count_check_result) = \
+        (wr_quadratic_check_result, wr_success_count_check_result) = \
             self.eval_wr_checks(r_wr_check,
                                 wr_check_v_bits,
                                 wr_check_g,
@@ -213,7 +215,7 @@ class PineValid(Valid):
         return bit_checks_result + \
             r_final * sq_norm_equality_check_result + \
             r_final**2 * sq_norm_range_check_result + \
-            r_final**3 * wr_checks_result + \
+            r_final**3 * wr_quadratic_check_result + \
             r_final**4 * wr_success_count_check_result
 
     def eval_bit_checks(self, r_bit_check, bit_checked, shares_inv):
@@ -272,12 +274,12 @@ class PineValid(Valid):
         """
         Check two things:
 
-        (1) For each wraparound test, (i) the reported success bit
-            (`wr_test_g`) is 0 or (ii) the success bit is 1 and the reported
-            result (`wr_test_v`) was computed correctly.
+        (1) Quadratic check: for each wraparound test, (i) the reported success
+            bit (`wr_check_g`) is 0 or (ii) the success bit is 1 and the
+            reported result (`wr_check_v`) was computed correctly.
 
-        (2) The number of reported successes is equal to the expected number of
-            successes.
+        (2) Success count check: The number of reported successes is equal to
+            the expected number of successes.
 
         See [ROCT23], Figure 2 for details.
 
@@ -297,9 +299,9 @@ class PineValid(Valid):
 
             # (1) For each check, we want that either (i) the Client reported
             # failure (`wr_check_g[i] == 0`) or (ii) the Client reported
-            # success and the reported result was computed correctly. To
-            # accomplish this, subtract the computed result from the reported
-            # result and multiply by the success bit.
+            # success and the reported range-checked result was computed
+            # correctly. To accomplish this, subtract the computed result from
+            # the reported result and multiply by the success bit.
             #
             # Similar to the bit checks, interpret the values as coefficients
             # of a polynomial and evaluate the polynomial at a random point
