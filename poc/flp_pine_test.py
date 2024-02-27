@@ -75,8 +75,13 @@ class TestEncoding(unittest.TestCase):
     def test_roundtrip_gradient(self):
         valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
         f64_vals = [0.5, 0.5]
-        self.assertEqual(f64_vals,
-                         valid.decode(valid.truncate(valid.encode_gradient(f64_vals)), 1))
+        self.assertEqual(
+            f64_vals,
+            valid.decode(
+                valid.truncate(valid.encode_gradient_and_norm(f64_vals)),
+                1
+            )
+        )
 
 
 class TestCircuit(unittest.TestCase):
@@ -117,10 +122,12 @@ class TestCircuit(unittest.TestCase):
 
             # Test PINE FLP with verification.
             xof = PineValid.Xof(gen_rand(16), b"", b"")
-            encoded_gradient = flp.Valid.encode_gradient(measurement)
+            encoded_gradient_and_norm = \
+                flp.Valid.encode_gradient_and_norm(measurement)
             (wr_check_bits, wr_check_results) = \
-                pine_valid.encode_wr_checks(encoded_gradient, xof)
-            meas = encoded_gradient + wr_check_bits + wr_check_results
+                pine_valid.encode_wr_checks(encoded_gradient_and_norm[:dimension],
+                                            xof)
+            meas = encoded_gradient_and_norm + wr_check_bits + wr_check_results
             test_flp_generic(flp, [(meas, True)])
 
 

@@ -100,9 +100,9 @@ class PineValid(Valid):
             self.wr_check_bound.as_unsigned() + 1
         ))
 
-        # Length of the encoded gradient, including the gradient
-        # itself and the L2-norm check.
-        self.encoded_gradient_len = dimension + 2 * self.num_bits_for_sq_norm
+        # Length of the encoded gradient and the L2-norm check.
+        self.encoded_gradient_and_norm_len = \
+            dimension + 2 * self.num_bits_for_sq_norm
 
         # Length of the bit-checked portion of the encoded
         # measurement. This includes:
@@ -335,7 +335,7 @@ class PineValid(Valid):
             s += self.GADGETS[0].eval(self.Field, chunk)
         return s
 
-    def encode_gradient(self, measurement):
+    def encode_gradient_and_norm(self, measurement):
         """
         Encode the gradient and the range-checked, squared L2-norm.
         """
@@ -348,15 +348,15 @@ class PineValid(Valid):
         (_, sq_norm_v, sq_norm_u) = range_check(
             sq_norm, self.Field(0), self.encoded_sq_norm_bound,
         )
-        encoded_gradient += self.Field.encode_into_bit_vector(
-            sq_norm_v.as_unsigned(),
-            self.num_bits_for_sq_norm,
-        )
-        encoded_gradient += self.Field.encode_into_bit_vector(
-            sq_norm_u.as_unsigned(),
-            self.num_bits_for_sq_norm,
-        )
-        return encoded_gradient
+        return encoded_gradient + \
+            self.Field.encode_into_bit_vector(
+                sq_norm_v.as_unsigned(),
+                self.num_bits_for_sq_norm,
+            ) + \
+            self.Field.encode_into_bit_vector(
+                sq_norm_u.as_unsigned(),
+                self.num_bits_for_sq_norm,
+            )
 
     def run_wr_checks(self, encoded_gradient, wr_joint_rand_xof):
         """
@@ -400,10 +400,10 @@ class PineValid(Valid):
         (`wr_check_results`) and the range-checked result for each check
         (`wr_check_bits`).
 
-        The string `encoded_gradient + wr_check_bits + wr_check_results` is
-        passed to the circuit. The Aggregators are expected to re-compute the
-        dot products on their own, with the encoded gradient and the wraparound
-        joint randomness XOF.
+        The string `encoded_gradient_and_norm + wr_check_bits +
+        wr_check_results` is passed to the circuit. The Aggregators are expected
+        to re-compute the dot products on their own, with the encoded gradient
+        and the wraparound joint randomness XOF.
         """
         wr_check_results = self.run_wr_checks(encoded_gradient,
                                               wr_joint_rand_xof)
