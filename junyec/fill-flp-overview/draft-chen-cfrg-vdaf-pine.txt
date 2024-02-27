@@ -73,10 +73,9 @@ Table of Contents
    3.  PINE Overview
    4.  The PINE Proof System
      4.1.  Measurement Encoding
-       4.1.1.  Encoding of Floating Point Numbers into Field Elements
-       4.1.2.  Encoding the Range-Checked, Squared Norm
-       4.1.3.  Running the Wraparound Tests
-       4.1.4.  Encoding the Range-Checked, Wraparound Check Results
+       4.1.1.  Encoding Gradient
+       4.1.2.  Running the Wraparound Tests
+       4.1.3.  Encoding the Range-Checked, Wraparound Check Results
      4.2.  The FLP Circuit
    5.  The PINE VDAF
      5.1.  Sharding
@@ -358,40 +357,48 @@ Table of Contents
 
 4.1.  Measurement Encoding
 
-   The measurement encoding is done in two stages: *
-   PineValid.encode_gradient(self, measurement: list[float]) ->
-   list[Field] allows a Client to encode each floating point number in
-   its gradient into a field element Section 4.1.1.  Then the Client
-   encodes the results for L2-norm check Section 4.1.2, by computing the
-   bit representation of the squared L2-norm, modulo q, of its encoded
-   gradient.  The result of this step allows Aggregators to check the
-   squared L2-norm of the Client's gradient, modulo q, falls in the
-   desired range of [0, encoded_sq_norm_bound]. *
-   PineValid.encode_wr_checks(self, encoded_gradient: list[Field],
-   wr_joint_rand_xof: Xof) -> list[Field] allows the Client to encode
-   the results of wraparound checks Section 4.1.3, based on the
+   The measurement encoding is done in two stages: * Section 4.1.1
+   involves encoding floating point numbers in the Client gradient into
+   field elements Section 4.1.1.1, and encoding the results for L2-norm
+   check Section 4.1.1.2, by computing the bit representation of the
+   squared L2-norm, modulo q, of the field element vector.  The result
+   of this step allows Aggregators to check the squared L2-norm of the
+   Client's gradient, modulo q, falls in the desired range of [0,
+   encoded_sq_norm_bound]. * Section 4.1.3 involves encoding the results
+   of running wraparound checks Section 4.1.2, based on the
    encoded_gradient from the previous step, and the random vector
    generated from an initialized Xof in `wr_joint_rand_xof.  The result
    of this step, along with the encoded gradient and the random vector
    that the Aggregators derive on their own, allow the Aggregators to
    run wraparound checks on their own.
 
-4.1.1.  Encoding of Floating Point Numbers into Field Elements
+4.1.1.  Encoding Gradient
+
+   We define a function PineValid.encode_gradient(self, measurement:
+   list[float]) -> list[Field] that implements this encoding step.
+
+4.1.1.1.  Encoding of Floating Point Numbers into Field Elements
 
       TODO Specify how floating point numbers are represented as field
       elements.
 
-4.1.2.  Encoding the Range-Checked, Squared Norm
+4.1.1.2.  Encoding the Range-Checked, Squared Norm
 
       TODO Specify how the Client encodes the norm such that the
       Aggregators can check that it is in the desired range.
 
-4.1.3.  Running the Wraparound Tests
+      TODO Put full implementation of encode_gradient() here.
+
+4.1.2.  Running the Wraparound Tests
 
       XXX Give an overview of how the wraparound test results are
       generated from the XOF seed.
 
-4.1.4.  Encoding the Range-Checked, Wraparound Check Results
+4.1.3.  Encoding the Range-Checked, Wraparound Check Results
+
+   We define a function PineValid.encode_wr_checks(self,
+   encoded_gradient: list[Field], wr_joint_rand_xof: Xof) -> list[Field]
+   that implements this encoding step.
 
       TODO Specify how the Client encodes the result of each wraparound
       check such that the Aggregators can check that each is in the
