@@ -442,8 +442,8 @@ Table of Contents
 
 4.2.  The FLP Circuit
 
-   The validity circuit unpacks the encoded measurement as the
-   following:
+   Evaluation of the validity circuit begins by unpacking the encoded
+   measurement into the following components:
 
    *  The first dimension entries are the encoded_gradient, the field
       elements encoded from the floating point numbers.
