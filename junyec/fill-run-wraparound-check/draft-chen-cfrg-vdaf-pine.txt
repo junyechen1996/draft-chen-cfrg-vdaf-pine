@@ -392,7 +392,7 @@ Table of Contents
 4.1.2.  Running the Wraparound Tests
 
    Given the encoded gradient from Section 4.1.1 and the XOF to generate
-   the random vectors, the Client needs to run wraparound check for
+   the random vectors, the Client needs to run wraparound check
    num_wr_checks times, and is required to pass at least
    num_wr_successes of them.  Each wraparound check works as the
    following:
