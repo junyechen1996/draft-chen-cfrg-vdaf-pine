@@ -73,7 +73,7 @@ Table of Contents
    3.  PINE Overview
    4.  The PINE Proof System
      4.1.  Measurement Encoding
-       4.1.1.  Encoding Gradient
+       4.1.1.  Encoding Gradient and L2-Norm Check
        4.1.2.  Running the Wraparound Tests
        4.1.3.  Encoding the Range-Checked, Wraparound Check Results
      4.2.  The FLP Circuit
@@ -364,21 +364,22 @@ Table of Contents
    involves encoding floating point numbers in the Client gradient into
    field elements Section 4.1.1.1, and encoding the results for L2-norm
    check Section 4.1.1.2, by computing the bit representation of the
-   squared L2-norm, modulo q, of the field element vector.  The result
-   of this step allows Aggregators to check the squared L2-norm of the
+   squared L2-norm, modulo q, of the encoded gradient.  The result of
+   this step allows Aggregators to check the squared L2-norm of the
    Client's gradient, modulo q, falls in the desired range of [0,
    encoded_sq_norm_bound]. * Section 4.1.3 involves encoding the results
-   of running wraparound checks Section 4.1.2, based on the
-   encoded_gradient from the previous step, and the vectors derived from
+   of running wraparound checks Section 4.1.2, based on the encoded
+   gradient from the previous step, and the random vectors derived from
    a short, random seed using an XOF.  The result of this step, along
    with the encoded gradient and the random vector that the Aggregators
    derive on their own, allow the Aggregators to run wraparound checks
    on their own.
 
-4.1.1.  Encoding Gradient
+4.1.1.  Encoding Gradient and L2-Norm Check
 
-   We define a function PineValid.encode_gradient(self, measurement:
-   list[float]) -> list[Field] that implements this encoding step.
+   We define a function PineValid.encode_gradient_and_norm(self,
+   measurement: list[float]) -> list[Field] that implements this
+   encoding step.
 
 4.1.1.1.  Encoding of Floating Point Numbers into Field Elements
 
@@ -390,7 +391,7 @@ Table of Contents
       TODO Specify how the Client encodes the norm such that the
       Aggregators can check that it is in the desired range.
 
-      TODO Put full implementation of encode_gradient() here.
+      TODO Put full implementation of encode_gradient_and_norm() here.
 
 4.1.2.  Running the Wraparound Tests
 
