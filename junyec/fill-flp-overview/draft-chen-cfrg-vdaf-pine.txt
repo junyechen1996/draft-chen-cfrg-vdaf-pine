@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 28 August 2024                                       Cloudflare
-                                                        25 February 2024
+Expires: 30 August 2024                                       Cloudflare
+                                                        27 February 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -53,7 +53,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 August 2024.
+   This Internet-Draft will expire on 30 August 2024.
 
 Copyright Notice
 
@@ -214,8 +214,8 @@ Table of Contents
 
    *  XOFs ("eXtendable Output Functions") from Section 6.2 of [VDAF].
 
-   A floating point number is a IEEE-754 compatible float64 value
-   [IEEE754-2019].
+   A floating point number, denoted float, is a IEEE-754 compatible
+   float64 value [IEEE754-2019].
 
    A "gradient" is a vector of floating point numbers.  Each coordinate
    of this vector is called an "entry".  The "L2-norm", or simply
