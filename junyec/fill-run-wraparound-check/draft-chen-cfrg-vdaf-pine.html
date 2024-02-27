@@ -1672,7 +1672,7 @@ wraparound check works as the following:<a href="#section-4.1.2-1" class="pilcro
 gradient <code>dimension</code>. Each entry of the random vector is a field element of <code>1</code>
 with probability <code>1/4</code>, or <code>0</code> with probability <code>1/2</code>, or <code>q-1</code> with probability
 <code>1/4</code>, over the field modulus <code>q</code>. The Client samples each entry by sampling
-from the XOF output stream two bits at a time:
+from the XOF two bits each time:
 * If the bits are <code>00</code>, set the entry to be <code>q-1</code>.
 * If the bits are <code>01</code> or <code>10</code>, set the entry to be <code>0</code>.
 * If the bits are <code>11</code>, set the entry to be <code>1</code>.<a href="#section-4.1.2-2" class="pilcrow">¶</a></p>
