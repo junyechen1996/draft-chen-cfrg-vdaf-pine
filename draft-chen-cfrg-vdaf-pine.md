@@ -277,23 +277,24 @@ Operational parameters for the proof system are summarized below in
 ## Measurement Encoding
 
 The measurement encoding is done in two stages:
-* {{encode-gradient}} involves encoding floating point numbers in the Client
-  gradient into field elements {{float-to-field}}, and encoding the results for
-  L2-norm check {{l2-norm-check}}, by computing the bit representation of the
-  squared L2-norm, modulo `q`, of the field element vector. The result of this
-  step allows Aggregators to check the squared L2-norm of the Client's gradient,
-  modulo `q`, falls in the desired range of `[0, encoded_sq_norm_bound]`.
+* {{encode-gradient-and-norm}} involves encoding floating point numbers in the
+  Client gradient into field elements {{float-to-field}}, and encoding the
+  results for L2-norm check {{l2-norm-check}}, by computing the bit
+  representation of the squared L2-norm, modulo `q`, of the encoded gradient.
+  The result of this step allows Aggregators to check the squared L2-norm of the
+  Client's gradient, modulo `q`, falls in the desired range of
+  `[0, encoded_sq_norm_bound]`.
 * {{encode-wr-check}} involves encoding the results of running wraparound checks
-  {{run-wr-check}}, based on the `encoded_gradient` from the previous step, and
-  the vectors derived from a short, random seed using an XOF. The result of this
-  step, along with the encoded gradient and the random vector that the
+  {{run-wr-check}}, based on the encoded gradient from the previous step, and
+  the random vectors derived from a short, random seed using an XOF. The result
+  of this step, along with the encoded gradient and the random vector that the
   Aggregators derive on their own, allow the Aggregators to run wraparound
   checks on their own.
 
-### Encoding Gradient {#encode-gradient}
+### Encoding Gradient and L2-Norm Check {#encode-gradient-and-norm}
 
-We define a function `PineValid.encode_gradient(self, measurement: list[float])
--> list[Field]` that implements this encoding step.
+We define a function `PineValid.encode_gradient_and_norm(self,
+measurement: list[float]) -> list[Field]` that implements this encoding step.
 
 #### Encoding of Floating Point Numbers into Field Elements {#float-to-field}
 
@@ -304,7 +305,7 @@ We define a function `PineValid.encode_gradient(self, measurement: list[float])
 > TODO Specify how the Client encodes the norm such that the Aggregators can
 > check that it is in the desired range.
 
-> TODO Put full implementation of `encode_gradient()` here.
+> TODO Put full implementation of `encode_gradient_and_norm()` here.
 
 ### Running the Wraparound Tests {#run-wr-check}
 
