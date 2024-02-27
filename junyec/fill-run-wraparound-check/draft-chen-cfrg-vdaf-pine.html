@@ -1679,7 +1679,7 @@ from the XOF two bits each time:
 <p id="section-4.1.2-3">Then the Client computes the dot product. If
 the dot product is in the range of
 <code>[-wr_check_bound, wr_check_bound + Field(1)]</code>, then the Client passes that
-wraparound check, and fails otherwise. Note the Client doesn't send this dot
+wraparound check, and fails otherwise. Note the Client does not send this dot
 product to the Aggregators. The Aggregators will compute the dot product
 themselves, based on the encoded gradient and the random vector derived on
 their own.<a href="#section-4.1.2-3" class="pilcrow">¶</a></p>
