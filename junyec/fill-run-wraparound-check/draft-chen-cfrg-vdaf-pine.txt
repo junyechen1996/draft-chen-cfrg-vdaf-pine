@@ -366,11 +366,11 @@ Table of Contents
    Client's gradient, modulo q, falls in the desired range of [0,
    encoded_sq_norm_bound]. * Section 4.1.3 involves encoding the results
    of running wraparound checks Section 4.1.2, based on the
-   encoded_gradient from the previous step, and the random vector
-   generated from an initialized Xof in `wr_joint_rand_xof.  The result
-   of this step, along with the encoded gradient and the random vector
-   that the Aggregators derive on their own, allow the Aggregators to
-   run wraparound checks on their own.
+   encoded_gradient from the previous step, and the vectors derived from
+   a short, random seed using an XOF.  The result of this step, along
+   with the encoded gradient and the random vector that the Aggregators
+   derive on their own, allow the Aggregators to run wraparound checks
+   on their own.
 
 4.1.1.  Encoding Gradient
 
@@ -401,10 +401,10 @@ Table of Contents
    dimension as the gradient dimension.  Each entry of the random vector
    is a field element of 1 with probability 1/4, or 0 with probability
    1/2, or q-1 with probability 1/4, over the field modulus q.  The
-   Client samples each entry by sampling from the XOF two bits each
-   time: * If the bits are 00, set the entry to be q-1. * If the bits
-   are 01 or 10, set the entry to be 0. * If the bits are 11, set the
-   entry to be 1.
+   Client samples each entry by sampling from the XOF output stream two
+   bits at a time: * If the bits are 00, set the entry to be q-1. * If
+   the bits are 01 or 10, set the entry to be 0. * If the bits are 11,
+   set the entry to be 1.
 
    Then the Client computes the dot product.  If the dot product is in
    the range of [-wr_check_bound, wr_check_bound+1], then the Client
