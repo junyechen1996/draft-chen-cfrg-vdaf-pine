@@ -467,7 +467,7 @@ Table of Contents
 
    *  The last joint randomness field element is to reduce over all the
       checks, which include the reduced bit check result, the L2-norm
-      equality check, the L2-norm range check, the reduced quadratic
+      equality check, the L2 norm range check, the reduced quadratic
       checks in wraparound check, and the success count check for
       wraparound check.
 
