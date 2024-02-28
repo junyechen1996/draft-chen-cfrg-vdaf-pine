@@ -616,8 +616,7 @@ Table of Contents
       Aggregators need to derive on their own.
 
    *  "Verification joint randomness": These are the field elements used
-      by the Clients to generate the proof and used by the Aggregators
-      to validate the proof.
+      by the Client and Aggregators to evaluate the FLP circuit.
 
    At a high level, PINE distributes this computation as follows.
 
