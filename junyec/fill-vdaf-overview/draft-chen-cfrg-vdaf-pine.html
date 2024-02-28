@@ -1976,8 +1976,7 @@ each Aggregator runs the wraparound checks with the wraparound joint randomness,
 and queries the FLP with its input share, proof share, the wraparound check
 results, and the verification joint randomness. All Aggregators then exchange
 the results from the FLP and decide whether to accept that Client gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
-<p id="section-5-5">Next, each Aggregator sums up the valid output shares locally, which are
-expressed as arrays of field elements. Finally, the Collector sums up the
+<p id="section-5-5">Next, each Aggregator sums up their shares of the encoded gradients and sends the aggregate share to the Collector. Finally, the Collector sums up the
 aggregate shares to obtain the aggregate result, and decodes it into an array
 of floating point values.<a href="#section-5-5" class="pilcrow">¶</a></p>
 <p id="section-5-6">Like Prio3 <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.2" class="relref">Section 7.1.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, PINE supports generation and verification
