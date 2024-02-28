@@ -274,6 +274,7 @@ Operational parameters for the proof system are summarized below in
 | wr_check_bound        | Field   | The bound of the range check for each wraparound check. |
 | num_bits_for_sq_norm  | int     | Number of bits to encode the squared L2-norm. |
 | num_bits_for_wr_check | int     | Number of bits to encode the range check in each wraparound check. |
+| bit_checked_len       | int     | Number of field elements in the encoded measurement that are expected to be bits. |
 | chunk_length          | int     | Parameter of the FLP. |
 {: #pine-flp-param title="Operational parameters of the PINE FLP."}
 
@@ -349,10 +350,129 @@ implements this encoding step.
 
 ## The FLP Circuit
 
-> XXX Give an overview of the circuit's operation. Here it would be appropriate
-> to name all of the intermediate results: the bit checks, the wraparound
-> checks result (the reduction over all of the checks), the wraparound success
-> count, the squred norm equality test, and the squared norm range check.
+Evaluation of the validity circuit begins by unpacking the encoded measurement
+into the following components:
+
+* The first `dimension` entries are the `encoded_gradient`, the field elements
+  encoded from the floating point numbers.
+* The next `bit_checked_len` entries are expected to be bits, and should contain
+  the bits for the range check of the L2 norm, the bits for the range check of
+  each wraparound check, and the success bits in wraparound checks.
+* The last `num_wr_checks` are the wraparound check results, i.e., the dot
+  products of the encoded gradient and the random vectors.
+
+It also unpacks the "joint randomness" that is shared between the Client and
+Aggregators, to compute random linear combinations of all the checks:
+
+* The first joint randomness field element is to reduce over the bit checks at
+  all bit entries.
+* The second joint randomness field element is to reduce over all the quadratic
+  checks in wraparound check.
+* The last joint randomness field element is to reduce over all the checks,
+  which include the reduced bit check result, the L2 norm equality check, the
+  L2 norm range check, the reduced quadratic checks in wraparound check, and
+  the success count check for wraparound check.
+
+In the subsections below, we outline the various checks computed by the validity
+circuit, which includes the bit check on all the bit entries
+{{valid-bit-check}}, the L2 norm check {{valid-norm-check}}, and the wraparound
+check {{valid-wr-check}}. Some of the auxiliary functions in these checks are
+defined in {{pine-auxiliary}}.
+
+### Range Check {#range-check}
+
+A common subroutine used in the validity circuit is the "range check", i.e.,
+checking if a `value` is in the range of `[B1, B2]`, over the field size `q`
+(See Figure 1 in {{ROCT23}}). The Client computes the "`v` bits", the bit
+representation of `value - B1` (modulo `q`), and the "`u` bits", the bit
+representation of `B2 - value` (modulo `q`). Assuming the Aggregators have
+verified the `v` bits and `u` bits are indeed composed of bits (as described in
+{{valid-bit-check}}), the Aggregators can verify `value` is in the desired
+range, by checking the decoded value from the `v` bits, and the decode value
+from the `u` bits sum up to `B2 - B1` (modulo `q`).
+
+As an optimization for communication cost per Remark 3.2 in {{ROCT23}}, the
+Client can skip sending the `u` bits if `B2 - B1 + 1` (modulo `q`) is a power of
+`2`. This is because the available `v` bits can naturally bound `value - B1` to
+be `B2 - B1`.
+
+### Bit Check {#valid-bit-check}
+
+The purpose of bit check on a field element is to prevent any computation
+involving the field element from going out of range. For example, if we were
+to compute the squared L2-norm from the bit representation claimed by the
+Client, bit check ensures the decoded value from the bit representation is
+at most `2^(num_bits_for_norm) - 1`.
+
+To run bit check on an array of field elements `bit_checked`, we use a
+similar approach as {{Section 7.3.1.1 of !VDAF}}, by constructing a polynomial
+from a random linear combination of the polynomial `x(x-1)` evaluated at each
+element of `bit_checked`. We then evaluate the polynomial at a random point
+`r_bit_check`, i.e., the joint randomness for bit check:
+
+~~~
+f(r_bit_check) = bit_checked[0] * (bit_checked[0] - 1) + \
+  r_bit_check * bit_checked[1] * (bit_checked[1] - 1) + \
+  r_bit_check^2 * bit_checked[2] * (bit_checked[2] - 1) + ...
+~~~
+
+If one of the entries in `bit_checked` is not a bit, then `f(r_bit_check)` is
+non-zero with high probability.
+
+> TODO Put `PineValid.eval_bit_check()` implementation here.
+
+### L2 Norm Check {#valid-norm-check}
+
+The purpose of L2 norm check is to check the squared L2-norm of the encoded
+gradient is in the range of `[0, encoded_sq_norm_bound]`.
+
+The validity circuit verifies two properties of the L2 norm reported by the
+Client:
+
+* Equality check: The squared norm computed from the encoded gradient is equal
+  to the bit representation reported by the Client. For this, the Aggregators
+  compute their shares of the squared norm from their shares of the encoded
+  gradient, and also decode their shares of the bit representation of the
+  squared norm (as defined above in {{valid-bit-check}}), and check that the
+  values are equal.
+* Range check: The squared norm reported by the Client is in the desired range
+  `[0, encoded_sq_norm_bound]`. For this, the Aggregators run the range check
+  described in {{range-check}}.
+
+> TODO Put `PineValid.eval_norm_check()` implementation here.
+
+### Wraparound Check {#valid-wr-check}
+
+The purpose of wraparound check is to check the squared L2-norm of the encoded
+Client gradient hasn't overflown the field size `q`.
+
+The validity circuit verifies two properties for wraparound checks:
+
+* Quadratic check (See bullet point 3 in Figure 2 of {{ROCT23}}): Recall in
+  {{encode-wr-check}}, the Client has to keep track of a success bit for each
+  wraparound check, i.e., whether it has passed that check. For each wraparound
+  check, the Aggregators then verify a quadratic constraint that, either the
+  success bit is a 0 (i.e., the Client has failed that check), or the success
+  bit is a 1, and the range-checked result reported by the Client is correct,
+  based on the wraparound check result (i.e., the dot product) computed by the
+  Aggregators from the encoded gradient and the random vector. For this, the
+  Aggregators multiply their shares of the success bit, and the difference of
+  the range-checked result reported by the Client, and that computed by the
+  Aggregators. We then construct a polynomial from a random linear combination
+  of the quadratic check at each wraparound check, and evaluate it at a random
+  point `r_wr_check`, the joint randomness.
+* Success count check: The number of successful wraparound checks, by summing
+  the success bits, is equal to the constant `num_wr_successes`. For this, the
+  Aggregators sum their shares of the success bits for all wraparound checks.
+
+> TODO Put `PineValid.eval_wr_check()` implementation here.
+
+### Putting All Checks Together
+
+Finally, we will construct a polynomial from a random linear combination of all
+the checks from `PineValid.eval_bit_checks()`, `PineValid.eval_norm_check()`,
+and `PineValid.eval_wr_check()`, and evaluate it at the final joint randomness
+`r_final`. The full implementation of `PineValid.eval()` is as follows:
 
 > TODO Specify the implementation of `Valid` from {{Section 7.3.2 of !VDAF}}.
 
@@ -392,6 +512,11 @@ This section specifies the complete VDAF.
 > TODO Specify concrete parameterizations of VDAFs, including the choice of
 > field, number of proofs, and valid ranges for the parameters in
 > {{pine-user-param}}.
+
+# PINE Auxiliary Functions {#pine-auxiliary}
+
+> TODO Put all auxiliary functions here, including `range_check()`,
+> `parallel_sum()`.
 
 # Security Considerations
 
@@ -1491,7 +1616,7 @@ which are expanded into vectors of field elements.
 
 We reuse the `Prg` interface in {{Section 6.2 of !VDAF}}, the parameters and
 constants in {{Section 7.2 of !VDAF}} for Prio3.
-We also define some auxiliary functions in {{pine-auxiliary}} for joint
+We also define some auxiliary functions in {{pine-auxiliary-old}} for joint
 randomness derivation and message serialization.
 
 ~~~
@@ -1648,7 +1773,7 @@ together the exchanged joint randomness seed parts gives the same joint
 randomness seed they were using to compute verifier shares.
 
 The definitions of constants and a few auxiliary functions are defined in
-{{pine-auxiliary}}.
+{{pine-auxiliary-old}}.
 
 ~~~
 def prep_init(Pine, verify_key, agg_id, _agg_param,
@@ -1815,7 +1940,7 @@ def agg_shares_to_result(Pine, _agg_param,
 {: #pine-agg-output title="Computation of the aggregate result for PINE."}
 
 
-## Auxiliary Functions {#pine-auxiliary}
+## Auxiliary Functions {#pine-auxiliary-old}
 
 This section defines a number of auxiliary functions referenced by the main
 algorithms for PINE in the preceding sections.
