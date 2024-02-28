@@ -82,7 +82,6 @@ Table of Contents
        4.2.3.  L2 Norm Check
        4.2.4.  Wraparound Check
        4.2.5.  Putting All Checks Together
-     4.3.  Multiple Proofs
    5.  The PINE VDAF
      5.1.  Sharding
      5.2.  Preparation
@@ -589,7 +588,73 @@ Table of Contents
       TODO Specify the implementation of Valid from Section 7.3.2 of
       [VDAF].
 
-4.3.  Multiple Proofs
+5.  The PINE VDAF
+
+   This section describes PINE VDAF for [ROCT23], a one-round VDAF with
+   no aggregation parameter.  It takes a set of Client gradients
+   expressed as vectors of floating point values, and computes an
+   element-wise summation of valid gradients with bounded L2-norm
+   configured by the user parameters in Table 1.  The VDAF largely uses
+   the encoding and validation schemes in Section 4, and also specifies
+   how the joint randomness shared between the Client and Aggregators is
+   derived.  There are two kinds of joint randomness used:
+
+   *  "Verification joint randomness": These are the field elements used
+      by the Client and Aggregators to evaluate the FLP circuit.  The
+      verification joint randomness is derived similar to the joint
+      randomness in Prio3 Section 7.2.1.2 of [VDAF]: the XOF is applied
+      to each secret share of the encoded measurement to derive the
+      "part"; and the parts are hashed together, using the XOF once
+      more, to get the seed for deriving the joint randomness itself.
+
+   *  "Wraparound joint randomness": This is used to generate the random
+      vectors in the wraparound checks that both the Clients and
+      Aggregators need to derive on their own.  It is generated in much
+      the same way as verification joint randomness, except that only
+      the gradient and the range-checked norm are used to derive the
+      parts.
+
+   In order for the Client to shard its gradient into input shares for
+   the Aggregators, the Client first encodes its gradient into field
+   elements, and encodes the range-checked L2-norm, according to
+   Section 4.1.1.  Then it needs to derives the wraparound joint
+   randomness for the wraparound checks.  It first derives the parts, by
+   applying the XOF to the secret shares of the encoded gradient and
+   range-checked norm.  Then it applies the XOF again to the parts to
+   obtain the seed for the wraparound joint randomness and use it to
+   encode the results for wraparound checks Section 4.1.3.  The encoded
+   gradient, range-checked norm, and results for wraparound checks form
+   the fully encoded measurement, that will be secret-shared to (1) be
+   sent as input shares for the Aggregators, and (2) derive the
+   verification joint randomness parts.  The parts are then hashed by
+   the XOF to generate the seed for the verification joint randomness to
+   evaluate the FLP circuit and generate the proof.  The proof is also
+   secret-shared, and sent to the Aggregators, along with the input
+   shares, and the joint randomness parts for both wraparound and
+   verification joint randomness.
+
+   Then the Aggregators carry out a multi-party computation to obtain
+   the output shares (the secret shares of the encoded Client
+   gradients), and also reject Client gradients that have invalid
+   L2-norm.  Each Aggregator first needs to derive wraparound and
+   verification joint randomness.  To compute the XOF seed for
+   wraparound joint randomness part, it applies its share of encoded
+   gradient and the range-checked norm to the XOF.  Then it applies its
+   part and other Aggregators' parts to the XOF again to obtain the seed
+   for wraparound joint for other Aggregators , and also the wraparound
+   joint randomness parts for the other Aggregators.  The verification
+   joint randomness is derived similarly, except each Aggregator uses
+   its entire input share to derive the part.  Then each Aggregator runs
+   the wraparound checks with the wraparound joint randomness, and
+   queries the FLP with its input share, proof share, the wraparound
+   check results, and the verification joint randomness.  All
+   Aggregators then exchange the results from the FLP and decide whether
+   to accept that Client gradient.
+
+   Next, each Aggregator sums up the valid output shares locally, which
+   are expressed as arrays of field elements.  Finally, the Collector
+   sums up the aggregate shares to obtain the aggregate result, and
+   decodes it into an array of floating point values.
 
    Like Prio3 Section 7.1.2 of [VDAF], PINE supports generation and
    verification of multiple FLPs.  The goal is to reduce soundness error
@@ -599,82 +664,6 @@ Table of Contents
    improve the communication cost between Clients and Aggregators, by
    instantiating PINE FLP with a smaller field, but repeating the proof
    generation (Flp.prove) and validation (Flp.query) multiple times.
-
-5.  The PINE VDAF
-
-   This section describes PINE VDAF for [ROCT23], a one-round VDAF with
-   no aggregation parameter.  It takes a set of Client gradients
-   expressed as vectors of floating point values, and computes an
-   elementwise summation of valid gradients with bounded L2-norm,
-   configured by the user parameters Table 1.  The VDAF largely uses the
-   encoding and validation schemes in Section 4, and also specifies how
-   the joint randomness shared between the Client and Aggregators is
-   derived.  There are two kinds of joint randomness used:
-
-   *  "Wraparound joint randomness": This is used to generate the random
-      vectors in the wraparound checks that both the Clients and
-      Aggregators need to derive on their own.
-
-   *  "Verification joint randomness": These are the field elements used
-      by the Client and Aggregators to evaluate the FLP circuit.
-
-   At a high level, PINE distributes this computation as follows.
-
-   In order for the Client to shard its gradient into input shares for
-   the Aggregators:
-
-   1.  Each Client first encodes its gradient and the range-checked
-       L2-norm results according to Section 4.1.1.
-
-   2.  Then it derives the wraparound joint randomness to run the
-       wraparound checks.  It computes a wraparound joint randomness
-       "part" for each Aggregator, by computing a XOF seed that hashes
-       the secret share of the results from step 1 for that Aggregator.
-       Note the parts are sent to all Aggregators.  The Client then
-       computes a XOF seed that hashes all the parts and uses that to
-       generate the random vectors in wraparound checks.
-
-   3.  Then it encodes results for wraparound checks according to
-       Section 4.1.3, based on the encoded gradient from step 1, and the
-       XOF seed from step 2.  The results are appended at the end of the
-       encoded gradient and range-checked norm from step 1, to form the
-       fully encoded measurement that will be secret shared and sent to
-       the Aggregators.
-
-   4.  Then it needs to derive the verification joint randomness to run
-       the validity circuit.  The joint randomness part derivation and
-       seed derivation are similar to those for wraparound joint
-       randomness, but the hash function for verification joint
-       randomness needs to include the secret shares of the fully
-       encoded measurement from step 3.
-
-   5.  Finally, it generates the proof with the verification joint
-       randomness from step 4, secret shares the proof, and sends the
-       secret-shared encoded measurement and proof to the Aggregators.
-
-   Then the Aggregators carry out a multi-party computation to obtain
-   the output shares (the secret shares of the encoded Client
-   gradients), and also reject Client gradients that have invalid
-   L2-norm: 1.  The Aggregators first need to derive wraparound joint
-   randomness in order to run wraparound checks.  Each Aggregator
-   derives the XOF seed from its secret share of the encoded gradient
-   and range-checked norm, and also from the wraparound joint randomness
-   parts for the other Aggregators. 1.  The Aggregators then run
-   wraparound checks with their secret shares of encoded gradient, and
-   with the random vector generated from the XOF seed derived in step 1.
-   1.  Each Aggregator also derives the verification joint randomness,
-   from its secret share of the fully encoded measurement, and also from
-   the verification joint randomness parts for the other Aggregators. 1.
-   Each Aggregator then queries the FLP with its secret share of the
-   encoded measurement and proof, its computed wraparound check results
-   from step 1, and the verification joint randomness from step 3.  All
-   Aggregators exchange the results from the FLP and decide whether to
-   accept that Client gradient.
-
-   Next, each Aggregator sums up the valid output shares locally, which
-   are expressed as arrays of field elements.  Finally, the Collector
-   sums up the aggregate shares to obtain the aggregate result, and
-   decodes it into an array of floating point values.
 
    The remainder of this section is structured as follows.  We will
    specify the exact algorithms for Client sharding Section 5.1,
