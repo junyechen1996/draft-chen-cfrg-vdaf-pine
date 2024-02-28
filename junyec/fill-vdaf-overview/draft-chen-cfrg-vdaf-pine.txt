@@ -620,7 +620,7 @@ Table of Contents
 
    At a high level, PINE distributes this computation as follows.
 
-   In order for the Client to shard its gradient into secret shares for
+   In order for the Client to shard its gradient into input shares for
    the Aggregators:
 
    1.  Each Client first encodes its gradient and the range-checked
