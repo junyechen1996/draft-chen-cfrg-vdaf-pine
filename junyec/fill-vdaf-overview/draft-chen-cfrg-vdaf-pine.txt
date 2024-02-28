@@ -612,8 +612,8 @@ Table of Contents
    derived.  There are two kinds of joint randomness used:
 
    *  "Wraparound joint randomness": This is used to generate the random
-      vectors in wraparound checks that both the Clients and Aggregators
-      need to derive on their own.
+      vectors in the wraparound checks that both the Clients and
+      Aggregators need to derive on their own.
 
    *  "Verification joint randomness": These are the field elements used
       by the Clients to generate the proof and used by the Aggregators
