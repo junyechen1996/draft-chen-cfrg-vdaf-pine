@@ -478,17 +478,71 @@ and `PineValid.eval_wr_check()`, and evaluate it at the final joint randomness
 
 # The PINE VDAF {#vdaf}
 
-This section specifies the complete VDAF.
+This section describes PINE VDAF for {{ROCT23}}, a one-round VDAF with no
+aggregation parameter. It takes a set of Client gradients expressed as vectors
+of floating point values, and computes an element-wise summation of valid
+gradients with bounded L2-norm configured by the user parameters in
+{{pine-user-param}}. The VDAF largely uses the encoding and validation schemes
+in {{flp}}, and also specifies how the joint randomness shared between the
+Client and Aggregators is derived. There are two kinds of joint randomness used:
 
-> XXX Give a high level overview of how the encoding scheme and FLP are used by
-> PINE. Here we want to define the the "wraparound joint randomness" and the
-> "verification joint randomness" and give some details of how each is derived.
-> We also want to mention the multiproof feature and the relationship between
-> the number of proofs, the field size, and soundness.
->
-> Remember, keep it short and intuitive. The full specificaiton of the
-> algorithms will come later, in a future draft. If you're using too many
-> variable names, then you're probably not on the right track.
+* "Verification joint randomness": These are the field elements used by the
+  Client and Aggregators to evaluate the FLP circuit. The verification joint
+  randomness is derived similar to the joint randomness in Prio3
+  {{Section 7.2.1.2 of !VDAF}}: the XOF is applied to each secret share of the
+  encoded measurement to derive the "part"; and the parts are hashed together,
+  using the XOF once more, to get the seed for deriving the joint randomness
+  itself.
+* "Wraparound joint randomness": This is used to generate the random vectors in
+  the wraparound checks that both the Clients and Aggregators need to derive on
+  their own. It is generated in much the same way as the verification joint
+  randomness, except that only the gradient and the range-checked norm are used
+  to derive the parts.
+
+In order for the Client to shard its gradient into input shares for the
+Aggregators, the Client first encodes its gradient into field elements, and
+encodes the range-checked L2-norm, according to {{encode-gradient-and-norm}}.
+Next, it derives the wraparound joint randomness for the wraparound checks as
+described above. The encoded gradient, range-checked norm, and results for
+wraparound checks will be secret-shared to (1) be sent as input shares for the
+Aggregators, and (2) derive the verification joint randomness as described
+above. The Client then generates the proof with the FLP and secret shares it.
+The secret-shared proof, along with the input shares, and the joint randomness
+parts for both wraparound and verification joint randomness, are sent to the
+Aggregators.
+
+Then the Aggregators carry out a multi-party computation to obtain the output
+shares (the secret shares of the encoded Client gradient), and also reject
+Client gradients that have invalid L2-norm. Each Aggregator first needs to
+derive wraparound and verification joint randomness. Similar to Prio3
+preparation {{Section 7.2.2 of !VDAF}}, the Aggregator doesn't derive every
+joint randomness part like the Client does. It only derives the joint
+randomness part from its secret share via the XOF, and applies its part and
+and other Aggregators' parts sent by the Client to the XOF to obtain the joint
+randomness seed. Then each Aggregator runs the wraparound checks with the
+wraparound joint randomness, and queries the FLP with its input share, proof
+share, the wraparound check results, and the verification joint randomness. All
+Aggregators then exchange the results from the FLP and decide whether to accept
+that Client gradient.
+
+Next, each Aggregator sums up their shares of the encoded gradients and sends
+the aggregate share to the Collector. Finally, the Collector sums up the
+aggregate shares to obtain the aggregate result, and decodes it into an array
+of floating point values.
+
+Like Prio3 {{Section 7.1.2 of !VDAF}}, PINE supports generation and verification
+of multiple FLPs. The goal is to improve robustness of PINE (Corollary 3.13 in
+{{ROCT23}}) by generating multiple unique proofs from the Client, and
+only accepting the Client gradient if all proofs have been verified by the
+Aggregators. The benefit is that one can improve the communication cost between
+Clients and Aggregators, by instantiating PINE FLP with a smaller field, but
+repeating the proof generation (`Flp.prove`) and validation (`Flp.query`)
+multiple times.
+
+The remainder of this section is structured as follows. We will specify the
+exact algorithms for Client sharding {{sharding}}, Aggregator preparation
+{{preparation}} and aggregation {{aggregation}}, and Collector unsharding
+{{unsharding}}.
 
 ## Sharding
 
