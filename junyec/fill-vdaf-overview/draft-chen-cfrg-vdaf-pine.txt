@@ -610,9 +610,9 @@ Table of Contents
    *  "Wraparound joint randomness": This is used to generate the random
       vectors in the wraparound checks that both the Clients and
       Aggregators need to derive on their own.  It is generated in much
-      the same way as verification joint randomness, except that only
-      the gradient and the range-checked norm are used to derive the
-      parts.
+      the same way as the verification joint randomness, except that
+      only the gradient and the range-checked norm are used to derive
+      the parts.
 
    In order for the Client to shard its gradient into input shares for
    the Aggregators, the Client first encodes its gradient into field
