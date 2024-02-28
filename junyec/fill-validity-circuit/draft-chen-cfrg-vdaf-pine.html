@@ -1451,8 +1451,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-2-5">A "gradient" is a vector of floating point numbers. Each coordinate of this
 vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
 the square root of the sum of the squares of its entries.<a href="#section-2-5" class="pilcrow">¶</a></p>
-<p id="section-2-6">The user-specified parameters to initialize PINE are defined in
-<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-6">The "dot product" of two vectors is to compute the sum of elementwise
+multiplications of the two vectors.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">The user-specified parameters to initialize PINE are defined in
+<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-7" class="pilcrow">¶</a></p>
 <span id="name-user-parameters-for-pine"></span><div id="pine-user-param">
 <table class="center" id="table-1">
         <caption>
@@ -1528,9 +1530,9 @@ high communication overhead between the Client and Aggregators, roughly
 <code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">In order to detect whether a wraparound has occurred, PINE uses a probabilistic
 test, which works as follows: A random vector over the field is generated (via a
-procedure described in <a href="#vdaf" class="auto internal xref">Section 5</a>) where each entry is equal to <code>1</code>, <code>0</code>, or
-<code>q-1</code>, each with a particular probability: to test for wraparound, compute the
-dot product of this vector and the gradient, and check if the result is in a
+procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.2</a>) where each entry is equal to <code>1</code>, <code>0</code>,
+or <code>q-1</code>, each with a particular probability: to test for wraparound, compute
+the dot product of this vector and the gradient, and check if the result is in a
 specific range. The range is determined by parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> show that this test correctly detects wraparounds
@@ -1691,12 +1693,28 @@ check that it is in the desired range.<a href="#section-4.1.1.2-1.1.1" class="pi
           <h4 id="name-running-the-wraparound-test">
 <a href="#section-4.1.2" class="section-number selfRef">4.1.2. </a><a href="#name-running-the-wraparound-test" class="section-name selfRef">Running the Wraparound Tests</a>
           </h4>
-<ul class="normal ulEmpty">
-<li class="normal ulEmpty" id="section-4.1.2-1.1">
-              <p id="section-4.1.2-1.1.1">XXX Give an overview of how the wraparound test results are generated from
-the XOF seed.<a href="#section-4.1.2-1.1.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
+<p id="section-4.1.2-1">Given the encoded gradient from <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.1</a> and the XOF to
+generate the random vectors, the Client needs to run wraparound check
+<code>num_wr_checks</code> times, and is required to pass at least <code>num_wr_successes</code>
+of them. Each wraparound check works as the following:<a href="#section-4.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.1.2-2">For each test, the Client generates a random vector with the same dimension as
+the gradient's dimension. Each entry of the random vector is a field element of
+<code>1</code> with probability <code>1/4</code>, or <code>0</code> with probability <code>1/2</code>, or <code>q-1</code> with
+probability <code>1/4</code>, over the field modulus <code>q</code>. The Client samples each entry by
+sampling from the XOF output stream two bits at a time:
+* If the bits are <code>00</code>, set the entry to be <code>q-1</code>.
+* If the bits are <code>01</code> or <code>10</code>, set the entry to be <code>0</code>.
+* If the bits are <code>11</code>, set the entry to be <code>1</code>.<a href="#section-4.1.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.1.2-3">Then the Client computes the dot product modulo <code>q</code>. If the dot product is in
+the range of <code>[-wr_check_bound, wr_check_bound + 1]</code>, then the Client passes
+that wraparound check, and fails otherwise. Note the Client does not send this
+dot product to the Aggregators. The Aggregators will compute the dot product
+themselves, based on the encoded gradient and the random vector derived on
+their own.<a href="#section-4.1.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.1.2-4">The Client is required to repeat the wraparound check <code>num_wr_checks</code> times,
+and keep track of how many wraparound checks it has passed. If it has passed
+fewer than <code>num_wr_successes</code> of them, it should retry, by using a new XOF
+seed to re-generate the random vectors and re-run wraparound checks.<a href="#section-4.1.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="encode-wr-check">
