@@ -591,8 +591,8 @@ Table of Contents
 
 4.3.  Multiple Proofs
 
-   PINE FLP introduces similar flexibility of multiple proofs as Prio3
-   FLP Section 7.1.2 of [VDAF].  The goal is to reduce soundness error
+   Like Prio3 Section 7.1.2 of [VDAF], PINE supports generation and
+   verification of multiple FLPs.  The goal is to reduce soundness error
    (Corollary 3.13 in [ROCT23]) by generating multiple unique proofs
    from the Client, and only accepting the Client gradient if all proofs
    have been verified by the Aggregators.  The benefit is that one can
