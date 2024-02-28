@@ -627,13 +627,13 @@ Table of Contents
    1.  Each Client first encodes its gradient and the range-checked
        L2-norm results according to Section 4.1.1.
 
-   2.  Then it derives the wraparound joint randomness to run wraparound
-       checks.  It computes a wraparound joint randomness "part" for
-       each Aggregator, by computing a XOF seed that hashes the secret
-       share of the results from step 1 for that Aggregator.  Note the
-       parts are sent to all Aggregators.  The Client then computes a
-       XOF seed that hashes all the parts and uses that to generate the
-       random vectors in wraparound checks.
+   2.  Then it derives the wraparound joint randomness to run the
+       wraparound checks.  It computes a wraparound joint randomness
+       "part" for each Aggregator, by computing a XOF seed that hashes
+       the secret share of the results from step 1 for that Aggregator.
+       Note the parts are sent to all Aggregators.  The Client then
+       computes a XOF seed that hashes all the parts and uses that to
+       generate the random vectors in wraparound checks.
 
    3.  Then it encodes results for wraparound checks according to
        Section 4.1.3, based on the encoded gradient from step 1, and the
