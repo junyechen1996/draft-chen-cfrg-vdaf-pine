@@ -1952,7 +1952,7 @@ to derive the parts.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
 <p id="section-5-3">In order for the Client to shard its gradient into input shares for the
 Aggregators, the Client first encodes its gradient into field elements, and
 encodes the range-checked L2-norm, according to <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.1</a>.
-Then it needs to derives the wraparound joint randomness for the wraparound
+Next, it derives the wraparound joint randomness for the wraparound
 checks. It first derives the parts, by applying the XOF to the secret shares of
 the encoded gradient and range-checked norm. Then it applies the XOF again to
 the parts to obtain the seed for the wraparound joint randomness and use it to
