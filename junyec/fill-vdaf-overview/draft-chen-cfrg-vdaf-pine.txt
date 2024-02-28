@@ -653,13 +653,14 @@ Table of Contents
    decodes it into an array of floating point values.
 
    Like Prio3 Section 7.1.2 of [VDAF], PINE supports generation and
-   verification of multiple FLPs.  The goal is to reduce soundness error
-   (Corollary 3.13 in [ROCT23]) by generating multiple unique proofs
-   from the Client, and only accepting the Client gradient if all proofs
-   have been verified by the Aggregators.  The benefit is that one can
-   improve the communication cost between Clients and Aggregators, by
-   instantiating PINE FLP with a smaller field, but repeating the proof
-   generation (Flp.prove) and validation (Flp.query) multiple times.
+   verification of multiple FLPs.  The goal is to improve robustness of
+   PINE (Corollary 3.13 in [ROCT23]) by generating multiple unique
+   proofs from the Client, and only accepting the Client gradient if all
+   proofs have been verified by the Aggregators.  The benefit is that
+   one can improve the communication cost between Clients and
+   Aggregators, by instantiating PINE FLP with a smaller field, but
+   repeating the proof generation (Flp.prove) and validation (Flp.query)
+   multiple times.
 
    The remainder of this section is structured as follows.  We will
    specify the exact algorithms for Client sharding Section 5.1,

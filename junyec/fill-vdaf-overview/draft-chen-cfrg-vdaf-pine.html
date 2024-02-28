@@ -1981,7 +1981,7 @@ expressed as arrays of field elements. Finally, the Collector sums up the
 aggregate shares to obtain the aggregate result, and decodes it into an array
 of floating point values.<a href="#section-5-5" class="pilcrow">¶</a></p>
 <p id="section-5-6">Like Prio3 <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.2" class="relref">Section 7.1.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, PINE supports generation and verification
-of multiple FLPs. The goal is to reduce soundness error (Corollary 3.13 in
+of multiple FLPs. The goal is to improve robustness of PINE (Corollary 3.13 in
 <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>) by generating multiple unique proofs from the Client, and
 only accepting the Client gradient if all proofs have been verified by the
 Aggregators. The benefit is that one can improve the communication cost between
