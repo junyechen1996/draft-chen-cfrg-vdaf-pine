@@ -1955,7 +1955,7 @@ encodes the range-checked L2-norm, according to <a href="#encode-gradient-and-no
 Next, it derives the wraparound joint randomness for the wraparound
 checks as described above. The encoded
 gradient, range-checked norm, and results for wraparound checks form the fully
-encoded measurement, that will be secret-shared to (1) be sent as input shares
+input to the FLP circuit, that will be secret-shared to (1) be sent as input shares
 for the Aggregators, and (2) derive the verification joint randomness parts.
 The parts are then hashed by the XOF to generate the seed for the verification
 joint randomness to evaluate the FLP circuit and generate the proof. The proof
