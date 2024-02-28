@@ -609,38 +609,49 @@ Table of Contents
    configured by the user parameters Table 1.  The VDAF largely uses the
    encoding and validation schemes in Section 4, and also specifies how
    the joint randomness shared between the Client and Aggregators is
-   derived.  There are two kinds of joint randomness used: * "Wraparound
-   joint randomness": This is used to generate the random vectors in
-   wraparound checks that both the Clients and Aggregators need to
-   derive on their own. * "Verification joint randomness": These are the
-   field elements used by the Clients to generate the proof and used by
-   the Aggregators to validate the proof.
+   derived.  There are two kinds of joint randomness used:
+
+   *  "Wraparound joint randomness": This is used to generate the random
+      vectors in wraparound checks that both the Clients and Aggregators
+      need to derive on their own.
+
+   *  "Verification joint randomness": These are the field elements used
+      by the Clients to generate the proof and used by the Aggregators
+      to validate the proof.
 
    At a high level, PINE distributes this computation as follows.
 
    In order for the Client to shard its gradient into secret shares for
-   the Aggregators: 1.  Each Client first encodes its gradient and the
-   range-checked L2-norm results according to Section 4.1.1. 1.  Then it
-   derives the wraparound joint randomness to run wraparound checks.  It
-   computes a wraparound joint randomness "part" for each Aggregator, by
-   computing a XOF seed that hashes the secret share of the results from
-   step 1 for that Aggregator.  Note the parts are sent to all
-   Aggregators.  The Client then computes a XOF seed that hashes all the
-   parts and uses that to generate the random vectors in wraparound
-   checks. 1.  Then it encodes results for wraparound checks according
-   to Section 4.1.3, based on the encoded gradient from step 1, and the
-   XOF seed from step 2.  The results are appended at the end of the
-   encoded gradient and range-checked norm from step 1, to form the
-   fully encoded measurement that will be secret shared and sent to the
-   Aggregators. 1.  Then it needs to derive the verification joint
-   randomness to run the validity circuit.  The joint randomness part
-   derivation and seed derivation are similar to those for wraparound
-   joint randomness, but the hash function for verification joint
-   randomness needs to include the secret shares of the fully encoded
-   measurement from step 3. 1.  Finally, it generates the proof with the
-   verification joint randomness from step 4, secret shares the proof,
-   and sends the secret-shared encoded measurement and proof to the
-   Aggregators.
+   the Aggregators:
+
+   1.  Each Client first encodes its gradient and the range-checked
+       L2-norm results according to Section 4.1.1.
+
+   2.  Then it derives the wraparound joint randomness to run wraparound
+       checks.  It computes a wraparound joint randomness "part" for
+       each Aggregator, by computing a XOF seed that hashes the secret
+       share of the results from step 1 for that Aggregator.  Note the
+       parts are sent to all Aggregators.  The Client then computes a
+       XOF seed that hashes all the parts and uses that to generate the
+       random vectors in wraparound checks.
+
+   3.  Then it encodes results for wraparound checks according to
+       Section 4.1.3, based on the encoded gradient from step 1, and the
+       XOF seed from step 2.  The results are appended at the end of the
+       encoded gradient and range-checked norm from step 1, to form the
+       fully encoded measurement that will be secret shared and sent to
+       the Aggregators.
+
+   4.  Then it needs to derive the verification joint randomness to run
+       the validity circuit.  The joint randomness part derivation and
+       seed derivation are similar to those for wraparound joint
+       randomness, but the hash function for verification joint
+       randomness needs to include the secret shares of the fully
+       encoded measurement from step 3.
+
+   5.  Finally, it generates the proof with the verification joint
+       randomness from step 4, secret shares the proof, and sends the
+       secret-shared encoded measurement and proof to the Aggregators.
 
    Then the Aggregators carry out a multi-party computation to obtain
    the output shares (the secret shares of the encoded Client
