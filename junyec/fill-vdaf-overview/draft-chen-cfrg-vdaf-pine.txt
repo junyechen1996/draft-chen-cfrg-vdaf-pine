@@ -618,12 +618,8 @@ Table of Contents
    the Aggregators, the Client first encodes its gradient into field
    elements, and encodes the range-checked L2-norm, according to
    Section 4.1.1.  Next, it derives the wraparound joint randomness for
-   the wraparound checks.  It first derives the parts, by applying the
-   XOF to the secret shares of the encoded gradient and range-checked
-   norm.  Then it applies the XOF again to the parts to obtain the seed
-   for the wraparound joint randomness and use it to encode the results
-   for wraparound checks Section 4.1.3.  The encoded gradient, range-
-   checked norm, and results for wraparound checks form the fully
+   the wraparound checks as described above.  The encoded gradient,
+   range-checked norm, and results for wraparound checks form the fully
    encoded measurement, that will be secret-shared to (1) be sent as
    input shares for the Aggregators, and (2) derive the verification
    joint randomness parts.  The parts are then hashed by the XOF to
