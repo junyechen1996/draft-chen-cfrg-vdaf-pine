@@ -1438,17 +1438,17 @@ therefore deem the gradient valid, when in fact it is invalid.<a href="#section-
 <p id="section-3-5">Thus the central challenge of adapting FLPs to this problem is to prevent the
 norm computation from "wrapping around" the field modulus.<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">One way to achieve this is to ensure that each gradient entry is in a range
-that ensures the norm is sufficiently small. However, this appraoch has high
+that ensures the norm is sufficiently small. However, this approach has high
 communication cost (roughly <code>num_frac_bits * dimension</code> field elements per
 entry), which becomes prohibitive for high-dimensional data.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">PINE uses a different strategy: rather than prevent wraparounds, we can try to
 detect whether a wraparound has occurred.<a href="#section-3-7" class="pilcrow">¶</a></p>
 <p id="section-3-8"><span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> devise a probabilistic test for this purpose. A random vector over
 the field is generated (via a procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.2</a>) where
-each entry is equal to <code>1</code>, <code>0</code>, or <code>q-1</code>. Each is indepenently generated from
-a particular probability distribution. to test for wraparound, compute the dot
-product of this vector and the gradient, and check if the result is in a
-specific range determined by parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-8" class="pilcrow">¶</a></p>
+each entry is sampled independently from a particular probability distribution.
+To test for wraparound, compute the dot product of this vector and the
+gradient, and check if the result is in a specific range determined by
+parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-8" class="pilcrow">¶</a></p>
 <p id="section-3-9">If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> show that this test correctly detects wraparounds
 with probability <code>1/2</code>. To decrease the false negative probability (that is,
