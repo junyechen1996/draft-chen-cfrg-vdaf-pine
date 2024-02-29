@@ -276,7 +276,7 @@ Table of Contents
    PINE uses a different strategy: rather than prevent wraparounds, we
    can try to detect whether a wraparound has occurred.
 
-   [ROCT23] devise a probabilistic test for this purpose.  A random
+   [ROCT23] devises a probabilistic test for this purpose.  A random
    vector over the field is generated (via a procedure described in
    Section 4.1.2) where each entry is sampled independently from a
    particular probability distribution.  To test for wraparound, compute

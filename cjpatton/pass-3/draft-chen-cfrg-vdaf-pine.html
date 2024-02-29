@@ -1443,7 +1443,7 @@ communication cost (roughly <code>num_frac_bits * dimension</code> field element
 entry), which becomes prohibitive for high-dimensional data.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">PINE uses a different strategy: rather than prevent wraparounds, we can try to
 detect whether a wraparound has occurred.<a href="#section-3-7" class="pilcrow">¶</a></p>
-<p id="section-3-8"><span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> devise a probabilistic test for this purpose. A random vector over
+<p id="section-3-8"><span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> devises a probabilistic test for this purpose. A random vector over
 the field is generated (via a procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.2</a>) where
 each entry is sampled independently from a particular probability distribution.
 To test for wraparound, compute the dot product of this vector and the
