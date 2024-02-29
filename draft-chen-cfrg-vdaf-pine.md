@@ -93,8 +93,8 @@ informative:
 This document describes PINE, a Verifiable Distributed Aggregation Function
 (VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
 to aggregation, each input vector is determined to have a bounded L2-norm,
-where the bound is determined by the applicaiton. Such a primitive can be used
-to facilitiate robust, federated machine learning.
+where the bound is configured by the applicaiton. PINE is intended to
+facilitiate robust, federated machine learning.
 
 --- middle
 
@@ -108,21 +108,49 @@ commonly referred to as "gradients" {{Lem12}}. The server then aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.
 
-> CP: A diagram showing how this works would be helpful here.
+~~~
+   data
+     |
+     v
++---------+               gradients                   +--------+
+| Clients |-+   ------------------------------------->| Server |
++---------+ |-+                                       +--------+
+  +---------+ |                                            |
+    +---------+                                            |
+     ^                                                     |
+     |                  updated model                      |
+     +-----------------------------------------------------+
+~~~
+{: #plain-fl title="Federated learning"}
 
 Federated learning improves user privacy by ensuring the training data never
 leaves users' devices. However, it requires computing an aggregate of the
 gradients sent from devices, which may still reveal a significant amount of
-information about each user's input. [CP: 1-2 sentences describing
-the risk here would be useful.] One way to mitigate this risk is to distribute
-the aggregation step across multiple servers such that no server sees any
-gradient in the clear.
+information about each user's input. [CP: 1-2 sentences describing the risk
+here would be useful.] One way to mitigate this risk is to distribute the
+aggregation step across multiple servers such that no server sees any gradient
+in the clear.
 
 In a Verifiable Distributed Aggregation Function
 {{!VDAF=I-D.draft-irtf-cfrg-vdaf-08}}, this is achieved by having each user
 shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
 of the aggregate with the other servers to get the aggregate result.
+
+~~~
+   data
+     |
+     v        gradient                    aggregate
++---------+   shares    +-------------+   shares     +-----------+
+| Clients |-+   ---->   | Aggregators |-+   ----->   | Collector |
++---------+ |-+         +-------------+ |            +-----------+
+  +---------+ |           +-------------+                  |
+    +---------+                                            |
+     ^                                                     |
+     |                  updated model                      |
+     +-----------------------------------------------------+
+~~~
+{: #distributed-fl title="Federated learning with a VDAF"}
 
 Along with keeping the gradients' privacy, it is also desirable to ensure
 robustness of the overall computation by preventing clients from "poisoning"
