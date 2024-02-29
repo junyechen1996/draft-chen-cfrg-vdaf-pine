@@ -9,10 +9,9 @@
 <meta content="Christopher Patton" name="author">
 <meta content="
        This document describes PINE, a Verifiable Distributed Aggregation Function
-(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
-to aggregation, each input vector is determined to have a bounded L2-norm,
-where the bound is configured by the applicaiton. PINE is intended to
-facilitiate robust, federated machine learning. 
+(VDAF) for secure aggregation of high-dimensional, real-valued vectors with
+bounded L2-norm. PINE is intended to facilitiate private and robust federated
+machine learning. 
     " name="description">
 <meta content="xml2rfc 3.19.4" name="generator">
 <meta content="next generation" name="keyword">
@@ -1072,10 +1071,9 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document describes PINE, a Verifiable Distributed Aggregation Function
-(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
-to aggregation, each input vector is determined to have a bounded L2-norm,
-where the bound is configured by the applicaiton. PINE is intended to
-facilitiate robust, federated machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+(VDAF) for secure aggregation of high-dimensional, real-valued vectors with
+bounded L2-norm. PINE is intended to facilitiate private and robust federated
+machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1256,7 +1254,7 @@ the users to repeat the process.<a href="#section-1-1" class="pilcrow">¶</a></p
      |
      v
 +---------+               gradients                   +--------+
-| Clients |-+   -------------------------------------&gt;| Server |
+| Clients |-+   -----------------------------------&gt;  | Server |
 +---------+ |-+                                       +--------+
   +---------+ |                                            |
     +---------+                                            |
@@ -1302,25 +1300,26 @@ of the aggregate with the other servers to get the aggregate result.<a href="#se
 <a href="#name-federated-learning-with-a-v" class="selfRef">Federated learning with a VDAF</a>
         </figcaption></figure>
 </div>
-<p id="section-1-6">Along with keeping the gradients' privacy, it is also desirable to ensure
+<p id="section-1-6">Along with keeping the gradients private, it is desirable to ensure
 robustness of the overall computation by preventing clients from "poisoning"
 the aggregate and corrupting the trained machine learning model. A client's
-gradient is typically expressed a vector of real numbers. A common goal is to
-ensure each gradient has a bounded "L2-norm", sometimes called Euclidean norm:
-the square root of the sum of the squares of each entry of the input vector.
-Bounding the L2 norm is used in federated learning to limit the contribution of
-each client to the aggregate, without over constraining the distribution of
-inputs. [CP: Add a relevant reference.]<a href="#section-1-6" class="pilcrow">¶</a></p>
+gradient is typically expressed as a vector of real numbers. A common goal is
+to ensure each gradient has a bounded "L2-norm" (sometimes called Euclidean
+norm): the square root of the sum of the squares of each entry of the input
+vector. Bounding the L2 norm is used in federated learning to limit the
+contribution of each client to the aggregate, without over constraining the
+distribution of inputs. [CP: Add a relevant reference.]<a href="#section-1-6" class="pilcrow">¶</a></p>
 <p id="section-1-7">In theory, Prio3 (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be adapted to support this
 functionality, but the concrete cost in terms of runtime and communication
 would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
 Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be specified that computes the
-L2-norm of the gradient and checks that the result is in the desired range.
-This computation is not easy to do efficiently: the challenge lies in ensuring
-that the computation itself was carried out correctly, while properly accounting
-for the relevant mathematical details of the proof system (that is, the choice
-of finite field) and the range of possible inputs.<a href="#section-1-7" class="pilcrow">¶</a></p>
-<p id="section-1-8">This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
+L2-norm of the gradient and checks that the result is in the desired range
+(without revealing the gradient to the aggregation servers). Computation of the
+norm and performing the range check is ralatively simple, and can be done
+efficiently: the challenge lies in ensuring that the computation itself was
+carried out correctly, while properly accounting for the relevant mathematical
+details of the proof system and the range of possible inputs.<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-8">This document describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
 for secure aggregation of gradients with bounded L2-norm <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. Its design
 is based largely on Prio3 in that the norm is computed and verified using
 an FLP. However, PINE uses a new technique for verifying the correctness of
@@ -1332,8 +1331,8 @@ multi-party, 1-round VDAF.<a href="#section-1-9" class="pilcrow">¶</a></p>
 <ul class="normal ulEmpty">
 <li class="normal ulEmpty" id="section-1-10.1">
           <p id="section-1-10.1.1">NOTE As of this draft, the algorithms are not yet fully specified. We are
-still working out some of the minor details. In the meantime, pllease refer
-to the reference code on which the spec will be based:
+still working out some of the minor details. In the meantime, please refer to
+the reference code on which the spec will be based:
 https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/tree/main/poc<a href="#section-1-10.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
