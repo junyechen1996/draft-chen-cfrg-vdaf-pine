@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 31 August 2024                                       Cloudflare
-                                                        28 February 2024
+Expires: 1 September 2024                                     Cloudflare
+                                                        29 February 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -53,7 +53,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 31 August 2024.
+   This Internet-Draft will expire on 1 September 2024.
 
 Copyright Notice
 
@@ -635,10 +635,10 @@ Table of Contents
    part, it applies its share of encoded gradient and the range-checked
    norm to the XOF.  Then it applies its part and other Aggregators'
    parts to the XOF again to obtain the seed for wraparound joint for
-   other Aggregators , and also the wraparound joint randomness parts
-   for the other Aggregators.  The verification joint randomness is
-   derived similarly, except each Aggregator uses its entire input share
-   to derive the part.  Then each Aggregator runs the wraparound checks
+   other Aggregators, and also the wraparound joint randomness parts for
+   the other Aggregators.  The verification joint randomness is derived
+   similarly, except each Aggregator uses its entire input share to
+   derive the part.  Then each Aggregator runs the wraparound checks
    with the wraparound joint randomness, and queries the FLP with its
    input share, proof share, the wraparound check results, and the
    verification joint randomness.  All Aggregators then exchange the
