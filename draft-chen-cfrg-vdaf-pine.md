@@ -91,10 +91,9 @@ informative:
 --- abstract
 
 This document describes PINE, a Verifiable Distributed Aggregation Function
-(VDAF) for privately aggregating high-dimensional, real-valued vectors. Prior
-to aggregation, each input vector is determined to have a bounded L2-norm,
-where the bound is configured by the applicaiton. PINE is intended to
-facilitiate robust, federated machine learning.
+(VDAF) for secure aggregation of high-dimensional, real-valued vectors with
+bounded L2-norm. PINE is intended to facilitiate private and robust federated
+machine learning.
 
 --- middle
 
@@ -113,7 +112,7 @@ the users to repeat the process.
      |
      v
 +---------+               gradients                   +--------+
-| Clients |-+   ------------------------------------->| Server |
+| Clients |-+   ----------------------------------->  | Server |
 +---------+ |-+                                       +--------+
   +---------+ |                                            |
     +---------+                                            |
@@ -152,27 +151,28 @@ of the aggregate with the other servers to get the aggregate result.
 ~~~
 {: #distributed-fl title="Federated learning with a VDAF"}
 
-Along with keeping the gradients' privacy, it is also desirable to ensure
+Along with keeping the gradients private, it is desirable to ensure
 robustness of the overall computation by preventing clients from "poisoning"
 the aggregate and corrupting the trained machine learning model. A client's
-gradient is typically expressed a vector of real numbers. A common goal is to
-ensure each gradient has a bounded "L2-norm", sometimes called Euclidean norm:
-the square root of the sum of the squares of each entry of the input vector.
-Bounding the L2 norm is used in federated learning to limit the contribution of
-each client to the aggregate, without over constraining the distribution of
-inputs. [CP: Add a relevant reference.]
+gradient is typically expressed as a vector of real numbers. A common goal is
+to ensure each gradient has a bounded "L2-norm" (sometimes called Euclidean
+norm): the square root of the sum of the squares of each entry of the input
+vector. Bounding the L2 norm is used in federated learning to limit the
+contribution of each client to the aggregate, without over constraining the
+distribution of inputs. [CP: Add a relevant reference.]
 
 In theory, Prio3 ({{Section 7 of !VDAF}}) could be adapted to support this
 functionality, but the concrete cost in terms of runtime and communication
 would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
 Proof", see {{Section 7.3 of !VDAF}}) could be specified that computes the
-L2-norm of the gradient and checks that the result is in the desired range.
-This computation is not easy to do efficiently: the challenge lies in ensuring
-that the computation itself was carried out correctly, while properly accounting
-for the relevant mathematical details of the proof system (that is, the choice
-of finite field) and the range of possible inputs.
+L2-norm of the gradient and checks that the result is in the desired range
+(without revealing the gradient to the aggregation servers). Computation of the
+norm and performing the range check is ralatively simple, and can be done
+efficiently: the challenge lies in ensuring that the computation itself was
+carried out correctly, while properly accounting for the relevant mathematical
+details of the proof system and the range of possible inputs.
 
-This dcoument describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
+This document describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
 for secure aggregation of gradients with bounded L2-norm {{ROCT23}}. Its design
 is based largely on Prio3 in that the norm is computed and verified using
 an FLP. However, PINE uses a new technique for verifying the correctness of
@@ -184,8 +184,8 @@ norm of each gradient. Finally, in {{vdaf}} we specify the complete
 multi-party, 1-round VDAF.
 
 > NOTE As of this draft, the algorithms are not yet fully specified. We are
-> still working out some of the minor details. In the meantime, pllease refer
-> to the reference code on which the spec will be based:
+> still working out some of the minor details. In the meantime, please refer to
+> the reference code on which the spec will be based:
 > https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/tree/main/poc
 
 # Conventions and Definitions
