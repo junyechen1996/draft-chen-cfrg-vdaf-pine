@@ -496,15 +496,11 @@ Table of Contents
 
 4.2.1.  Range Check
 
-   A common subroutine used in the validity circuit is the "range
-   check", i.e., checking if a value is in the range of [B1, B2], over
-   the field size q (see Figure 1 in [ROCT23]).  Assume the Client has
-   computed the v bits and u bits as described in Section 4.1.1, and
-   that the Aggregators have verified the v bits and u bits are indeed
-   composed of bits (as described in Section 4.2.2), the Aggregators can
-   verify value is in the desired range, by checking the decoded value
-   from the v bits, and the decoded value from the u bits sum up to B2 -
-   B1 (modulo q).
+   In order to verify the range-checked results reported by the Client
+   as described in Section 4.1.1, the Aggregators will verify (1) v bits
+   and u bits are indeed composed of bits, as described in
+   Section 4.2.2, and (2) the verify the decoded value from the v bits,
+   and the decoded value from the u bits sum up to B2 - B1 (modulo q).
 
    If the Client skips sending the u bits as an optimization mentioned
    in Section 4.1.4, then the Aggregators only need to verify the

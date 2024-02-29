@@ -1723,14 +1723,11 @@ defined in <a href="#pine-auxiliary" class="auto internal xref">Section 7</a>.<a
           <h4 id="name-range-check">
 <a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-range-check" class="section-name selfRef">Range Check</a>
           </h4>
-<p id="section-4.2.1-1">A common subroutine used in the validity circuit is the "range check", i.e.,
-checking if a <code>value</code> is in the range of <code>[B1, B2]</code>, over the field size <code>q</code>
-(see Figure 1 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>). Assume the Client has computed the <code>v</code> bits and
-<code>u</code> bits as described in <a href="#encode-range-check" class="auto internal xref">Section 4.1.1</a>, and that the Aggregators have
-verified the <code>v</code> bits and <code>u</code> bits are indeed composed of bits (as described in
-<a href="#valid-bit-check" class="auto internal xref">Section 4.2.2</a>), the Aggregators can verify <code>value</code> is in the desired
-range, by checking the decoded value from the <code>v</code> bits, and the decoded value
-from the <code>u</code> bits sum up to <code>B2 - B1</code> (modulo <code>q</code>).<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.2.1-1">In order to verify the range-checked results reported by the Client as described
+in <a href="#encode-range-check" class="auto internal xref">Section 4.1.1</a>, the Aggregators will verify (1) <code>v</code> bits and <code>u</code> bits
+are indeed composed of bits, as described in <a href="#valid-bit-check" class="auto internal xref">Section 4.2.2</a>, and (2) the
+verify the decoded value from the <code>v</code> bits, and the decoded value from the <code>u</code>
+bits sum up to <code>B2 - B1</code> (modulo <code>q</code>).<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
 <p id="section-4.2.1-2">If the Client skips sending the <code>u</code> bits as an optimization mentioned in
 <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>, then the Aggregators only need to verify the decoded value
 from the <code>v</code> bits is equal to <code>B2 - B1</code> (modulo <code>q</code>).<a href="#section-4.2.1-2" class="pilcrow">¶</a></p>
