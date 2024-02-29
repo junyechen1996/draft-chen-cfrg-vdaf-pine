@@ -92,7 +92,7 @@ informative:
 
 This document describes PINE, a Verifiable Distributed Aggregation Function
 (VDAF) for secure aggregation of high-dimensional, real-valued vectors with
-bounded L2-norm. PINE is intended to facilitiate private and robust federated
+bounded L2-norm. PINE is intended to facilitate private and robust federated
 machine learning.
 
 --- middle
@@ -103,7 +103,7 @@ The goal of federated machine learning {{MR17}} is to enable training of
 machine learning models from data stored on users' devices. The bulk of the
 computation is carried out on-device: each user trains the model on its data
 locally, then sends a model update to a central server. These model updates are
-commonly referred to as "gradients" {{Lem12}}. The server then aggregates the
+commonly referred to as "gradients" {{Lem12}}. The server aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.
 
@@ -125,12 +125,11 @@ the users to repeat the process.
 Federated learning improves user privacy by ensuring the training data never
 leaves users' devices. However, it requires computing an aggregate of the
 gradients sent from devices, which may still reveal a significant amount of
-information about each user's input. [CP: 1-2 sentences describing the risk
-here would be useful.] One way to mitigate this risk is to distribute the
-aggregation step across multiple servers such that no server sees any gradient
-in the clear.
+information about the underlying data. One way to mitigate this risk is to
+distribute the aggregation step across multiple servers such that no server
+sees any gradient in the clear.
 
-In a Verifiable Distributed Aggregation Function
+With a Verifiable Distributed Aggregation Function
 {{!VDAF=I-D.draft-irtf-cfrg-vdaf-08}}, this is achieved by having each user
 shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
@@ -162,15 +161,15 @@ contribution of each client to the aggregate, without over constraining the
 distribution of inputs. [CP: Add a relevant reference.]
 
 In theory, Prio3 ({{Section 7 of !VDAF}}) could be adapted to support this
-functionality, but the concrete cost in terms of runtime and communication
-would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
-Proof", see {{Section 7.3 of !VDAF}}) could be specified that computes the
-L2-norm of the gradient and checks that the result is in the desired range
-(without revealing the gradient to the aggregation servers). Computation of the
-norm and performing the range check is ralatively simple, and can be done
-efficiently: the challenge lies in ensuring that the computation itself was
-carried out correctly, while properly accounting for the relevant mathematical
-details of the proof system and the range of possible inputs.
+functionality, but for high-dimensional data, the concrete cost in terms of
+runtime and communication would be prohibitively high. The basic idea is
+simple. An FLP ("Fully Linear Proof", see {{Section 7.3 of !VDAF}}) could be
+used to compute the L2 norm of the secret shared gradient and check that the
+result is in the desired range, all without learning the gradient or its norm.
+This computation, on its own, can be done efficiently: the challenge lies in
+ensuring that the computation itself was carried out correctly, while properly
+accounting for the relevant mathematical details of the proof system and the
+range of possible inputs.
 
 This document describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
 for secure aggregation of gradients with bounded L2-norm {{ROCT23}}. Its design
@@ -196,7 +195,8 @@ This document uses the same parameters and conventions specified for:
 
 * Clients, Aggregators, and Collectors from {{Section 5 of !VDAF}}.
 
-* Finite fields from {{Section 6.1 of !VDAF}}.
+* Finite fields from {{Section 6.1 of !VDAF}}. All fields in this document have
+  prime order.
 
 * XOFs ("eXtendable Output Functions") from {{Section 6.2 of !VDAF}}.
 
@@ -204,10 +204,10 @@ A floating point number, denoted `float`, is a IEEE-754 compatible float64 value
 {{IEEE754-2019}}.
 
 A "gradient" is a vector of floating point numbers. Each coordinate of this
-vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
+vector is called an "entry". The "L2 norm", or simply "norm", of a gradient is
 the square root of the sum of the squares of its entries.
 
-The "dot product" of two vectors is to compute the sum of elementwise
+The "dot product" of two vectors is to compute the sum of element-wise
 multiplications of the two vectors.
 
 The user-specified parameters to initialize PINE are defined in
@@ -215,51 +215,54 @@ The user-specified parameters to initialize PINE are defined in
 
 | Parameter       | Type    | Description    |
 |:----------------|:--------|:---------------|
-| `l2_norm_bound` | `float` | The L2-norm upper bound (inclusive). |
+| `l2_norm_bound` | `float` | The L2 norm upper bound (inclusive). |
 | `dimension`     | int     | Dimension of each gradient. |
 | `num_frac_bits` | int     | The number of bits of precision to use when encoding each gradient entry into the field. |
 {: #pine-user-param title="User parameters for PINE."}
 
 # PINE Overview {#overview}
 
-In this section, we will give an overview of the main technical contribution of
-{{ROCT23}} that allows the Aggregators holding secret shares of the Client
-measurement (e.g., a gradient in federated learning) to verify it has a bounded
-L2-norm, which is the square root of the sum of square of all vector entries.
+This section provides an overview of the main technical contribution of
+{{ROCT23}} that forms the basis of PINE. To motivate their idea, let us first
+say how Prio3 from {{Section 7 of !VDAF}} would be used to aggregate vectors
+with bounded L2 norm.
 
-One way to achieve this is to use an FLP ("Fully Linear Proof"; see {{Section
-7.3 of !VDAF}}). An FLP is an assertion about the validity of some input that
-can be checked jointly by the Aggregators who only hold secret shares of the
-input. Validity is expressed as a circuit evaluated on the input over a finite
-field, denoted by `Field` in {{Section 6.1 of !VDAF}}. Let `q` denote the field
-size. In our case, the circuit would compute the sum of the squares of the
-entries of the gradient vector, that is the squared L2-norm, and check that the
-result is in the desired range. Note that there is no need to compute the exact
-L2-norm (i.e., the square root of the sum); it suffices to compute the squared
-L2-norm and check that it is smaller than the square of the bound.
+Prio3 uses an FLP ("Fully Linear Proof"; see {{Section 7.3 of !VDAF}}) to
+verify properties of a secret shared measurement without revealing the
+measurement to the Aggregators. The property to be verified is expressed as an
+arithmetic circuit over a finite field ({{Section 7.3.2 of !VDAF}}). Let `q`
+denote the field modulus.
 
-Crucially, arithmetic in this computation is modulo the field size `q`. This
-means that, for a given gradient, the norm may have a different result when
-computed in our finite field versus the ring of integers. For example, suppose
-our bound is `10`: the gradient `[99, 0, 7]` has squared L2-norm of `9850` over
-the integers (out of range), but only `6` modulo `q = 23` (in range). This is
-because the sum of the squares "wraps around" the field modulus `q`.
+In our case, the circuit would take (a share of) the gradient as input, compute
+the squared L2-norm (the sum of the squares of the entries of the gradient),
+and check that the result is in the desired range. Note that we do not compute
+the exact norm: it is mathematically equivalent to compute the squared norm and
+check that it is smaller than the square of the bound.
 
-Thus the central challenge of adapting FLPs to this problem is preventing such
-"wraparounds".
+Crucially, arithmetic in this computation is modulo `q`. This means that, for a
+given gradient, the norm may have a different result when computed in our
+finite field than in the ring of integers. For example, suppose our bound is
+`10`: the gradient `[99, 0, 7]` has squared L2-norm of `9850` over the integers
+(out of range), but only `6` modulo `q = 23` (in range). This circuit would
+therefore deem the gradient valid, when in fact it is invalid.
 
-One way to do this is to encode each entry of the gradient such that the
-Aggregators are assured that each entry falls in a range that ensures the norm
-does not wrap around the field modulus. However, this approach has relatively
-high communication overhead between the Client and Aggregators, roughly
-`num_frac_bits * dimension` field elements (see {{pine-user-param}}).
+Thus the central challenge of adapting FLPs to this problem is to prevent the
+norm computation from "wrapping around" the field modulus.
 
-In order to detect whether a wraparound has occurred, PINE uses a probabilistic
-test, which works as follows: A random vector over the field is generated (via a
-procedure described in {{run-wr-check}}) where each entry is equal to `1`, `0`,
-or `q-1`, each with a particular probability: to test for wraparound, compute
-the dot product of this vector and the gradient, and check if the result is in a
-specific range. The range is determined by parameters in {{pine-user-param}}.
+One way to achieve this is to ensure that each gradient entry is in a range
+that ensures the norm is sufficiently small. However, this approach has high
+communication cost (roughly `num_frac_bits * dimension` field elements per
+entry), which becomes prohibitive for high-dimensional data.
+
+PINE uses a different strategy: rather than prevent wraparounds, we can try to
+detect whether a wraparound has occurred.
+
+{{ROCT23}} devises a probabilistic test for this purpose. A random vector over
+the field is generated (via a procedure described in {{run-wr-check}}) where
+each entry is sampled independently from a particular probability distribution.
+To test for wraparound, compute the dot product of this vector and the
+gradient, and check if the result is in a specific range determined by
+parameters in {{pine-user-param}}.
 
 If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, {{ROCT23}} show that this test correctly detects wraparounds
