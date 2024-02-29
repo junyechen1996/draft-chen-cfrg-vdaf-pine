@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-27T01:11:00.167698+00:00",
+  "timestamp": "2024-02-29T01:10:56.891065+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -710,6 +710,37 @@
       "updatedAt": "2024-02-20T22:57:08Z",
       "closedAt": null,
       "comments": []
+    },
+    {
+      "number": 65,
+      "id": "I_kwDOJWdxls6Aic6q",
+      "title": " Conflicting definitions of `encoded_gradient`",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/65",
+      "state": "CLOSED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "We currently return [`encoded_gradient`](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/fb64c4a6b2b1189ba5c0684a797c1f347413cce6/poc/flp_pine.py#L359) from `encode_gradient()` method that contains the field elements converted from floating point numbers, and also the bits for L2-norm check. But when we unpack the encoded measurement in `eval()`, we refer to [`encoded_gradient`](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/fb64c4a6b2b1189ba5c0684a797c1f347413cce6/poc/flp_pine.py#L176) as the field elements converted from floating point numbers only. It would be good to distinguish between the two.",
+      "createdAt": "2024-02-27T12:53:04Z",
+      "updatedAt": "2024-02-27T23:04:24Z",
+      "closedAt": "2024-02-27T23:04:23Z",
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Good catch! As suggested in the call today: consider renaming to `encode_gradient_and_range_checked_norm()`, or maybe just `encode_gradient_and_norm()`. Make sure to also replace each instance of the variable `encoded_gradient` that also has the norm in it with something distinctive.",
+          "createdAt": "2024-02-27T19:35:48Z",
+          "updatedAt": "2024-02-27T19:35:48Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Closed by #68 . ",
+          "createdAt": "2024-02-27T23:04:23Z",
+          "updatedAt": "2024-02-27T23:04:23Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -7459,25 +7490,35 @@
       "id": "PR_kwDOJWdxls5n2Ik_",
       "title": "Fill in FLP overview in draft",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/64",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "The remaining two sections to fill:\r\n- Wraparound checks and FLP circuit\r\n- VDAF overview",
       "createdAt": "2024-02-25T17:15:00Z",
-      "updatedAt": "2024-02-26T15:24:55Z",
+      "updatedAt": "2024-02-27T21:55:17Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
-      "baseRefOid": "4d511485de135d898beb7abcf2ec7a7f94660c70",
+      "baseRefOid": "fb64c4a6b2b1189ba5c0684a797c1f347413cce6",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/fill-flp-overview",
-      "headRefOid": "5b961d7fad1c444e72652841d0a6e8d1a897d120",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
-      "comments": [],
+      "headRefOid": "16d379520cd1bced9eb326b45b76aadba56aac6b",
+      "closedAt": "2024-02-27T21:55:15Z",
+      "mergedAt": "2024-02-27T21:55:14Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "6014969b4a715f3fdad1c0a55a27b975eb065831"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-02-27T21:54:52Z",
+          "updatedAt": "2024-02-27T21:54:52Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOJWdxls5xO2VK",
@@ -7578,6 +7619,934 @@
               "updatedAt": "2024-02-26T15:24:55Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xcrGQ",
+          "commit": {
+            "abbreviatedOid": "0a5aa71"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-27T12:17:14Z",
+          "updatedAt": "2024-02-27T12:17:49Z",
+          "comments": [
+            {
+              "originalPosition": 112,
+              "body": "I added a section `Encoding Gradient {#encode-gradient}` and mentions this function there. I also put floating point encoding and L2-norm check as subsections of it.",
+              "createdAt": "2024-02-27T12:17:14Z",
+              "updatedAt": "2024-02-27T12:17:49Z"
+            },
+            {
+              "originalPosition": 123,
+              "body": "isn't the XOF composed of the seed and domain separation tag? Mentioning XOF here also connects to our reference implementation?",
+              "createdAt": "2024-02-27T12:17:37Z",
+              "updatedAt": "2024-02-27T12:17:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xhn-a",
+          "commit": {
+            "abbreviatedOid": "5b961d7"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-27T19:30:34Z",
+          "updatedAt": "2024-02-27T19:30:34Z",
+          "comments": [
+            {
+              "originalPosition": 112,
+              "body": "Works for me",
+              "createdAt": "2024-02-27T19:30:34Z",
+              "updatedAt": "2024-02-27T19:30:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xhol8",
+          "commit": {
+            "abbreviatedOid": "42f80df"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-27T19:32:06Z",
+          "updatedAt": "2024-02-27T19:32:25Z",
+          "comments": [
+            {
+              "originalPosition": 128,
+              "body": "```suggestion\r\n  the vectors derived from a short, random seed using an XOF.\r\n````",
+              "createdAt": "2024-02-27T19:32:06Z",
+              "updatedAt": "2024-02-27T19:32:25Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 66,
+      "id": "PR_kwDOJWdxls5oDX01",
+      "title": "Fill the section about running wraparound checks",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/66",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Reviewer's note: stacked PR on #64 .",
+      "createdAt": "2024-02-27T14:24:07Z",
+      "updatedAt": "2024-02-27T23:13:24Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "56200091243c369989be66a88e09b10fa7cd4408",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/fill-run-wraparound-check",
+      "headRefOid": "cfe9fadeef65d641c60464781cbe1a5dea3f6db1",
+      "closedAt": "2024-02-27T23:13:22Z",
+      "mergedAt": "2024-02-27T23:13:22Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "c10fdcec3d228ac364515f2d29b327e92c5e7a8a"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Rebased and squashed.",
+          "createdAt": "2024-02-27T23:13:06Z",
+          "updatedAt": "2024-02-27T23:13:06Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xhrOT",
+          "commit": {
+            "abbreviatedOid": "9102a09"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-27T19:37:47Z",
+          "updatedAt": "2024-02-27T19:47:39Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "Harmonize with #65 once you have a PR up for that.",
+              "createdAt": "2024-02-27T19:37:48Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "```suggestion\r\nrandom vectors, the Client needs to run wraparound check `num_wr_checks`\r\n```",
+              "createdAt": "2024-02-27T19:38:29Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 24,
+              "body": "```suggestion\r\nFor each test, the Client generates a random vector with the same dimension as the\r\n```",
+              "createdAt": "2024-02-27T19:39:05Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 25,
+              "body": "nit (grammar): It sounds like you're using the variable `dimension` to denote the gradient.",
+              "createdAt": "2024-02-27T19:39:48Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 28,
+              "body": "```suggestion\r\nfrom the XOF output stream two bits at a time:\r\n```",
+              "createdAt": "2024-02-27T19:39:59Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "Move the definition of the dot product to the conventions section above.\r\n```suggestion\r\nThen the Client computes the dot product. If\r\nthe dot product is in the range of\r\n```",
+              "createdAt": "2024-02-27T19:44:32Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 36,
+              "body": "We can be a bit informal here:  it's clear from context that arithmetic is mod `q`.\r\n```suggestion\r\n`[-wr_check_bound, wr_check_bound+1]`, then the Client passes that\r\n```",
+              "createdAt": "2024-02-27T19:45:15Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            },
+            {
+              "originalPosition": 37,
+              "body": "nit (grammar): As a general rule, technical writing doesn't have contractions in it. Some authors make exceptions of course. In an Internet-Draft, I'd probably not use contractions.\r\n```suggestion\r\nwraparound check, and fails otherwise. Note the Client does not send this dot\r\n```",
+              "createdAt": "2024-02-27T19:46:23Z",
+              "updatedAt": "2024-02-27T19:47:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xi9w9",
+          "commit": {
+            "abbreviatedOid": "9102a09"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-27T23:12:43Z",
+          "updatedAt": "2024-02-27T23:12:43Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "Done.",
+              "createdAt": "2024-02-27T23:12:43Z",
+              "updatedAt": "2024-02-27T23:12:43Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 67,
+      "id": "PR_kwDOJWdxls5oDYKt",
+      "title": "Fill in validity circuit",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/67",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Reviewer's note: stacked PR on #66 .",
+      "createdAt": "2024-02-27T14:24:53Z",
+      "updatedAt": "2024-02-28T17:15:36Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "c10fdcec3d228ac364515f2d29b327e92c5e7a8a",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/fill-validity-circuit",
+      "headRefOid": "1142db8d007fd347a79599945d9479421e03a1e0",
+      "closedAt": "2024-02-28T17:15:33Z",
+      "mergedAt": "2024-02-28T17:15:33Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "797e5c7b1a76fe448d3b60300dc697eb98938ed0"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Things that are still open:\r\n\r\n- Wording about evaluating polynomial at random point: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/67#discussion_r1504898519\r\n- Mention range check at the beginning of FLP circuit: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/67#discussion_r1504905892\r\n- The term \"quadratic check\": https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/67#discussion_r1504888793\r\n- Mention success bit: https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/67#discussion_r1504883073",
+          "createdAt": "2024-02-28T00:36:59Z",
+          "updatedAt": "2024-02-28T00:36:59Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Made a final pass and squashed.",
+          "createdAt": "2024-02-28T11:46:29Z",
+          "updatedAt": "2024-02-28T11:46:29Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xhwu-",
+          "commit": {
+            "abbreviatedOid": "607f99e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-27T19:49:01Z",
+          "updatedAt": "2024-02-27T20:13:35Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "```suggestion\r\n| bit_checked_len       | int     | Number of field elements in the encoded measurement that are expected to be bits. |\r\n```",
+              "createdAt": "2024-02-27T19:49:01Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 16,
+              "body": "```suggestion\r\nEvaluation of the validity circuit begins by unpacking the encoded measurement into the following components:\r\n```",
+              "createdAt": "2024-02-27T19:49:44Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 21,
+              "body": "```suggestion\r\n  the bits for the range check of the L2 norm, the bits from the range check in wraparound\r\n```",
+              "createdAt": "2024-02-27T19:50:58Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 22,
+              "body": "```suggestion\r\n  the bits from L2-norm check, the bits from the range check for each wraparound\r\n  check, and the success bits in wraparound checks.\r\n```",
+              "createdAt": "2024-02-27T19:51:31Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 22,
+              "body": "Have we explained the concept of a \"success bit\"? If not, make sure we do before this point.",
+              "createdAt": "2024-02-27T19:52:14Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 26,
+              "body": "Make sure the reader knows what \"joint randomness\" means before this point.",
+              "createdAt": "2024-02-27T19:53:11Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "nit: The hyphen is only used to disambiguate \"L2 norm\" in certain grammatical contexts. For example, if we write \"cool L2 norm\", we're not sure whether \"L2\" or \"norm\" is cool. If instead we write \"cool L2-norm\", then it's clear we mean \"L2 norm\" is cool.\r\n```suggestion\r\n  L2 norm range check, the reduced quadratic checks in wraparound check, and\r\n```",
+              "createdAt": "2024-02-27T19:54:38Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "I don't think the reader knows what a \"quadratic\" check is.",
+              "createdAt": "2024-02-27T19:55:32Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "Before we get to the technical details, we need to first say what the purpose is of checking that `bit_checked` is made up of bits.",
+              "createdAt": "2024-02-27T20:00:06Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "```suggestion\r\nevaluated at each element of `bit_checked`, with the coefficients computed\r\n```",
+              "createdAt": "2024-02-27T20:00:30Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "I don't think you mean \"coefficients\" here. We're evaluating a polynomial $p(r) = c_0 + c_1 r + c_1 + r^2 + \\cdots$ at a random point $r$: what are the ceofficients?",
+              "createdAt": "2024-02-27T20:02:17Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 46,
+              "body": "I'd say let's save this note until we've handled the TODO below.\r\n\r\nIn fact, it may be worth adding an in line comment somewhere in `eval()` explaining the purpose of `shares_inv`.",
+              "createdAt": "2024-02-27T20:03:08Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 52,
+              "body": "```suggestion\r\nThe validity circuit verifies two properties of the L2 norm reported by the Client:\r\n```",
+              "createdAt": "2024-02-27T20:04:36Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 39,
+              "body": "The jump  to the next subusbusections is rather abrupt. We need some fence posting here to let the reader know how the remainder is organized.",
+              "createdAt": "2024-02-27T20:05:38Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            },
+            {
+              "originalPosition": 55,
+              "body": "I don't think variable `sq_norm_v_bits` has not been defined? Ask yourself if you actually need to define it in order to convey what's going on.\r\n\r\nI think we should try to explain what's going on without referring to variables in the circuit. What would help is an explanation of how range checking works in PINE. That way all you need to do here is say that the circuit decodes the bit-encoding of the reported norm and performs the range check.\r\n\r\nLikewise for \"wraparound check\" section below. the explanation of how range checking works should go somewhere towards the top of the \"FLP Circuit\" section.",
+              "createdAt": "2024-02-27T20:07:03Z",
+              "updatedAt": "2024-02-27T20:13:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjDkW",
+          "commit": {
+            "abbreviatedOid": "9484ca7"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-27T23:33:27Z",
+          "updatedAt": "2024-02-28T00:34:04Z",
+          "comments": [
+            {
+              "originalPosition": 26,
+              "body": "Added a note about \"joint randomness\" is shared between the Client and Aggregators.",
+              "createdAt": "2024-02-27T23:33:27Z",
+              "updatedAt": "2024-02-28T00:34:04Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "Done.",
+              "createdAt": "2024-02-27T23:41:38Z",
+              "updatedAt": "2024-02-28T00:34:04Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "Coefficients is a bad word, I was thinking about random linear combination, and the joint randomness is the coefficient multiplied with the each polynomial. I corrected the wording there.",
+              "createdAt": "2024-02-27T23:52:05Z",
+              "updatedAt": "2024-02-28T00:34:04Z"
+            },
+            {
+              "originalPosition": 46,
+              "body": "Yes... I had this comment about `shares_inv` initially because I already pasted the reference implementation code in, and was basically explaining the code there. I removed this comment for now.",
+              "createdAt": "2024-02-27T23:52:56Z",
+              "updatedAt": "2024-02-28T00:34:04Z"
+            },
+            {
+              "originalPosition": 55,
+              "body": "I added a section at the beginning of FLP circuit about range check.",
+              "createdAt": "2024-02-28T00:19:26Z",
+              "updatedAt": "2024-02-28T00:34:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjR6F",
+          "commit": {
+            "abbreviatedOid": "607f99e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T00:34:50Z",
+          "updatedAt": "2024-02-28T00:34:51Z",
+          "comments": [
+            {
+              "originalPosition": 22,
+              "body": "I quickly mentioned it, but also referred to {{encode-wr-checks}}, which has yet to be filled.",
+              "createdAt": "2024-02-28T00:34:50Z",
+              "updatedAt": "2024-02-28T00:34:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjSAU",
+          "commit": {
+            "abbreviatedOid": "607f99e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T00:35:21Z",
+          "updatedAt": "2024-02-28T00:35:21Z",
+          "comments": [
+            {
+              "originalPosition": 35,
+              "body": "I couldn't really come up with a better name than \"quadratic check\"... So I used the term in the paper.",
+              "createdAt": "2024-02-28T00:35:21Z",
+              "updatedAt": "2024-02-28T00:35:21Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjkXQ",
+          "commit": {
+            "abbreviatedOid": "c0998e1"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Great, just some minor suggestions.",
+          "createdAt": "2024-02-28T02:04:23Z",
+          "updatedAt": "2024-02-28T02:11:49Z",
+          "comments": [
+            {
+              "originalPosition": 52,
+              "body": "```suggestion\r\nverified the `v` bits and `u` bits are indeed composed of bits (as described in {{valid-bit-check}}), the Aggregators\r\n```",
+              "createdAt": "2024-02-28T02:04:23Z",
+              "updatedAt": "2024-02-28T02:11:49Z"
+            },
+            {
+              "originalPosition": 59,
+              "body": "```suggestion\r\n`2`. This is because the available `v` bits can naturally bound `value - B1` to be\r\n```",
+              "createdAt": "2024-02-28T02:04:47Z",
+              "updatedAt": "2024-02-28T02:11:49Z"
+            },
+            {
+              "originalPosition": 45,
+              "body": "Perfect!",
+              "createdAt": "2024-02-28T02:04:53Z",
+              "updatedAt": "2024-02-28T02:11:49Z"
+            },
+            {
+              "originalPosition": 55,
+              "body": "The explanation is great. I think we can now simplify this text accordingly, by not mentioning variables. Also, I suggest describing what the circuit actuall does here:\r\n\r\n> Equality check: The squared norm of the gradient is equal to the value reported by the Client. For this, the Aggregators decode their shares of the bit-representation of the squared norm (as defined above in {{valid-bit-check}}), compute their shares of the squared norm from their shares of the gradient, and check that the values are equal.\r\n> Range check: The squared norm reported by the Client is in the desired range. For this, the Aggregators run the range check described in {{range-check}}.\r\n\r\nLikewise for the other \"sub-checks\".",
+              "createdAt": "2024-02-28T02:11:12Z",
+              "updatedAt": "2024-02-28T02:11:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjl5U",
+          "commit": {
+            "abbreviatedOid": "607f99e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T02:12:40Z",
+          "updatedAt": "2024-02-28T02:12:40Z",
+          "comments": [
+            {
+              "originalPosition": 35,
+              "body": "That's fine for now, I think connecting it to the paper is the main thing we need.",
+              "createdAt": "2024-02-28T02:12:40Z",
+              "updatedAt": "2024-02-28T02:12:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xjmAG",
+          "commit": {
+            "abbreviatedOid": "607f99e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T02:13:14Z",
+          "updatedAt": "2024-02-28T02:13:14Z",
+          "comments": [
+            {
+              "originalPosition": 22,
+              "body": "Once you're satisfied it's defined, feel free to resolve this.",
+              "createdAt": "2024-02-28T02:13:14Z",
+              "updatedAt": "2024-02-28T02:13:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xpJyc",
+          "commit": {
+            "abbreviatedOid": "1142db8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-28T15:45:27Z",
+          "updatedAt": "2024-02-28T15:45:27Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 68,
+      "id": "PR_kwDOJWdxls5oGzK5",
+      "title": "Resolve issue #65",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/68",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Resolve issue #65: conflicting definitions of `encoded_gradient`.",
+      "createdAt": "2024-02-27T22:27:06Z",
+      "updatedAt": "2024-02-27T23:03:16Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "6014969b4a715f3fdad1c0a55a27b975eb065831",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/issue-65",
+      "headRefOid": "6f3d0d8fb1bf353aabc51287ff969886ad29dc29",
+      "closedAt": "2024-02-27T23:03:14Z",
+      "mergedAt": "2024-02-27T23:03:14Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "56200091243c369989be66a88e09b10fa7cd4408"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-02-27T23:03:09Z",
+          "updatedAt": "2024-02-27T23:03:09Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xixMi",
+          "commit": {
+            "abbreviatedOid": "2aabfde"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-27T22:29:12Z",
+          "updatedAt": "2024-02-27T22:30:20Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "Generally \"simple\" words, like \"and\", \"or\", \"the\", \"a\", etc., are not capitalized in titles.\r\n```suggestion\r\n### Encoding Gradient and L2-Norm Check {#encode-gradient-and-norm}\r\n```",
+              "createdAt": "2024-02-27T22:29:12Z",
+              "updatedAt": "2024-02-27T22:30:20Z"
+            },
+            {
+              "originalPosition": 34,
+              "body": "While we're here, should this be `wr_check_results`?\r\n```suggestion\r\n        wr_check_results = Pine.Flp.Valid.run_wr_checks(\r\n```",
+              "createdAt": "2024-02-27T22:30:16Z",
+              "updatedAt": "2024-02-27T22:30:20Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 69,
+      "id": "PR_kwDOJWdxls5oLJ6a",
+      "title": "Fill in multiproof feature and  VDAF overview",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/69",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Reviewer's note: stacked PR on #67 .",
+      "createdAt": "2024-02-28T13:44:37Z",
+      "updatedAt": "2024-02-29T00:56:59Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "797e5c7b1a76fe448d3b60300dc697eb98938ed0",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/fill-vdaf-overview",
+      "headRefOid": "9a9d4eaf43d9ecaf7020fa4535b3226a0e6042e0",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "It might still be a bit verbose, a lot of it is trying to illustrate how to generate joint randomness. Given how we introduce wraparound and verification joint randomness at the beginning (deriving the parts, and applying them to XOF to obtain the seed), maybe in the intro of sharding and preparation, we just say for example: \"The Client uses the secret shares of the encoded gradient and range-checked norm to generate the wraparound joint randomness\", and omit the details?",
+          "createdAt": "2024-02-28T21:11:18Z",
+          "updatedAt": "2024-02-28T21:13:10Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xpJF2",
+          "commit": {
+            "abbreviatedOid": "376829e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-28T15:44:15Z",
+          "updatedAt": "2024-02-28T15:44:15Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xpJoq",
+          "commit": {
+            "abbreviatedOid": "376829e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "Whoops, I didn't mean to approve yet :(",
+          "createdAt": "2024-02-28T15:45:13Z",
+          "updatedAt": "2024-02-28T15:45:13Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xpL_4",
+          "commit": {
+            "abbreviatedOid": "376829e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "I think the overview of the VDAF is too low-level. Remember: your goal is to teach the reader how the algorithm works, not to specify it.\r\n\r\nWherever possible, I would draw parallels to Prio3. Something like:\r\n> The verification joint randomness is derived similar to the joint randomness in Prio3: each Aggregator applies the XOF to its share of the encoded measurement to derive its \"part\"; and the parts are hashed together, using the XOF once more, to get the seed for deriving the joint randomness itself.\r\n>\r\n> The wraparound joint ranodness is generated in much the same way, except that the only the gradient and the range-checked norm are used to derive the parts. (The rest of the encoded measurement depends on this the wrapparound joint randomness.)",
+          "createdAt": "2024-02-28T15:49:18Z",
+          "updatedAt": "2024-02-28T18:18:16Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "```suggestion\r\nLike Prio3 {{Section 7.1.2 of !VDAF}}, PINE supports generation and verification of multiple FLPs. The goal is to reduce soundness error (Corollary\r\n```",
+              "createdAt": "2024-02-28T15:49:18Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 5,
+              "body": "I think this should be a subsection of the \"The PINE VDAF\" section. Technically the fact that we run the FLP multiple times in PINE is orthogonal to the details of the FLP.\r\n\r\nIn fact, I don't think we need a section for this. We could just move this paragraph down to the VDAF section.",
+              "createdAt": "2024-02-28T15:51:59Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 29,
+              "body": "Grammar\r\n```suggestion\r\nThis section describes PINE VDAF for {{ROCT23}}, a one-round VDAF with no aggregation parameter. It takes a set of Client gradients expressed as vectors of\r\n```",
+              "createdAt": "2024-02-28T15:53:17Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 30,
+              "body": "```suggestion\r\nfloating point values, and computes an elemen-twise summation of valid gradients\r\n```",
+              "createdAt": "2024-02-28T15:53:40Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 31,
+              "body": "grammar: What is configured by the user parameters, the norm or the gradients?\r\n```suggestion\r\nwith bounded L2-norm, configured by the user parameters in {{pine-user-param}}. The\r\n```",
+              "createdAt": "2024-02-28T15:54:10Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "```suggestion\r\nderived. There are two kinds of joint randomness used:\r\n\r\n* \"Wraparound joint randomness\": This is used to generate the random vectors in\r\n```",
+              "createdAt": "2024-02-28T15:54:26Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 36,
+              "body": "```suggestion\r\n  the wraparound checks that both the Clients and Aggregators need to derive on\r\n```",
+              "createdAt": "2024-02-28T15:55:14Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 40,
+              "body": "A little simpler\r\n```suggestion\r\n* \"Verification joint randomness\": These are the field elements used by the\r\n  Client and Aggregators to evaluate the FLP circuit.\r\n```",
+              "createdAt": "2024-02-28T15:56:05Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 42,
+              "body": "What we mean by \"this computation\" is not clear in context.",
+              "createdAt": "2024-02-28T15:56:51Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 44,
+              "body": "Match the terminology of the VDAF draft\r\n```suggestion\r\nIn order for the Client to shard its gradient into input shares for the\r\n```",
+              "createdAt": "2024-02-28T16:00:42Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 46,
+              "body": "```suggestion\r\nAggregators:\r\n\r\n1. Each Client first encodes its gradient and the range-checked L2-norm results\r\n```",
+              "createdAt": "2024-02-28T16:00:53Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 48,
+              "body": "```suggestion\r\n1. Then it derives the wraparound joint randomness to run the wraparound checks. It\r\n```",
+              "createdAt": "2024-02-28T16:01:14Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 199,
+              "body": "what is the \"hash function\"?",
+              "createdAt": "2024-02-28T18:13:46Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            },
+            {
+              "originalPosition": 210,
+              "body": "```suggestion\r\n   run wraparound checks. Each Aggregator derives an XOF seed --- it's wraparound randomness \"part\" --- from its secret\r\n```",
+              "createdAt": "2024-02-28T18:14:40Z",
+              "updatedAt": "2024-02-28T18:18:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xsIBI",
+          "commit": {
+            "abbreviatedOid": "e12c5e0"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "@cjpatton I reworked the overview a bit. Please take a look again.",
+          "createdAt": "2024-02-28T20:44:10Z",
+          "updatedAt": "2024-02-28T21:07:53Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "The norm.",
+              "createdAt": "2024-02-28T20:44:10Z",
+              "updatedAt": "2024-02-28T21:07:53Z"
+            },
+            {
+              "originalPosition": 42,
+              "body": "I removed this line. It doesn't say much.",
+              "createdAt": "2024-02-28T20:44:36Z",
+              "updatedAt": "2024-02-28T21:07:53Z"
+            },
+            {
+              "originalPosition": 199,
+              "body": "Reworked this paragraph here.",
+              "createdAt": "2024-02-28T20:44:59Z",
+              "updatedAt": "2024-02-28T21:07:53Z"
+            },
+            {
+              "originalPosition": 210,
+              "body": "Reworded this part.",
+              "createdAt": "2024-02-28T21:04:42Z",
+              "updatedAt": "2024-02-28T21:07:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xsRNN",
+          "commit": {
+            "abbreviatedOid": "376829e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T21:08:20Z",
+          "updatedAt": "2024-02-28T21:08:20Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Moved it to the VDAF section.",
+              "createdAt": "2024-02-28T21:08:20Z",
+              "updatedAt": "2024-02-28T21:08:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xtDe-",
+          "commit": {
+            "abbreviatedOid": "426eb0c"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-28T23:21:45Z",
+          "updatedAt": "2024-02-28T23:30:41Z",
+          "comments": [
+            {
+              "originalPosition": 32,
+              "body": "```suggestion\r\n  their own. It is generated in much the same way as the verification joint\r\n```",
+              "createdAt": "2024-02-28T23:21:46Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 39,
+              "body": "```suggestion\r\nNext, it derives the wraparound joint randomness for the wraparound\r\n```",
+              "createdAt": "2024-02-28T23:22:27Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "You've already said this above.\r\n```suggestion\r\nchecks as described above. The encoded\r\n```",
+              "createdAt": "2024-02-28T23:24:05Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 45,
+              "body": "```suggestion\r\ninput to the FLP circuit, that will be secret-shared to (1) be sent as input shares\r\n```",
+              "createdAt": "2024-02-28T23:25:10Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 45,
+              "body": "```suggestion\r\ninput to the FLP circuit, that will be secret-shared to (1) be sent as input shares\r\n```",
+              "createdAt": "2024-02-28T23:25:37Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 48,
+              "body": "```suggestion\r\nfor the Aggregators, and (2) derive the verification joint randomness as described above. The proof\r\n```",
+              "createdAt": "2024-02-28T23:26:18Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 54,
+              "body": "```suggestion\r\nshares (the secret shares of the encoded Client gradient), and also reject\r\n```",
+              "createdAt": "2024-02-28T23:27:32Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 56,
+              "body": "Like the last paragraph, avoid saying things twice. Make sure to highlight the differences between what the Client computes versus what each Aggregator computes.",
+              "createdAt": "2024-02-28T23:28:22Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 60,
+              "body": "```suggestion\r\nfor other Aggregators, and also the wraparound joint randomness parts for the\r\n```",
+              "createdAt": "2024-02-28T23:28:42Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 69,
+              "body": "```suggestion\r\nNext, each Aggregator sums up their shares of the encoded gradients and sends the aggregate share to the Collector. Finally, the Collector sums up the\r\n```",
+              "createdAt": "2024-02-28T23:29:46Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            },
+            {
+              "originalPosition": 74,
+              "body": "```suggestion\r\nof multiple FLPs. The goal is to improve robustness of PINE (Corollary 3.13 in\r\n```",
+              "createdAt": "2024-02-28T23:30:27Z",
+              "updatedAt": "2024-02-28T23:30:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xtdeC",
+          "commit": {
+            "abbreviatedOid": "426eb0c"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-29T00:56:58Z",
+          "updatedAt": "2024-02-29T00:56:59Z",
+          "comments": [
+            {
+              "originalPosition": 56,
+              "body": "Done.",
+              "createdAt": "2024-02-29T00:56:59Z",
+              "updatedAt": "2024-02-29T00:56:59Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 70,
+      "id": "PR_kwDOJWdxls5oO5kt",
+      "title": "Move old text it its own file",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/70",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Keep it for copy-paste value.",
+      "createdAt": "2024-02-29T00:15:41Z",
+      "updatedAt": "2024-02-29T00:58:51Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "797e5c7b1a76fe448d3b60300dc697eb98938ed0",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/clean-up-1",
+      "headRefOid": "cdd4dcb051ef0dec377458f00745bd6c0151ce01",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xtd9B",
+          "commit": {
+            "abbreviatedOid": "cdd4dcb"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-29T00:58:51Z",
+          "updatedAt": "2024-02-29T00:58:51Z",
+          "comments": []
         }
       ]
     }
