@@ -1952,29 +1952,29 @@ to derive the parts.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
 <p id="section-5-3">In order for the Client to shard its gradient into input shares for the
 Aggregators, the Client first encodes its gradient into field elements, and
 encodes the range-checked L2-norm, according to <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.1</a>.
-Next, it derives the wraparound joint randomness for the wraparound
-checks as described above. The encoded
-gradient, range-checked norm, and results for wraparound checks form the fully
-input to the FLP circuit, that will be secret-shared to (1) be sent as input shares
-for the Aggregators, and (2) derive the verification joint randomness as described above. The proof
-is also secret-shared, and sent to the Aggregators, along with the input shares,
-and the joint randomness parts for both wraparound and verification joint
-randomness.<a href="#section-5-3" class="pilcrow">¶</a></p>
+Next, it derives the wraparound joint randomness for the wraparound checks as
+described above. The encoded gradient, range-checked norm, and results for
+wraparound checks will be secret-shared to (1) be sent as input shares for the
+Aggregators, and (2) derive the verification joint randomness as described
+above. The Client then generates the proof with the FLP and secret shares it.
+The secret-shared proof, along with the input shares, and the joint randomness
+parts for both wraparound and verification joint randomness, are sent to the
+Aggregators.<a href="#section-5-3" class="pilcrow">¶</a></p>
 <p id="section-5-4">Then the Aggregators carry out a multi-party computation to obtain the output
 shares (the secret shares of the encoded Client gradient), and also reject
 Client gradients that have invalid L2-norm. Each Aggregator first needs to
-derive wraparound and verification joint randomness. To compute the XOF seed
-for wraparound joint randomness part, it applies its share of encoded gradient
-and the range-checked norm to the XOF. Then it applies its part and other
-Aggregators' parts to the XOF again to obtain the seed for wraparound joint
-for other Aggregators, and also the wraparound joint randomness parts for the
-other Aggregators. The verification joint randomness is derived similarly,
-except each Aggregator uses its entire input share to derive the part. Then
-each Aggregator runs the wraparound checks with the wraparound joint randomness,
-and queries the FLP with its input share, proof share, the wraparound check
-results, and the verification joint randomness. All Aggregators then exchange
-the results from the FLP and decide whether to accept that Client gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
-<p id="section-5-5">Next, each Aggregator sums up their shares of the encoded gradients and sends the aggregate share to the Collector. Finally, the Collector sums up the
+derive wraparound and verification joint randomness. Similar to Prio3
+preparation <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.2.2" class="relref">Section 7.2.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, the Aggregator doesn't derive every
+joint randomness part like the Client does. It only derives the joint
+randomness part from its secret share via the XOF, and applies its part and
+and other Aggregators' parts sent by the Client to the XOF to obtain the joint
+randomness seed. Then each Aggregator runs the wraparound checks with the
+wraparound joint randomness, and queries the FLP with its input share, proof
+share, the wraparound check results, and the verification joint randomness. All
+Aggregators then exchange the results from the FLP and decide whether to accept
+that Client gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5">Next, each Aggregator sums up their shares of the encoded gradients and sends
+the aggregate share to the Collector. Finally, the Collector sums up the
 aggregate shares to obtain the aggregate result, and decodes it into an array
 of floating point values.<a href="#section-5-5" class="pilcrow">¶</a></p>
 <p id="section-5-6">Like Prio3 <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.1.2" class="relref">Section 7.1.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, PINE supports generation and verification
