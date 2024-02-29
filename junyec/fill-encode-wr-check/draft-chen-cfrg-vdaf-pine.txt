@@ -411,7 +411,7 @@ Table of Contents
 
    Given the encoded gradient from Section 4.1.2 and the XOF to generate
    the random vectors, the Client needs to run wraparound check
-   num_wr_checks times.  Each wraparound check works as the following:
+   num_wr_checks times.  Each wraparound check works as follows.
 
    The Client generates a random vector with the same dimension as the
    gradient's dimension.  Each entry of the random vector is a field
