@@ -17,9 +17,9 @@ Abstract
    This document describes PINE, a Verifiable Distributed Aggregation
    Function (VDAF) for privately aggregating high-dimensional, real-
    valued vectors.  Prior to aggregation, each input vector is
-   determined to have a bounded L2-norm, where the bound is determined
-   by the applicaiton.  Such a primitive can be used to facilitiate
-   robust, federated machine learning.
+   determined to have a bounded L2-norm, where the bound is configured
+   by the applicaiton.  PINE is intended to facilitiate robust,
+   federated machine learning.
 
 About This Document
 
@@ -108,7 +108,19 @@ Table of Contents
    the central model, and sends the updated model to the users to repeat
    the process.
 
-      CP: A diagram showing how this works would be helpful here.
+      data
+        |
+        v
+   +---------+               gradients                   +--------+
+   | Clients |-+   ------------------------------------->| Server |
+   +---------+ |-+                                       +--------+
+     +---------+ |                                            |
+       +---------+                                            |
+        ^                                                     |
+        |                  updated model                      |
+        +-----------------------------------------------------+
+
+                        Figure 1: Federated learning
 
    Federated learning improves user privacy by ensuring the training
    data never leaves users' devices.  However, it requires computing an
@@ -123,6 +135,20 @@ Table of Contents
    secret shares, one for each aggregation server.  Each server
    aggregates their shares locally, then combines their share of the
    aggregate with the other servers to get the aggregate result.
+
+      data
+        |
+        v        gradient                    aggregate
+   +---------+   shares    +-------------+   shares     +-----------+
+   | Clients |-+   ---->   | Aggregators |-+   ----->   | Collector |
+   +---------+ |-+         +-------------+ |            +-----------+
+     +---------+ |           +-------------+                  |
+       +---------+                                            |
+        ^                                                     |
+        |                  updated model                      |
+        +-----------------------------------------------------+
+
+                  Figure 2: Federated learning with a VDAF
 
    Along with keeping the gradients' privacy, it is also desirable to
    ensure robustness of the overall computation by preventing clients
