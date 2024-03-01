@@ -68,7 +68,7 @@ informative:
 
   ROCT23:
     title: "PINE: Efficient Norm-Bound Verification for Secret-Shared Vectors"
-    auhtor:
+    author:
       - ins: G.N. Rothblum
       - ins: E. Omri
       - ins: J. Chen
@@ -326,6 +326,21 @@ The measurement encoding is done in two stages:
   Aggregators derive on their own, allow the Aggregators to run wraparound
   checks on their own.
 
+### Encoding Range-Checked Results {#encode-range-check}
+
+Encoding range-checked results is a common subroutine during measurement
+encoding. The goal is to allow the Client to prove a `value` is in the desired
+range of `[B1, B2]`, over the field size `q` (see Figure 1 in {{ROCT23}}). The
+Client computes the "`v` bits", the bit representation of `value - B1`
+(modulo `q`), and the "`u` bits", the bit representation of `B2 - value`
+(modulo `q`). The number of bits for the `v` and `u` bits is
+`ceil(log2(B2 - B1 + 1))`.
+
+As an optimization for communication cost per Remark 3.2 in {{ROCT23}}, the
+Client can skip sending the `u` bits if `B2 - B1 + 1` (modulo `q`) is a power of
+`2`. This is because the available `v` bits can naturally bound `value - B1` to
+be `B2 - B1`.
+
 ### Encoding Gradient and L2-Norm Check {#encode-gradient-and-norm}
 
 We define a function `PineValid.encode_gradient_and_norm(self,
@@ -345,39 +360,49 @@ measurement: list[float]) -> list[Field]` that implements this encoding step.
 ### Running the Wraparound Tests {#run-wr-check}
 
 Given the encoded gradient from {{encode-gradient-and-norm}} and the XOF to
-generate the random vectors, the Client needs to run wraparound check
-`num_wr_checks` times, and is required to pass at least `num_wr_successes`
-of them. Each wraparound check works as the following:
+generate the random vectors, the Client needs to run the wraparound check
+`num_wr_checks` times. Each wraparound check works as follows.
 
-For each test, the Client generates a random vector with the same dimension as
-the gradient's dimension. Each entry of the random vector is a field element of
-`1` with probability `1/4`, or `0` with probability `1/2`, or `q-1` with
-probability `1/4`, over the field modulus `q`. The Client samples each entry by
-sampling from the XOF output stream two bits at a time:
+The Client generates a random vector with the same dimension as the gradient's
+dimension. Each entry of the random vector is a field element of `1` with
+probability `1/4`, or `0` with probability `1/2`, or `q-1` with probability
+`1/4`, over the field modulus `q`. The Client samples each entry by sampling
+from the XOF output stream two bits at a time:
 * If the bits are `00`, set the entry to be `q-1`.
 * If the bits are `01` or `10`, set the entry to be `0`.
 * If the bits are `11`, set the entry to be `1`.
 
-Then the Client computes the dot product modulo `q`. If the dot product is in
-the range of `[-wr_check_bound, wr_check_bound + 1]`, then the Client passes
-that wraparound check, and fails otherwise. Note the Client does not send this
-dot product to the Aggregators. The Aggregators will compute the dot product
-themselves, based on the encoded gradient and the random vector derived on
-their own.
+Finally, the Client computes the dot product of the encoded gradient and the
+random vector, modulo `q`.
 
-The Client is required to repeat the wraparound check `num_wr_checks` times,
-and keep track of how many wraparound checks it has passed. If it has passed
-fewer than `num_wr_successes` of them, it should retry, by using a new XOF
-seed to re-generate the random vectors and re-run wraparound checks.
+Note the Client does not send this dot product to the Aggregators. The
+Aggregators will compute the dot product themselves, based on the encoded
+gradient and the random vector derived on their own.
 
 ### Encoding the Range-Checked, Wraparound Check Results {#encode-wr-check}
 
 We define a function `PineValid.encode_wr_checks(self,
-encoded_gradient: list[Field], wr_joint_rand_xof: Xof) -> list[Field]` that
-implements this encoding step.
+encoded_gradient: list[Field], wr_joint_rand_xof: Xof) ->
+tuple[list[Field], list[Field]]` that implements this encoding step. It returns
+a tuple of range-checked, wraparound check results, and the wraparound check
+results (i.e., the dot products) from {{run-wr-check}}.
 
-> TODO Specify how the Client encodes the result of each wraparound check such
-> that the Aggregators can check that each is in the desired range.
+The Client obtains the wraparound check results, as described in
+{{run-wr-check}}. For each wraparound check, the Client runs the range check on
+the result to see if it is in the range of
+`[-wr_check_bound, wr_check_bound + 1]`. Note we choose `wr_check_bound`, such
+that `wr_check_bound + 2` is a power of 2, so the Client does not have to send
+the `u` bits in range check. The Client also keeps track of a success bit
+`wr_check_g`, which is a `1` if the wraparound check result is in range, and `0`
+otherwise.
+
+The Client counts how many wraparound checks it has passed. If it has passed
+fewer than `num_wr_successes` of them, it should retry, by using a new XOF
+seed to re-generate the random vectors and re-run wraparound checks
+{{run-wr-check}}.
+
+The range-checked results and the success bits are sent to the Aggregators, and
+the wraparound check results are passed to the FLP circuit.
 
 ## The FLP Circuit
 
@@ -410,22 +435,17 @@ circuit, which includes the bit check on all the bit entries
 check {{valid-wr-check}}. Some of the auxiliary functions in these checks are
 defined in {{pine-auxiliary}}.
 
-### Range Check {#range-check}
+### Range Check {#valid-range-check}
 
-A common subroutine used in the validity circuit is the "range check", i.e.,
-checking if a `value` is in the range of `[B1, B2]`, over the field size `q`
-(See Figure 1 in {{ROCT23}}). The Client computes the "`v` bits", the bit
-representation of `value - B1` (modulo `q`), and the "`u` bits", the bit
-representation of `B2 - value` (modulo `q`). Assuming the Aggregators have
-verified the `v` bits and `u` bits are indeed composed of bits (as described in
-{{valid-bit-check}}), the Aggregators can verify `value` is in the desired
-range, by checking the decoded value from the `v` bits, and the decode value
-from the `u` bits sum up to `B2 - B1` (modulo `q`).
+In order to verify the range-checked results reported by the Client as described
+in {{encode-range-check}}, the Aggregators will verify (1) `v` bits and `u` bits
+are indeed composed of bits, as described in {{valid-bit-check}}, and (2) the
+verify the decoded value from the `v` bits, and the decoded value from the `u`
+bits sum up to `B2 - B1` (modulo `q`).
 
-As an optimization for communication cost per Remark 3.2 in {{ROCT23}}, the
-Client can skip sending the `u` bits if `B2 - B1 + 1` (modulo `q`) is a power of
-`2`. This is because the available `v` bits can naturally bound `value - B1` to
-be `B2 - B1`.
+If the Client skips sending the `u` bits as an optimization mentioned in
+{{encode-wr-check}}, then the Aggregators only need to verify the decoded value
+from the `v` bits is equal to `B2 - B1` (modulo `q`).
 
 ### Bit Check {#valid-bit-check}
 
@@ -468,7 +488,7 @@ Client:
   values are equal.
 * Range check: The squared norm reported by the Client is in the desired range
   `[0, encoded_sq_norm_bound]`. For this, the Aggregators run the range check
-  described in {{range-check}}.
+  described in {{valid-range-check}}.
 
 > TODO Put `PineValid.eval_norm_check()` implementation here.
 
@@ -480,11 +500,11 @@ Client gradient hasn't overflown the field size `q`.
 The validity circuit verifies two properties for wraparound checks:
 
 * Quadratic check (See bullet point 3 in Figure 2 of {{ROCT23}}): Recall in
-  {{encode-wr-check}}, the Client has to keep track of a success bit for each
+  {{encode-wr-check}}, the Client keeps track of a success bit for each
   wraparound check, i.e., whether it has passed that check. For each wraparound
   check, the Aggregators then verify a quadratic constraint that, either the
-  success bit is a 0 (i.e., the Client has failed that check), or the success
-  bit is a 1, and the range-checked result reported by the Client is correct,
+  success bit is a `0` (i.e., the Client has failed that check), or the success
+  bit is a `1`, and the range-checked result reported by the Client is correct,
   based on the wraparound check result (i.e., the dot product) computed by the
   Aggregators from the encoded gradient and the random vector. For this, the
   Aggregators multiply their shares of the success bit, and the difference of
@@ -546,7 +566,7 @@ Then the Aggregators carry out a multi-party computation to obtain the output
 shares (the secret shares of the encoded Client gradient), and also reject
 Client gradients that have invalid L2-norm. Each Aggregator first needs to
 derive wraparound and verification joint randomness. Similar to Prio3
-preparation {{Section 7.2.2 of !VDAF}}, the Aggregator doesn't derive every
+preparation {{Section 7.2.2 of !VDAF}}, the Aggregator does not derive every
 joint randomness part like the Client does. It only derives the joint
 randomness part from its secret share via the XOF, and applies its part and
 and other Aggregators' parts sent by the Client to the XOF to obtain the joint
