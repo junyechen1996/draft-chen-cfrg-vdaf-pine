@@ -10,7 +10,7 @@
 <meta content="
        This document describes PINE, a Verifiable Distributed Aggregation Function
 (VDAF) for secure aggregation of high-dimensional, real-valued vectors with
-bounded L2-norm. PINE is intended to facilitiate private and robust federated
+bounded L2-norm. PINE is intended to facilitate private and robust federated
 machine learning. 
     " name="description">
 <meta content="xml2rfc 3.19.4" name="generator">
@@ -1031,11 +1031,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">Private Inexpensive Norm Enforcement (PI</td>
-<td class="right">February 2024</td>
+<td class="right">March 2024</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Chen &amp; Patton</td>
-<td class="center">Expires 1 September 2024</td>
+<td class="center">Expires 2 September 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1048,12 +1048,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-chen-cfrg-vdaf-pine-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-02-29" class="published">29 February 2024</time>
+<time datetime="2024-03-01" class="published">1 March 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-09-01">1 September 2024</time></dd>
+<dd class="expires"><time datetime="2024-09-02">2 September 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1072,7 +1072,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document describes PINE, a Verifiable Distributed Aggregation Function
 (VDAF) for secure aggregation of high-dimensional, real-valued vectors with
-bounded L2-norm. PINE is intended to facilitiate private and robust federated
+bounded L2-norm. PINE is intended to facilitate private and robust federated
 machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
@@ -1110,7 +1110,7 @@ machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 1 September 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 2 September 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1246,7 +1246,7 @@ machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 machine learning models from data stored on users' devices. The bulk of the
 computation is carried out on-device: each user trains the model on its data
 locally, then sends a model update to a central server. These model updates are
-commonly referred to as "gradients" <span>[<a href="#Lem12" class="cite xref">Lem12</a>]</span>. The server then aggregates the
+commonly referred to as "gradients" <span>[<a href="#Lem12" class="cite xref">Lem12</a>]</span>. The server aggregates the
 gradients, applies them to the central model, and sends the updated model to
 the users to repeat the process.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <span id="name-federated-learning"></span><div id="plain-fl">
@@ -1273,11 +1273,10 @@ the users to repeat the process.<a href="#section-1-1" class="pilcrow">¶</a></p
 <p id="section-1-3">Federated learning improves user privacy by ensuring the training data never
 leaves users' devices. However, it requires computing an aggregate of the
 gradients sent from devices, which may still reveal a significant amount of
-information about each user's input. [CP: 1-2 sentences describing the risk
-here would be useful.] One way to mitigate this risk is to distribute the
-aggregation step across multiple servers such that no server sees any gradient
-in the clear.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">In a Verifiable Distributed Aggregation Function
+information about the underlying data. One way to mitigate this risk is to
+distribute the aggregation step across multiple servers such that no server
+sees any gradient in the clear.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">With a Verifiable Distributed Aggregation Function
 <span>[<a href="#VDAF" class="cite xref">VDAF</a>]</span>, this is achieved by having each user
 shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
@@ -1313,15 +1312,15 @@ vector. Bounding the L2 norm is used in federated learning to limit the
 contribution of each client to the aggregate, without over constraining the
 distribution of inputs. [CP: Add a relevant reference.]<a href="#section-1-6" class="pilcrow">¶</a></p>
 <p id="section-1-7">In theory, Prio3 (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be adapted to support this
-functionality, but the concrete cost in terms of runtime and communication
-would be prohibitively high. The basic idea is simple: an FLP ("Fully Linear
-Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be specified that computes the
-L2-norm of the gradient and checks that the result is in the desired range
-(without revealing the gradient to the aggregation servers). Computation of the
-norm and performing the range check is ralatively simple, and can be done
-efficiently: the challenge lies in ensuring that the computation itself was
-carried out correctly, while properly accounting for the relevant mathematical
-details of the proof system and the range of possible inputs.<a href="#section-1-7" class="pilcrow">¶</a></p>
+functionality, but for high-dimensional data, the concrete cost in terms of
+runtime and communication would be prohibitively high. The basic idea is
+simple. An FLP ("Fully Linear Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be
+used to compute the L2 norm of the secret shared gradient and check that the
+result is in the desired range, all without learning the gradient or its norm.
+This computation, on its own, can be done efficiently: the challenge lies in
+ensuring that the computation itself was carried out correctly, while properly
+accounting for the relevant mathematical details of the proof system and the
+range of possible inputs.<a href="#section-1-7" class="pilcrow">¶</a></p>
 <p id="section-1-8">This document describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
 for secure aggregation of gradients with bounded L2-norm <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. Its design
 is based largely on Prio3 in that the norm is computed and verified using
@@ -1356,7 +1355,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-2-3.1.1">Clients, Aggregators, and Collectors from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-2-3.2">
-          <p id="section-2-3.2.1">Finite fields from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.2.1">Finite fields from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. All fields in this document have
+prime order.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-2-3.3">
           <p id="section-2-3.3.1">XOFs ("eXtendable Output Functions") from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.3.1" class="pilcrow">¶</a></p>
@@ -1365,9 +1365,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-2-4">A floating point number, denoted <code>float</code>, is a IEEE-754 compatible float64 value
 <span>[<a href="#IEEE754-2019" class="cite xref">IEEE754-2019</a>]</span>.<a href="#section-2-4" class="pilcrow">¶</a></p>
 <p id="section-2-5">A "gradient" is a vector of floating point numbers. Each coordinate of this
-vector is called an "entry". The "L2-norm", or simply "norm", of a gradient is
+vector is called an "entry". The "L2 norm", or simply "norm", of a gradient is
 the square root of the sum of the squares of its entries.<a href="#section-2-5" class="pilcrow">¶</a></p>
-<p id="section-2-6">The "dot product" of two vectors is to compute the sum of elementwise
+<p id="section-2-6">The "dot product" of two vectors is to compute the sum of element-wise
 multiplications of the two vectors.<a href="#section-2-6" class="pilcrow">¶</a></p>
 <p id="section-2-7">The user-specified parameters to initialize PINE are defined in
 <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-7" class="pilcrow">¶</a></p>
@@ -1392,7 +1392,7 @@ multiplications of the two vectors.<a href="#section-2-6" class="pilcrow">¶</a>
             <td class="text-left" rowspan="1" colspan="1">
               <code>float</code>
 </td>
-            <td class="text-left" rowspan="1" colspan="1">The L2-norm upper bound (inclusive).</td>
+            <td class="text-left" rowspan="1" colspan="1">The L2 norm upper bound (inclusive).</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
@@ -1418,52 +1418,54 @@ multiplications of the two vectors.<a href="#section-2-6" class="pilcrow">¶</a>
       <h2 id="name-pine-overview">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pine-overview" class="section-name selfRef">PINE Overview</a>
       </h2>
-<p id="section-3-1">In this section, we will give an overview of the main technical contribution of
-<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> that allows the Aggregators holding secret shares of the Client
-measurement (e.g., a gradient in federated learning) to verify it has a bounded
-L2-norm, which is the square root of the sum of square of all vector entries.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">One way to achieve this is to use an FLP ("Fully Linear Proof"; see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>). An FLP is an assertion about the validity of some input that
-can be checked jointly by the Aggregators who only hold secret shares of the
-input. Validity is expressed as a circuit evaluated on the input over a finite
-field, denoted by <code>Field</code> in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. Let <code>q</code> denote the field
-size. In our case, the circuit would compute the sum of the squares of the
-entries of the gradient vector, that is the squared L2-norm, and check that the
-result is in the desired range. Note that there is no need to compute the exact
-L2-norm (i.e., the square root of the sum); it suffices to compute the squared
-L2-norm and check that it is smaller than the square of the bound.<a href="#section-3-2" class="pilcrow">¶</a></p>
-<p id="section-3-3">Crucially, arithmetic in this computation is modulo the field size <code>q</code>. This
-means that, for a given gradient, the norm may have a different result when
-computed in our finite field versus the ring of integers. For example, suppose
-our bound is <code>10</code>: the gradient <code>[99, 0, 7]</code> has squared L2-norm of <code>9850</code> over
-the integers (out of range), but only <code>6</code> modulo <code>q = 23</code> (in range). This is
-because the sum of the squares "wraps around" the field modulus <code>q</code>.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">Thus the central challenge of adapting FLPs to this problem is preventing such
-"wraparounds".<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">One way to do this is to encode each entry of the gradient such that the
-Aggregators are assured that each entry falls in a range that ensures the norm
-does not wrap around the field modulus. However, this approach has relatively
-high communication overhead between the Client and Aggregators, roughly
-<code>num_frac_bits * dimension</code> field elements (see <a href="#pine-user-param" class="auto internal xref">Table 1</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">In order to detect whether a wraparound has occurred, PINE uses a probabilistic
-test, which works as follows: A random vector over the field is generated (via a
-procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>) where each entry is equal to <code>1</code>, <code>0</code>,
-or <code>q-1</code>, each with a particular probability: to test for wraparound, compute
-the dot product of this vector and the gradient, and check if the result is in a
-specific range. The range is determined by parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">If the norm wraps around the field modulus, then the dot product is likely to
+<p id="section-3-1">This section provides an overview of the main technical contribution of
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> that forms the basis of PINE. To motivate their idea, let us first
+say how Prio3 from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> would be used to aggregate vectors
+with bounded L2 norm.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Prio3 uses an FLP ("Fully Linear Proof"; see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) to
+verify properties of a secret shared measurement without revealing the
+measurement to the Aggregators. The property to be verified is expressed as an
+arithmetic circuit over a finite field (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-08#section-7.3.2" class="relref">Section 7.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>). Let <code>q</code>
+denote the field modulus.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">In our case, the circuit would take (a share of) the gradient as input, compute
+the squared L2-norm (the sum of the squares of the entries of the gradient),
+and check that the result is in the desired range. Note that we do not compute
+the exact norm: it is mathematically equivalent to compute the squared norm and
+check that it is smaller than the square of the bound.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">Crucially, arithmetic in this computation is modulo <code>q</code>. This means that, for a
+given gradient, the norm may have a different result when computed in our
+finite field than in the ring of integers. For example, suppose our bound is
+<code>10</code>: the gradient <code>[99, 0, 7]</code> has squared L2-norm of <code>9850</code> over the integers
+(out of range), but only <code>6</code> modulo <code>q = 23</code> (in range). This circuit would
+therefore deem the gradient valid, when in fact it is invalid.<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">Thus the central challenge of adapting FLPs to this problem is to prevent the
+norm computation from "wrapping around" the field modulus.<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">One way to achieve this is to ensure that each gradient entry is in a range
+that ensures the norm is sufficiently small. However, this approach has high
+communication cost (roughly <code>num_frac_bits * dimension</code> field elements per
+entry), which becomes prohibitive for high-dimensional data.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">PINE uses a different strategy: rather than prevent wraparounds, we can try to
+detect whether a wraparound has occurred.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8"><span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> devises a probabilistic test for this purpose. A random vector over
+the field is generated (via a procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>) where
+each entry is sampled independently from a particular probability distribution.
+To test for wraparound, compute the dot product of this vector and the
+gradient, and check if the result is in a specific range determined by
+parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-8" class="pilcrow">¶</a></p>
+<p id="section-3-9">If the norm wraps around the field modulus, then the dot product is likely to
 be large. In fact, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> show that this test correctly detects wraparounds
 with probability <code>1/2</code>. To decrease the false negative probability (that is,
 the probability of misclassifying an invalid gradient as valid), we simply
 repeat this test a number of times, each time with a vector sampled from the
-same distribution.<a href="#section-3-7" class="pilcrow">¶</a></p>
-<p id="section-3-8">However, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> also show that each wraparound test has a non-zero false
+same distribution.<a href="#section-3-9" class="pilcrow">¶</a></p>
+<p id="section-3-10">However, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> also show that each wraparound test has a non-zero false
 positive probability (the probability of misclassifying a valid gradient as
 invalid). We refer to this probability as the "zero-knowledge error", or in
 short, "ZK error". This creates a problem for privacy, as the Aggregators learn
 information about a valid gradient they were not meant to learn: whether its
 dot product with a known vector is in a particular range. [CP: We need a more
 intuitive explanation of the information that's leaked.] The parameters of PINE
-are chosen carefully in order to ensure this leakage is negligible.<a href="#section-3-8" class="pilcrow">¶</a></p>
+are chosen carefully in order to ensure this leakage is negligible.<a href="#section-3-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="flp">
