@@ -33,12 +33,12 @@ class PineValid(Valid):
 
     def __init__(self,
                  l2_norm_bound: float,
-                 num_frac_bits: Unsigned,
-                 dimension: Unsigned,
-                 chunk_length: Unsigned = None,
+                 num_frac_bits: int,
+                 dimension: int,
+                 chunk_length: int,
                  alpha: float = ALPHA,
-                 num_wr_checks: Unsigned = NUM_WR_CHECKS,
-                 num_wr_successes: Unsigned = NUM_WR_SUCCESSES):
+                 num_wr_checks: int = NUM_WR_CHECKS,
+                 num_wr_successes: int = NUM_WR_SUCCESSES):
         """
         Instantiate the `PineValid` circuit for gradients with `dimension`
         elements. Each element will be truncated to `num_frac_bits` binary
