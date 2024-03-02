@@ -299,7 +299,7 @@ class Pine(Vdaf):
             Pine.joint_rand_part_and_seed_for_aggregator(
                 agg_id,
                 k_wr_joint_rand_blind,
-                meas_share[:Pine.Flp.Valid.encoded_gradient_len],
+                meas_share[:Pine.Flp.Valid.encoded_gradient_and_norm_len],
                 nonce,
                 k_wr_joint_rand_parts,
                 USAGE_WR_JOINT_RAND_PART,
