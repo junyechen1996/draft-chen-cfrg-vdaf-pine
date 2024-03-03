@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-29T01:10:56.891065+00:00",
+  "timestamp": "2024-03-03T01:15:10.595251+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -741,6 +741,22 @@
           "updatedAt": "2024-02-27T23:04:23Z"
         }
       ]
+    },
+    {
+      "number": 75,
+      "id": "I_kwDOJWdxls6A-rhM",
+      "title": "Run tests and linter in CI",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/75",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We could more or less copy the workflows from the base draft:\r\nhttps://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/.github/workflows/test.yml\r\nhttps://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/.github/workflows/lint-python.yml\r\n",
+      "createdAt": "2024-03-01T17:57:54Z",
+      "updatedAt": "2024-03-01T17:57:54Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -8198,24 +8214,26 @@
       "id": "PR_kwDOJWdxls5oLJ6a",
       "title": "Fill in multiproof feature and  VDAF overview",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/69",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Reviewer's note: stacked PR on #67 .",
       "createdAt": "2024-02-28T13:44:37Z",
-      "updatedAt": "2024-02-29T00:56:59Z",
+      "updatedAt": "2024-02-29T01:27:12Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
-      "baseRefOid": "797e5c7b1a76fe448d3b60300dc697eb98938ed0",
+      "baseRefOid": "fb6223c0d473b0f5a4d6662d15c9bd6247d87f66",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/fill-vdaf-overview",
-      "headRefOid": "9a9d4eaf43d9ecaf7020fa4535b3226a0e6042e0",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "975244054ab41b782b6afbc6f12838d22a217395",
+      "closedAt": "2024-02-29T01:27:01Z",
+      "mergedAt": "2024-02-29T01:27:01Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "6f704c7bd6eaedfc530eab42a2137c3b9081e35f"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -8223,6 +8241,13 @@
           "body": "It might still be a bit verbose, a lot of it is trying to illustrate how to generate joint randomness. Given how we introduce wraparound and verification joint randomness at the beginning (deriving the parts, and applying them to XOF to obtain the seed), maybe in the intro of sharding and preparation, we just say for example: \"The Client uses the secret shares of the encoded gradient and range-checked norm to generate the wraparound joint randomness\", and omit the details?",
           "createdAt": "2024-02-28T21:11:18Z",
           "updatedAt": "2024-02-28T21:13:10Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-02-29T01:27:11Z",
+          "updatedAt": "2024-02-29T01:27:11Z"
         }
       ],
       "reviews": [
@@ -8507,6 +8532,19 @@
               "updatedAt": "2024-02-29T00:56:59Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xth27",
+          "commit": {
+            "abbreviatedOid": "9752440"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-29T01:16:58Z",
+          "updatedAt": "2024-02-29T01:26:13Z",
+          "comments": []
         }
       ]
     },
@@ -8515,24 +8553,26 @@
       "id": "PR_kwDOJWdxls5oO5kt",
       "title": "Move old text it its own file",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/70",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Keep it for copy-paste value.",
       "createdAt": "2024-02-29T00:15:41Z",
-      "updatedAt": "2024-02-29T00:58:51Z",
+      "updatedAt": "2024-02-29T01:19:04Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "797e5c7b1a76fe448d3b60300dc697eb98938ed0",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/clean-up-1",
       "headRefOid": "cdd4dcb051ef0dec377458f00745bd6c0151ce01",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-02-29T01:19:04Z",
+      "mergedAt": "2024-02-29T01:19:04Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "fb6223c0d473b0f5a4d6662d15c9bd6247d87f66"
+      },
       "comments": [],
       "reviews": [
         {
@@ -8549,6 +8589,377 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 71,
+      "id": "PR_kwDOJWdxls5oR80I",
+      "title": "Fill the section about encoding wraparound check",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/71",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-02-29T11:09:43Z",
+      "updatedAt": "2024-03-01T02:12:53Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "29513dae2b19a108860a800757e9edff32c12d7c",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/fill-encode-wr-check",
+      "headRefOid": "d61c9f1b95d13b68c608b6cedd575fbd8484990f",
+      "closedAt": "2024-03-01T02:12:50Z",
+      "mergedAt": "2024-03-01T02:12:50Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "fa786cc99251d807477301400fd8f343a4380e28"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-03-01T02:12:30Z",
+          "updatedAt": "2024-03-01T02:12:30Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5xww7v",
+          "commit": {
+            "abbreviatedOid": "289eb60"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-29T11:17:55Z",
+          "updatedAt": "2024-02-29T11:22:35Z",
+          "comments": [
+            {
+              "originalPosition": 84,
+              "body": "I haven't spelled out the derivation of `wr_check_bound` in this PR.",
+              "createdAt": "2024-02-29T11:17:56Z",
+              "updatedAt": "2024-02-29T11:22:35Z"
+            },
+            {
+              "originalPosition": 76,
+              "body": "This signature matches our reference implementation.",
+              "createdAt": "2024-02-29T11:18:11Z",
+              "updatedAt": "2024-02-29T11:22:35Z"
+            },
+            {
+              "originalPosition": 90,
+              "body": "I moved counting success bits into this section, since it matches our reference implementation. Running wraparound checks should only contain computing the dot products.",
+              "createdAt": "2024-02-29T11:18:46Z",
+              "updatedAt": "2024-02-29T11:22:35Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5xyA6K",
+          "commit": {
+            "abbreviatedOid": "289eb60"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-29T13:49:27Z",
+          "updatedAt": "2024-02-29T13:54:50Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "```suggestion\r\ngenerate the random vectors, the Client needs to run the wraparound check\r\n```",
+              "createdAt": "2024-02-29T13:49:28Z",
+              "updatedAt": "2024-02-29T13:54:50Z"
+            },
+            {
+              "originalPosition": 43,
+              "body": "```suggestion\r\n`num_wr_checks` times. Each wraparound check works as follows.\r\n```",
+              "createdAt": "2024-02-29T13:50:01Z",
+              "updatedAt": "2024-02-29T13:54:50Z"
+            },
+            {
+              "originalPosition": 13,
+              "body": "This basically says the same thing as the \"Range Check\" section below. What is your goal exactly?",
+              "createdAt": "2024-02-29T13:54:29Z",
+              "updatedAt": "2024-02-29T13:54:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5x1LMF",
+          "commit": {
+            "abbreviatedOid": "289eb60"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-29T19:59:28Z",
+          "updatedAt": "2024-02-29T19:59:28Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "This section is more about Client encoding the range check. While the {{valid-range-check}} talks about what the Aggregator does to verify the range check.",
+              "createdAt": "2024-02-29T19:59:28Z",
+              "updatedAt": "2024-02-29T19:59:28Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5x1aAV",
+          "commit": {
+            "abbreviatedOid": "289eb60"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-02-29T20:38:17Z",
+          "updatedAt": "2024-02-29T20:38:17Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "I cut some texts in {{valid-range-check}}.",
+              "createdAt": "2024-02-29T20:38:17Z",
+              "updatedAt": "2024-02-29T20:38:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5x2xg6",
+          "commit": {
+            "abbreviatedOid": "d61c9f1"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-01T01:54:37Z",
+          "updatedAt": "2024-03-01T02:11:26Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 72,
+      "id": "PR_kwDOJWdxls5oSBWQ",
+      "title": "Fix wording in wraparound checks",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/72",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "We have conflicting references of \"wraparound check results\", e.g., \"Encoding range-checked wraparound check results\", which are the bits of the range-checked result in wraparound check, and we also have \"wraparound check results\", that we typically mean the dot products from running wraparound tests.\r\n\r\nHow about we use \"check\" on the entire wraparound \"check\" section, i.e., it is checking for wraparound, similar to L2-norm \"check\". And we also have the quadratic \"check\" and success count \"check\" in wraparound checks.\r\nFor the dot product computation, we will refer to it as wraparound \"test\". I think we already did this in a couple of places, but just weren't consistent about it.",
+      "createdAt": "2024-02-29T11:22:19Z",
+      "updatedAt": "2024-03-01T02:12:53Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "fa786cc99251d807477301400fd8f343a4380e28",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/wr-wording",
+      "headRefOid": "ab3fce05c4b4f23df194d377f3cbe02f0284c58a",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "@cjpatton If you like this idea, I can make a pass over the variables (mainly `num_wr_checks` -> `num_wr_tests`)  and reference implementations.",
+          "createdAt": "2024-02-29T11:23:28Z",
+          "updatedAt": "2024-02-29T11:23:28Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> We have conflicting references of \"wraparound check results\", e.g., \"Encoding range-checked wraparound check results\", which are the bits of the range-checked result in wraparound check, and we also have \"wraparound check results\", that we typically mean the dot products from running wraparound tests.\r\n> \r\n> How about we use \"check\" on the entire wraparound \"check\" section, i.e., it is checking for wraparound, similar to L2-norm \"check\". And we also have the quadratic \"check\" and success count \"check\" in wraparound checks. For the dot product computation, we will refer to it as wraparound \"test\". I think we already did this in a couple of places, but just weren't consistent about it.\r\n\r\nI'd prefer to use one term: either \"check\" or \"test\". Mixing them would be confusing.\r\n\r\nInstead, I think our goal should be to make sure the distinction is clear in context: one is encoded in the in the input (shares), the other is computed from the input (shares).",
+          "createdAt": "2024-02-29T13:58:23Z",
+          "updatedAt": "2024-02-29T13:58:23Z"
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "number": 73,
+      "id": "PR_kwDOJWdxls5oTZ9m",
+      "title": "Pass of intro, conventions, and overview",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/73",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-02-29T14:41:20Z",
+      "updatedAt": "2024-02-29T21:26:15Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "cae7b81511ec50ee6e4561b846f704c2ac127201",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/pass-3",
+      "headRefOid": "c5f0dae78f8b62dfb49caa2190341b4f46697ddb",
+      "closedAt": "2024-02-29T21:26:15Z",
+      "mergedAt": "2024-02-29T21:26:15Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "29513dae2b19a108860a800757e9edff32c12d7c"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5x1NE_",
+          "commit": {
+            "abbreviatedOid": "e85b052"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-02-29T20:04:22Z",
+          "updatedAt": "2024-02-29T20:05:33Z",
+          "comments": [
+            {
+              "originalPosition": 168,
+              "body": "```suggestion\r\n{{ROCT23}} devises a probabilistic test for this purpose. A random vector over\r\n```",
+              "createdAt": "2024-02-29T20:04:23Z",
+              "updatedAt": "2024-02-29T20:05:33Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 74,
+      "id": "PR_kwDOJWdxls5ob9kc",
+      "title": "Fix an undefined variable in `prep_init()`",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/74",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Prevented by #75.",
+      "createdAt": "2024-03-01T17:56:20Z",
+      "updatedAt": "2024-03-02T11:56:33Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "fa786cc99251d807477301400fd8f343a4380e28",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/fix-tests",
+      "headRefOid": "e7315f74c3360557e5cb52bfe866decf059428fc",
+      "closedAt": "2024-03-02T11:56:33Z",
+      "mergedAt": "2024-03-02T11:56:33Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "16d7a0cbc544bc09c1dcb88c2d9f018c5ac5d06e"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yALLT",
+          "commit": {
+            "abbreviatedOid": "e7315f7"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-02T11:55:39Z",
+          "updatedAt": "2024-03-02T11:56:22Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Sorry. I didn't re-run tests because I was finishing the spec in an environment where I don't have Sage :)",
+              "createdAt": "2024-03-02T11:55:39Z",
+              "updatedAt": "2024-03-02T11:56:22Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 76,
+      "id": "PR_kwDOJWdxls5ocU06",
+      "title": "Add unit tests for wraparound and squared norm bounds",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/76",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Stacked on #74.\r\n\r\nAlso, clean up the parameters of `PineValid()`.",
+      "createdAt": "2024-03-01T19:11:26Z",
+      "updatedAt": "2024-03-02T11:57:27Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "cjpatton/fix-tests",
+      "baseRefOid": "e7315f74c3360557e5cb52bfe866decf059428fc",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/poc-unit-tests-for-op-params",
+      "headRefOid": "87fef535b08f524d59b62f3a164932a734beb718",
+      "closedAt": "2024-03-02T11:57:27Z",
+      "mergedAt": "2024-03-02T11:57:27Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "66e8b6492ea2ba8647afb65896d48463ae10f05d"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yALN6",
+          "commit": {
+            "abbreviatedOid": "87fef53"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-02T11:57:18Z",
+          "updatedAt": "2024-03-02T11:57:18Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 77,
+      "id": "PR_kwDOJWdxls5oe3-o",
+      "title": "[For main] Add unit tests for wraparound and squared norm bounds",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/77",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-03-02T11:59:05Z",
+      "updatedAt": "2024-03-02T12:02:16Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "16d7a0cbc544bc09c1dcb88c2d9f018c5ac5d06e",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/fix-tests",
+      "headRefOid": "e3f30682ebcb7966a51e526472d033507e2b7b6e",
+      "closedAt": "2024-03-02T12:02:16Z",
+      "mergedAt": "2024-03-02T12:02:16Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "31126a90c743bf5007ffff50200abd8129f72a23"
+      },
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "I accidentally merged previous PR https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/76 into this branch, so opening another PR to merge it into main.",
+          "createdAt": "2024-03-02T12:02:10Z",
+          "updatedAt": "2024-03-02T12:02:10Z"
+        }
+      ],
+      "reviews": []
     }
   ]
 }
