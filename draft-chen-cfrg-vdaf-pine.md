@@ -330,8 +330,8 @@ The measurement encoding is done in two stages:
 
 Encoding range-checked results is a common subroutine during measurement
 encoding. The goal is to allow the Client to prove a `value` is in the desired
-range of `[B1, B2]`, over the field size `q` (see Figure 1 in {{ROCT23}}). The
-Client computes the "`v` bits", the bit representation of `value - B1`
+range of `[B1, B2]`, over the field modulus `q` (see Figure 1 in {{ROCT23}}).
+The Client computes the "`v` bits", the bit representation of `value - B1`
 (modulo `q`), and the "`u` bits", the bit representation of `B2 - value`
 (modulo `q`). The number of bits for the `v` and `u` bits is
 `ceil(log2(B2 - B1 + 1))`.
@@ -357,7 +357,7 @@ measurement: list[float]) -> list[Field]` that implements this encoding step.
 
 > TODO Put full implementation of `encode_gradient_and_norm()` here.
 
-### Running the Wraparound Tests {#run-wr-check}
+### Running the Wraparound Checks {#run-wr-check}
 
 Given the encoded gradient from {{encode-gradient-and-norm}} and the XOF to
 generate the random vectors, the Client needs to run the wraparound check
@@ -384,17 +384,17 @@ gradient and the random vector derived on their own.
 We define a function `PineValid.encode_wr_checks(self,
 encoded_gradient: list[Field], wr_joint_rand_xof: Xof) ->
 tuple[list[Field], list[Field]]` that implements this encoding step. It returns
-a tuple of range-checked, wraparound check results, and the wraparound check
-results (i.e., the dot products) from {{run-wr-check}}.
+the tuple of range-checked, wraparound check results that will be sent to the
+Aggregators, and the wraparound check results (i.e., the dot products from
+{{run-wr-check}}) that will be passed as inputs to the FLP circuit.
 
 The Client obtains the wraparound check results, as described in
-{{run-wr-check}}. For each wraparound check, the Client runs the range check on
-the result to see if it is in the range of
-`[-wr_check_bound, wr_check_bound + 1]`. Note we choose `wr_check_bound`, such
-that `wr_check_bound + 2` is a power of 2, so the Client does not have to send
-the `u` bits in range check. The Client also keeps track of a success bit
-`wr_check_g`, which is a `1` if the wraparound check result is in range, and `0`
-otherwise.
+{{run-wr-check}}. For each check, the Client runs the range check on the result
+to see if it is in the range of `[-wr_check_bound, wr_check_bound + 1]`. Note we
+choose `wr_check_bound`, such that `wr_check_bound + 2` is a power of 2, so the
+Client does not have to send the `u` bits in range check. The Client also keeps
+track of a success bit `wr_check_g`, which is a `1` if the wraparound check
+result is in range, and `0` otherwise.
 
 The Client counts how many wraparound checks it has passed. If it has passed
 fewer than `num_wr_successes` of them, it should retry, by using a new XOF
@@ -412,8 +412,8 @@ into the following components:
 * The first `dimension` entries are the `encoded_gradient`, the field elements
   encoded from the floating point numbers.
 * The next `bit_checked_len` entries are expected to be bits, and should contain
-  the bits for the range check of the L2 norm, the bits for the range check of
-  each wraparound check, and the success bits in wraparound checks.
+  the bits for the range-checked L2-norm, the bits for the range-checked
+  wraparound check results, and the success bits in wraparound checks.
 * The last `num_wr_checks` are the wraparound check results, i.e., the dot
   products of the encoded gradient and the random vectors.
 
@@ -495,20 +495,20 @@ Client:
 ### Wraparound Check {#valid-wr-check}
 
 The purpose of wraparound check is to check the squared L2-norm of the encoded
-Client gradient hasn't overflown the field size `q`.
+Client gradient hasn't overflown the field modulus `q`.
 
 The validity circuit verifies two properties for wraparound checks:
 
 * Quadratic check (See bullet point 3 in Figure 2 of {{ROCT23}}): Recall in
   {{encode-wr-check}}, the Client keeps track of a success bit for each
-  wraparound check, i.e., whether it has passed that check. For each wraparound
-  check, the Aggregators then verify a quadratic constraint that, either the
-  success bit is a `0` (i.e., the Client has failed that check), or the success
-  bit is a `1`, and the range-checked result reported by the Client is correct,
-  based on the wraparound check result (i.e., the dot product) computed by the
-  Aggregators from the encoded gradient and the random vector. For this, the
-  Aggregators multiply their shares of the success bit, and the difference of
-  the range-checked result reported by the Client, and that computed by the
+  wraparound check, i.e., whether it has passed that check. For each check, the
+  Aggregators then verify a quadratic constraint that, either the success bit is
+  a `0` (i.e., the Client has failed that check), or the success bit is a `1`,
+  and the range-checked result reported by the Client is correct, based on the
+  wraparound check result (i.e., the dot product) computed by the Aggregators
+  from the encoded gradient and the random vector. For this, the Aggregators
+  multiply their shares of the success bit, and the difference of the
+  range-checked result reported by the Client, and that computed by the
   Aggregators. We then construct a polynomial from a random linear combination
   of the quadratic check at each wraparound check, and evaluate it at a random
   point `r_wr_check`, the joint randomness.
@@ -554,13 +554,14 @@ In order for the Client to shard its gradient into input shares for the
 Aggregators, the Client first encodes its gradient into field elements, and
 encodes the range-checked L2-norm, according to {{encode-gradient-and-norm}}.
 Next, it derives the wraparound joint randomness for the wraparound checks as
-described above. The encoded gradient, range-checked norm, and results for
-wraparound checks will be secret-shared to (1) be sent as input shares for the
-Aggregators, and (2) derive the verification joint randomness as described
-above. The Client then generates the proof with the FLP and secret shares it.
-The secret-shared proof, along with the input shares, and the joint randomness
-parts for both wraparound and verification joint randomness, are sent to the
-Aggregators.
+described above, and uses that to encode the range-checked, wraparound check
+results as described in {{encode-wr-check}}}. The encoded gradient,
+range-checked norm, and range-checked wraparound check results will be
+secret-shared to (1) be sent as input shares for the Aggregators, and (2) derive
+the verification joint randomness as described above. The Client then generates
+the proof with the FLP and secret shares it. The secret-shared proof, along with
+the input shares, and the joint randomness parts for both wraparound and
+verification joint randomness, are sent to the Aggregators.
 
 Then the Aggregators carry out a multi-party computation to obtain the output
 shares (the secret shares of the encoded Client gradient), and also reject
@@ -570,11 +571,12 @@ preparation {{Section 7.2.2 of !VDAF}}, the Aggregator does not derive every
 joint randomness part like the Client does. It only derives the joint
 randomness part from its secret share via the XOF, and applies its part and
 and other Aggregators' parts sent by the Client to the XOF to obtain the joint
-randomness seed. Then each Aggregator runs the wraparound checks with the
-wraparound joint randomness, and queries the FLP with its input share, proof
-share, the wraparound check results, and the verification joint randomness. All
-Aggregators then exchange the results from the FLP and decide whether to accept
-that Client gradient.
+randomness seed. Then each Aggregator runs the wraparound checks
+{{run-wr-check}} with its share of encoded gradient and the wraparound joint
+randomness, and queries the FLP with its input share, proof share, the
+wraparound check results, and the verification joint randomness. All Aggregators
+then exchange the results from the FLP and decide whether to accept that Client
+gradient.
 
 Next, each Aggregator sums up their shares of the encoded gradients and sends
 the aggregate share to the Collector. Finally, the Collector sums up the
