@@ -644,4 +644,10 @@ in {{Section 9 of !VDAF}}.
 # Acknowledgments
 {:numbered="false"}
 
-TODO acknowledge.
+Guy Rothblum
+Apple Inc.
+gn_rothblum@apple.com
+
+Kunal Talwar
+Apple Inc.
+ktalwar@apple.com
