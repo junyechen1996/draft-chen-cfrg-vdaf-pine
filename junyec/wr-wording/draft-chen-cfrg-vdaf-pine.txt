@@ -435,7 +435,7 @@ Table of Contents
    We define a function PineValid.encode_wr_checks(self,
    encoded_gradient: list[Field], wr_joint_rand_xof: Xof) ->
    tuple[list[Field], list[Field]] that implements this encoding step.
-   It returns a tuple of range-checked, wraparound check results that
+   It returns the tuple of range-checked, wraparound check results that
    will be sent to the Aggregators, and the wraparound check results
    (i.e., the dot products from Section 4.1.3) that will be passed as
    inputs to the FLP circuit.
