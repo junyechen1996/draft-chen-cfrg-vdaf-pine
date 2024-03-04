@@ -89,7 +89,7 @@ class TestOperationalParameters(unittest.TestCase):
 
     def test_bounds(self):
         """
-        Test bound computatinos (squared norm and wraparound checks) for
+        Test bound computations (squared norm and wraparound checks) for
         various parameters and the default alpha, number of wraparound tests,
         and number of successes.
         """
@@ -102,7 +102,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 15,
                 "expected_sq_norm_bound": Field128(1073741824),
                 "expected_num_bits_for_sq_norm": 31,
-                "expected_wr_check_bound": Field128(524287),
+                "expected_wr_check_bound": Field128(524288),
                 "expected_num_bits_for_wr_check": 20,
             },
             {
@@ -110,7 +110,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 24,
                 "expected_sq_norm_bound": Field128(281474976710656),
                 "expected_num_bits_for_sq_norm": 49,
-                "expected_wr_check_bound": Field128(268435455),
+                "expected_wr_check_bound": Field128(268435456),
                 "expected_num_bits_for_wr_check": 29,
             },
             {
@@ -118,7 +118,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 15,
                 "expected_sq_norm_bound": Field128(1073741824000000),
                 "expected_num_bits_for_sq_norm": 50,
-                "expected_wr_check_bound": Field128(536870911),
+                "expected_wr_check_bound": Field128(536870912),
                 "expected_num_bits_for_wr_check": 30,
             },
             {
@@ -126,7 +126,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 15,
                 "expected_sq_norm_bound": Field128(9),
                 "expected_num_bits_for_sq_norm": 4,
-                "expected_wr_check_bound": Field128(31),
+                "expected_wr_check_bound": Field128(32),
                 "expected_num_bits_for_wr_check": 6,
             },
             {
@@ -134,7 +134,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 0,
                 "expected_sq_norm_bound": Field128(1),
                 "expected_num_bits_for_sq_norm": 1,
-                "expected_wr_check_bound": Field128(15),
+                "expected_wr_check_bound": Field128(16),
                 "expected_num_bits_for_wr_check": 5,
             },
             {
@@ -142,7 +142,7 @@ class TestOperationalParameters(unittest.TestCase):
                 "num_frac_bits": 0,
                 "expected_sq_norm_bound": Field128(1787569),
                 "expected_num_bits_for_sq_norm": 21,
-                "expected_wr_check_bound": Field128(16383),
+                "expected_wr_check_bound": Field128(16384),
                 "expected_num_bits_for_wr_check": 15,
             },
         ]
@@ -164,6 +164,72 @@ class TestOperationalParameters(unittest.TestCase):
             self.assertEqual(v.wr_check_bound, t["expected_wr_check_bound"])
             self.assertEqual(v.num_bits_for_wr_check,
                              t["expected_num_bits_for_wr_check"])
+
+    def test_field_modulus_check(self):
+        """
+        Test `PineValid` can or cannot be initialized given the user parameters
+        and the field modulus constraint.
+        """
+
+        test_cases = [
+            {
+                # Violate range check requirement.
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 32,
+                "valid": PineValid.with_field(Field64),
+                "expected_success": False,
+            },
+            {
+                # After rounding up `alpha * encoded_norm_bound_unsigned`, the
+                # field modulus does not meet the requirement in wraparound
+                # check.
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 25,
+                "valid": PineValid.with_field(Field64),
+                "expected_success": False,
+            },
+            {
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 24,
+                "valid": PineValid.with_field(Field64),
+                "expected_success": True,
+            },
+            {
+                # Violate range check requirement.
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 64,
+                "valid": PineValid.with_field(Field128),
+                "expected_success": False,
+            },
+            {
+                # After rounding up `alpha * encoded_norm_bound_unsigned`, the
+                # field modulus does not meet the requirement in wraparound
+                # check.
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 57,
+                "valid": PineValid.with_field(Field128),
+                "expected_success": False,
+            },
+            {
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 56,
+                "valid": PineValid.with_field(Field128),
+                "expected_success": True,
+            },
+        ]
+
+        for t in test_cases:
+            # The dimension and chunk_length don't impact these tests.
+            if t["expected_success"]:
+                v = t["valid"](
+                    t["l2_norm_bound"], t["num_frac_bits"], 10000, 123
+                )
+                self.assertIsNotNone(v)
+            else:
+                with self.assertRaises(ValueError):
+                    v = t["valid"](
+                        t["l2_norm_bound"], t["num_frac_bits"], 10000, 123
+                    )
 
 
 class TestCircuit(unittest.TestCase):

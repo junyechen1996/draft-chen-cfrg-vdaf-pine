@@ -63,7 +63,7 @@ class PineValid(Valid):
         encoded_norm_bound_unsigned = \
             self.encode_f64_into_field(l2_norm_bound).as_unsigned()
         if (self.Field.MODULUS / encoded_norm_bound_unsigned
-            < encoded_norm_bound_unsigned):
+            <= encoded_norm_bound_unsigned):
             # Squaring encoded norm bound overflows field size, reject.
             raise ValueError("Invalid combination of L2-norm bound and "
                              "number of fractional bits, that causes the "
@@ -78,26 +78,40 @@ class PineValid(Valid):
         # of this quantity.
         self.num_bits_for_sq_norm = \
             math.ceil(math.log2(self.encoded_sq_norm_bound.as_unsigned() + 1))
-        # TODO(junyechen1996): check other field size requirement,
-        # specifically the requirements from Figure 1 and Lemma 4.3
-        # in the PINE paper.
 
-        # Wraparound check bound, equal to the smallest power of two
-        # larger than or equal to `ceil(alpha * encoded_norm_bound_unsigned)
-        # + 1` is a power of 2. Using a power of 2 allows us to use
-        # the optimization of Remark 3.2 without degrading
-        # completeness.
+        # Wraparound check bound, equal to the smallest power of 2 larger than
+        # or equal to `ceil(alpha * encoded_norm_bound_unsigned) + 1`. Using a
+        # power of 2 allows us to use the optimization of Remark 3.2 without
+        # degrading completeness. The range for wraparound check thus becomes
+        # `[-wr_check_bound + 1, wr_check_bound]`.
         self.wr_check_bound = self.Field(
             next_power_of_2(math.ceil(alpha * encoded_norm_bound_unsigned) + 1)
-            - 1
         )
 
+        # Check field size requirement in:
+        # - Figure 1: Range check for squared L2-norm,
+        #   `q > 3 * encoded_sq_norm_bound + 2`.
+        # - Lemma 3.3: `q > max(81 * alpha^2 * B, 100, 2 * num_wr_checks)`, or,
+        #   `q > max(81 * wr_check_bound**2, 100, 2 * num_wr_checks)`.
+        if ((self.Field.MODULUS - 2) / self.encoded_sq_norm_bound.as_unsigned()
+            <= 3):
+            raise ValueError("User parameter is too large that range check "
+                             "is infeasible given the field modulus.")
+        if (self.Field.MODULUS / num_wr_checks <= 2 or
+            self.Field.MODULUS <= 100 or
+            # Check `wr_check_bound` can be safely squared without overflow.
+            (self.Field.MODULUS / self.wr_check_bound.as_unsigned() <=
+                self.wr_check_bound.as_unsigned()) or
+            (self.Field.MODULUS / self.wr_check_bound.as_unsigned()**2 <= 81)):
+            raise ValueError("User parameter is too large that wraparound "
+                             "check is infeasible given the field modulus.")
+
         # Number of bits to represent each wraparound check result, which
-        # should be in range `[-wr_bound, wr_bound + 1]`. The number of
-        # values in this range is `2 * (wr_bound + 1)`, so take the `log2`
-        # of `wr_bound + 1` and add 1 to it.
+        # should be in range `[-wr_check_bound + 1, wr_check_bound]`. The number
+        # of values in this range is `2 * wr_check_bound`, so take the `log2`
+        # of `wr_check_bound` and add 1 to it.
         self.num_bits_for_wr_check = 1 + math.ceil(math.log2(
-            self.wr_check_bound.as_unsigned() + 1
+            self.wr_check_bound.as_unsigned()
         ))
 
         # Length of the encoded gradient and the L2-norm check.
@@ -295,7 +309,8 @@ class PineValid(Valid):
 
         for i in range(self.num_wr_checks):
             wr_check_v = self.Field.decode_from_bit_vector(wr_check_v_bits[i])
-            computed_result = wr_check_v - self.wr_check_bound * shares_inv
+            computed_result = wr_check_v - \
+                (self.wr_check_bound - self.Field(1)) * shares_inv
 
             # (1) For each check, we want that either (i) the Client reported
             # failure (`wr_check_g[i] == 0`) or (ii) the Client reported
@@ -420,15 +435,15 @@ class PineValid(Valid):
 
         for i in range(self.num_wr_checks):
             # This wraparound check passes if the current dot product is in
-            # range `[-wr_check_bound, wr_check_bound+1]`. To prove this, the
+            # range `[-wr_check_bound + 1, wr_check_bound]`. To prove this, the
             # prover sends the bit-encoding of `wr_check_v =
-            # wr_check_results[i] + wr_check_bound` to the verifier. The
+            # wr_check_results[i] + wr_check_bound - 1` to the verifier. The
             # verifier re-computes this value and makes sure it matches the
             # reported value.
             (is_in_range, wr_check_v, _) = range_check(
                 wr_check_results[i],
-                -self.wr_check_bound,
-                self.wr_check_bound + self.Field(1),
+                -self.wr_check_bound + self.Field(1),
+                self.wr_check_bound,
             )
 
             if is_in_range and wr_success_count < self.num_wr_successes:
