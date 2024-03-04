@@ -630,11 +630,6 @@ exact algorithms for Client sharding {{sharding}}, Aggregator preparation
 Our security considerations for PINE are the same as those for Prio3 described
 in {{Section 9 of !VDAF}}.
 
-> XXX Given that we can tune the parameters such that the ZK error is
-> negligible, I don't think this needs to be mentioned here.
->
-> Is there anything else worth mentioning?
-
 # IANA Considerations
 
 > TODO Ask IANA to allocate an algorithm ID from the VDAF algorithm ID registry.
