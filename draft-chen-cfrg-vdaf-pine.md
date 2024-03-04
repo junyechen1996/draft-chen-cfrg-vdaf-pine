@@ -390,8 +390,8 @@ Aggregators, and the wraparound check results (i.e., the dot products from
 
 The Client obtains the wraparound check results, as described in
 {{run-wr-check}}. For each check, the Client runs the range check on the result
-to see if it is in the range of `[-wr_check_bound, wr_check_bound + 1]`. Note we
-choose `wr_check_bound`, such that `wr_check_bound + 2` is a power of 2, so the
+to see if it is in the range of `[-wr_check_bound + 1, wr_check_bound]`. Note we
+choose `wr_check_bound`, such that `wr_check_bound` is a power of 2, so the
 Client does not have to send the `u` bits in range check. The Client also keeps
 track of a success bit `wr_check_g`, which is a `1` if the wraparound check
 result is in range, and `0` otherwise.
