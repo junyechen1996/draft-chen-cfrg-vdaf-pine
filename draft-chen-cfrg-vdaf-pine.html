@@ -13,14 +13,14 @@
 bounded L2-norm. PINE is intended to facilitate private and robust federated
 machine learning. 
     " name="description">
-<meta content="xml2rfc 3.19.4" name="generator">
+<meta content="xml2rfc 3.20.0" name="generator">
 <meta content="next generation" name="keyword">
 <meta content="unicorn" name="keyword">
 <meta content="sparkling distributed ledger" name="keyword">
 <meta content="draft-chen-cfrg-vdaf-pine-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.19.4
-    Python 3.11.6
+  xml2rfc 3.20.0
+    Python 3.11.8
     ConfigArgParse 1.7
     google-i18n-address 3.1.0
     intervaltree 3.1.0
@@ -1035,7 +1035,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Chen &amp; Patton</td>
-<td class="center">Expires 3 September 2024</td>
+<td class="center">Expires 5 September 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1048,12 +1048,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-chen-cfrg-vdaf-pine-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-03-02" class="published">2 March 2024</time>
+<time datetime="2024-03-04" class="published">4 March 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-09-03">3 September 2024</time></dd>
+<dd class="expires"><time datetime="2024-09-05">5 September 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1110,7 +1110,7 @@ machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 3 September 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 5 September 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1158,7 +1158,7 @@ machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
                     <p id="section-toc.1-1.4.2.1.2.2.1"><a href="#section-4.1.2" class="auto internal xref">4.1.2</a>.  <a href="#name-encoding-gradient-and-l2-no" class="internal xref">Encoding Gradient and L2-Norm Check</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.3">
-                    <p id="section-toc.1-1.4.2.1.2.3.1"><a href="#section-4.1.3" class="auto internal xref">4.1.3</a>.  <a href="#name-running-the-wraparound-test" class="internal xref">Running the Wraparound Tests</a></p>
+                    <p id="section-toc.1-1.4.2.1.2.3.1"><a href="#section-4.1.3" class="auto internal xref">4.1.3</a>.  <a href="#name-running-the-wraparound-chec" class="internal xref">Running the Wraparound Checks</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.4">
                     <p id="section-toc.1-1.4.2.1.2.4.1"><a href="#section-4.1.4" class="auto internal xref">4.1.4</a>.  <a href="#name-encoding-the-range-checked-w" class="internal xref">Encoding the Range-Checked, Wraparound Check Results</a></p>
@@ -1574,8 +1574,8 @@ derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a
           </h4>
 <p id="section-4.1.1-1">Encoding range-checked results is a common subroutine during measurement
 encoding. The goal is to allow the Client to prove a <code>value</code> is in the desired
-range of <code>[B1, B2]</code>, over the field size <code>q</code> (see Figure 1 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>). The
-Client computes the "<code>v</code> bits", the bit representation of <code>value - B1</code>
+range of <code>[B1, B2]</code>, over the field modulus <code>q</code> (see Figure 1 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>).
+The Client computes the "<code>v</code> bits", the bit representation of <code>value - B1</code>
 (modulo <code>q</code>), and the "<code>u</code> bits", the bit representation of <code>B2 - value</code>
 (modulo <code>q</code>). The number of bits for the <code>v</code> and <code>u</code> bits is
 <code>ceil(log2(B2 - B1 + 1))</code>.<a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
@@ -1626,8 +1626,8 @@ check that it is in the desired range.<a href="#section-4.1.2.2-1.1.1" class="pi
 </div>
 <div id="run-wr-check">
 <section id="section-4.1.3">
-          <h4 id="name-running-the-wraparound-test">
-<a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-running-the-wraparound-test" class="section-name selfRef">Running the Wraparound Tests</a>
+          <h4 id="name-running-the-wraparound-chec">
+<a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-running-the-wraparound-chec" class="section-name selfRef">Running the Wraparound Checks</a>
           </h4>
 <p id="section-4.1.3-1">Given the encoded gradient from <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.2</a> and the XOF to
 generate the random vectors, the Client needs to run the wraparound check
@@ -1655,16 +1655,16 @@ gradient and the random vector derived on their own.<a href="#section-4.1.3-4" c
 <p id="section-4.1.4-1">We define a function <code>PineValid.encode_wr_checks(self,
 encoded_gradient: list[Field], wr_joint_rand_xof: Xof) -&gt;
 tuple[list[Field], list[Field]]</code> that implements this encoding step. It returns
-a tuple of range-checked, wraparound check results, and the wraparound check
-results (i.e., the dot products) from <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>.<a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
+the tuple of range-checked, wraparound check results that will be sent to the
+Aggregators, and the wraparound check results (i.e., the dot products from
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>) that will be passed as inputs to the FLP circuit.<a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
 <p id="section-4.1.4-2">The Client obtains the wraparound check results, as described in
-<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>. For each wraparound check, the Client runs the range check on
-the result to see if it is in the range of
-<code>[-wr_check_bound, wr_check_bound + 1]</code>. Note we choose <code>wr_check_bound</code>, such
-that <code>wr_check_bound + 2</code> is a power of 2, so the Client does not have to send
-the <code>u</code> bits in range check. The Client also keeps track of a success bit
-<code>wr_check_g</code>, which is a <code>1</code> if the wraparound check result is in range, and <code>0</code>
-otherwise.<a href="#section-4.1.4-2" class="pilcrow">¶</a></p>
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>. For each check, the Client runs the range check on the result
+to see if it is in the range of <code>[-wr_check_bound, wr_check_bound + 1]</code>. Note we
+choose <code>wr_check_bound</code>, such that <code>wr_check_bound + 2</code> is a power of 2, so the
+Client does not have to send the <code>u</code> bits in range check. The Client also keeps
+track of a success bit <code>wr_check_g</code>, which is a <code>1</code> if the wraparound check
+result is in range, and <code>0</code> otherwise.<a href="#section-4.1.4-2" class="pilcrow">¶</a></p>
 <p id="section-4.1.4-3">The Client counts how many wraparound checks it has passed. If it has passed
 fewer than <code>num_wr_successes</code> of them, it should retry, by using a new XOF
 seed to re-generate the random vectors and re-run wraparound checks
@@ -1689,8 +1689,8 @@ encoded from the floating point numbers.<a href="#section-4.2-2.1.1" class="pilc
 </li>
           <li class="normal" id="section-4.2-2.2">
             <p id="section-4.2-2.2.1">The next <code>bit_checked_len</code> entries are expected to be bits, and should contain
-the bits for the range check of the L2 norm, the bits for the range check of
-each wraparound check, and the success bits in wraparound checks.<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
+the bits for the range-checked L2-norm, the bits for the range-checked
+wraparound check results, and the success bits in wraparound checks.<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.2-2.3">
             <p id="section-4.2-2.3.1">The last <code>num_wr_checks</code> are the wraparound check results, i.e., the dot
@@ -1803,20 +1803,20 @@ described in <a href="#valid-range-check" class="auto internal xref">Section 4.2
 <a href="#section-4.2.4" class="section-number selfRef">4.2.4. </a><a href="#name-wraparound-check" class="section-name selfRef">Wraparound Check</a>
           </h4>
 <p id="section-4.2.4-1">The purpose of wraparound check is to check the squared L2-norm of the encoded
-Client gradient hasn't overflown the field size <code>q</code>.<a href="#section-4.2.4-1" class="pilcrow">¶</a></p>
+Client gradient hasn't overflown the field modulus <code>q</code>.<a href="#section-4.2.4-1" class="pilcrow">¶</a></p>
 <p id="section-4.2.4-2">The validity circuit verifies two properties for wraparound checks:<a href="#section-4.2.4-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.2.4-3.1">
               <p id="section-4.2.4-3.1.1">Quadratic check (See bullet point 3 in Figure 2 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>): Recall in
 <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>, the Client keeps track of a success bit for each
-wraparound check, i.e., whether it has passed that check. For each wraparound
-check, the Aggregators then verify a quadratic constraint that, either the
-success bit is a <code>0</code> (i.e., the Client has failed that check), or the success
-bit is a <code>1</code>, and the range-checked result reported by the Client is correct,
-based on the wraparound check result (i.e., the dot product) computed by the
-Aggregators from the encoded gradient and the random vector. For this, the
-Aggregators multiply their shares of the success bit, and the difference of
-the range-checked result reported by the Client, and that computed by the
+wraparound check, i.e., whether it has passed that check. For each check, the
+Aggregators then verify a quadratic constraint that, either the success bit is
+a <code>0</code> (i.e., the Client has failed that check), or the success bit is a <code>1</code>,
+and the range-checked result reported by the Client is correct, based on the
+wraparound check result (i.e., the dot product) computed by the Aggregators
+from the encoded gradient and the random vector. For this, the Aggregators
+multiply their shares of the success bit, and the difference of the
+range-checked result reported by the Client, and that computed by the
 Aggregators. We then construct a polynomial from a random linear combination
 of the quadratic check at each wraparound check, and evaluate it at a random
 point <code>r_wr_check</code>, the joint randomness.<a href="#section-4.2.4-3.1.1" class="pilcrow">¶</a></p>
@@ -1888,13 +1888,14 @@ to derive the parts.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
 Aggregators, the Client first encodes its gradient into field elements, and
 encodes the range-checked L2-norm, according to <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.2</a>.
 Next, it derives the wraparound joint randomness for the wraparound checks as
-described above. The encoded gradient, range-checked norm, and results for
-wraparound checks will be secret-shared to (1) be sent as input shares for the
-Aggregators, and (2) derive the verification joint randomness as described
-above. The Client then generates the proof with the FLP and secret shares it.
-The secret-shared proof, along with the input shares, and the joint randomness
-parts for both wraparound and verification joint randomness, are sent to the
-Aggregators.<a href="#section-5-3" class="pilcrow">¶</a></p>
+described above, and uses that to encode the range-checked, wraparound check
+results as described in <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>}. The encoded gradient,
+range-checked norm, and range-checked wraparound check results will be
+secret-shared to (1) be sent as input shares for the Aggregators, and (2) derive
+the verification joint randomness as described above. The Client then generates
+the proof with the FLP and secret shares it. The secret-shared proof, along with
+the input shares, and the joint randomness parts for both wraparound and
+verification joint randomness, are sent to the Aggregators.<a href="#section-5-3" class="pilcrow">¶</a></p>
 <p id="section-5-4">Then the Aggregators carry out a multi-party computation to obtain the output
 shares (the secret shares of the encoded Client gradient), and also reject
 Client gradients that have invalid L2-norm. Each Aggregator first needs to
@@ -1903,11 +1904,12 @@ preparation <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg
 joint randomness part like the Client does. It only derives the joint
 randomness part from its secret share via the XOF, and applies its part and
 and other Aggregators' parts sent by the Client to the XOF to obtain the joint
-randomness seed. Then each Aggregator runs the wraparound checks with the
-wraparound joint randomness, and queries the FLP with its input share, proof
-share, the wraparound check results, and the verification joint randomness. All
-Aggregators then exchange the results from the FLP and decide whether to accept
-that Client gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
+randomness seed. Then each Aggregator runs the wraparound checks
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a> with its share of encoded gradient and the wraparound joint
+randomness, and queries the FLP with its input share, proof share, the
+wraparound check results, and the verification joint randomness. All Aggregators
+then exchange the results from the FLP and decide whether to accept that Client
+gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
 <p id="section-5-5">Next, each Aggregator sums up their shares of the encoded gradients and sends
 the aggregate share to the Collector. Finally, the Collector sums up the
 aggregate shares to obtain the aggregate result, and decodes it into an array
