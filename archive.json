@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-03T01:15:10.595251+00:00",
+  "timestamp": "2024-03-05T01:11:08.960268+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -8747,26 +8747,28 @@
     {
       "number": 72,
       "id": "PR_kwDOJWdxls5oSBWQ",
-      "title": "Fix wording in wraparound checks",
+      "title": "Clean up some texts for wraparound checks",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/72",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "We have conflicting references of \"wraparound check results\", e.g., \"Encoding range-checked wraparound check results\", which are the bits of the range-checked result in wraparound check, and we also have \"wraparound check results\", that we typically mean the dot products from running wraparound tests.\r\n\r\nHow about we use \"check\" on the entire wraparound \"check\" section, i.e., it is checking for wraparound, similar to L2-norm \"check\". And we also have the quadratic \"check\" and success count \"check\" in wraparound checks.\r\nFor the dot product computation, we will refer to it as wraparound \"test\". I think we already did this in a couple of places, but just weren't consistent about it.",
       "createdAt": "2024-02-29T11:22:19Z",
-      "updatedAt": "2024-03-01T02:12:53Z",
+      "updatedAt": "2024-03-04T15:26:44Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
-      "baseRefOid": "fa786cc99251d807477301400fd8f343a4380e28",
+      "baseRefOid": "31126a90c743bf5007ffff50200abd8129f72a23",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/wr-wording",
-      "headRefOid": "ab3fce05c4b4f23df194d377f3cbe02f0284c58a",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "6b59a9fd1ad3eb0a829af7a18cf395d28552a7ef",
+      "closedAt": "2024-03-04T15:26:42Z",
+      "mergedAt": "2024-03-04T15:26:42Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "4696aecf3be815d182e5b2aed97e12b9400ca9b5"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -8781,9 +8783,44 @@
           "body": "> We have conflicting references of \"wraparound check results\", e.g., \"Encoding range-checked wraparound check results\", which are the bits of the range-checked result in wraparound check, and we also have \"wraparound check results\", that we typically mean the dot products from running wraparound tests.\r\n> \r\n> How about we use \"check\" on the entire wraparound \"check\" section, i.e., it is checking for wraparound, similar to L2-norm \"check\". And we also have the quadratic \"check\" and success count \"check\" in wraparound checks. For the dot product computation, we will refer to it as wraparound \"test\". I think we already did this in a couple of places, but just weren't consistent about it.\r\n\r\nI'd prefer to use one term: either \"check\" or \"test\". Mixing them would be confusing.\r\n\r\nInstead, I think our goal should be to make sure the distinction is clear in context: one is encoded in the in the input (shares), the other is computed from the input (shares).",
           "createdAt": "2024-02-29T13:58:23Z",
           "updatedAt": "2024-02-29T13:58:23Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "> Instead, I think our goal should be to make sure the distinction is clear in context: one is encoded in the in the input (shares), the other is computed from the input (shares).\r\n\r\nGot it. I reworked this PR and tried to clarify the distinction between them.",
+          "createdAt": "2024-03-04T10:09:49Z",
+          "updatedAt": "2024-03-04T10:09:49Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Squashed.",
+          "createdAt": "2024-03-04T15:26:38Z",
+          "updatedAt": "2024-03-04T15:26:38Z"
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yHaMq",
+          "commit": {
+            "abbreviatedOid": "b2d45cb"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-04T15:01:22Z",
+          "updatedAt": "2024-03-04T15:01:48Z",
+          "comments": [
+            {
+              "originalPosition": 26,
+              "body": "```suggestion\r\nthe tuple of range-checked, wraparound check results that will be sent to the\r\n```",
+              "createdAt": "2024-03-04T15:01:22Z",
+              "updatedAt": "2024-03-04T15:01:48Z"
+            }
+          ]
+        }
+      ]
     },
     {
       "number": 73,
@@ -8960,6 +8997,150 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "number": 78,
+      "id": "PR_kwDOJWdxls5omiUk",
+      "title": "Field size check for range check and wraparound check",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/78",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-03-04T15:05:04Z",
+      "updatedAt": "2024-03-04T20:51:17Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4696aecf3be815d182e5b2aed97e12b9400ca9b5",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/field-size-check",
+      "headRefOid": "f7a06a7687d4d1b79d41151bd0b8fcf0737108e7",
+      "closedAt": "2024-03-04T20:51:15Z",
+      "mergedAt": "2024-03-04T20:51:15Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "f304b013bfccea483411fc8324b043208541f624"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yHfdq",
+          "commit": {
+            "abbreviatedOid": "112e631"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-03-04T15:06:32Z",
+          "updatedAt": "2024-03-04T15:06:35Z",
+          "comments": [
+            {
+              "originalPosition": 36,
+              "body": "nit: Given we seem to use `wr_check_bound + 1` more than `wr_check_bound`, maybe we change the range check bounds for wraparound check to be `[-wr_check_bound + 1, wr_check_bound]`, and avoid the `-1` when we compute it? Currently the `wr_check_bound` is computed as:\r\n\r\n```\r\nself.Field(\r\n            next_power_of_2(math.ceil(alpha * encoded_norm_bound_unsigned) + 1)\r\n            - 1\r\n        )\r\n```\r\n\r\nIt will make this if block a bit cleaner.",
+              "createdAt": "2024-03-04T15:06:32Z",
+              "updatedAt": "2024-03-04T15:10:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5yINkQ",
+          "commit": {
+            "abbreviatedOid": "112e631"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-04T16:23:43Z",
+          "updatedAt": "2024-03-04T16:23:46Z",
+          "comments": [
+            {
+              "originalPosition": 36,
+              "body": "That sounds fine. You may need to end up some unit tests?",
+              "createdAt": "2024-03-04T16:23:43Z",
+              "updatedAt": "2024-03-04T16:23:46Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5yJJIe",
+          "commit": {
+            "abbreviatedOid": "112e631"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-03-04T18:22:02Z",
+          "updatedAt": "2024-03-04T18:22:03Z",
+          "comments": [
+            {
+              "originalPosition": 36,
+              "body": "I made this change, and added some unit tests.",
+              "createdAt": "2024-03-04T18:22:03Z",
+              "updatedAt": "2024-03-04T18:22:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5yKVQ7",
+          "commit": {
+            "abbreviatedOid": "f7a06a7"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-04T20:49:38Z",
+          "updatedAt": "2024-03-04T20:49:38Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 79,
+      "id": "PR_kwDOJWdxls5ooy0X",
+      "title": "Ack Guy and Kunal",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/79",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-03-04T20:50:11Z",
+      "updatedAt": "2024-03-04T20:51:36Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4696aecf3be815d182e5b2aed97e12b9400ca9b5",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/ack",
+      "headRefOid": "f6a8c8120742f067dad11b567957b0c8272a00ba",
+      "closedAt": "2024-03-04T20:51:34Z",
+      "mergedAt": "2024-03-04T20:51:34Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "3e3bff0de25b5b9fbb5b099a09ae00dc18e7a281"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yKVrD",
+          "commit": {
+            "abbreviatedOid": "f6a8c81"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-04T20:50:48Z",
+          "updatedAt": "2024-03-04T20:50:48Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
