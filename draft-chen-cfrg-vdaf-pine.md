@@ -301,7 +301,7 @@ Operational parameters for the proof system are summarized below in
 | alpha                 | `float` | Parameter in wraparound check that determines the ZK error. The higher `alpha` is, the lower ZK error is. |
 | num_wr_checks         | int     | Number of wraparound checks to run. |
 | num_wr_successes      | int     | Minimum number of wraparound checks that a Client must pass. |
-| encoded_sq_norm_bound | Field   | The square of `l2_norm_bound` encoded into a field element. |
+| sq_norm_bound         | Field   | The square of `l2_norm_bound` encoded into a field element. |
 | wr_check_bound        | Field   | The bound of the range check for each wraparound check. |
 | num_bits_for_sq_norm  | int     | Number of bits to encode the squared L2-norm. |
 | num_bits_for_wr_check | int     | Number of bits to encode the range check in each wraparound check. |
@@ -316,9 +316,9 @@ The measurement encoding is done in two stages:
   Client gradient into field elements {{float-to-field}}, and encoding the
   results for L2-norm check {{l2-norm-check}}, by computing the bit
   representation of the squared L2-norm, modulo `q`, of the encoded gradient.
-  The result of this step allows Aggregators to check the squared L2-norm of the
-  Client's gradient, modulo `q`, falls in the desired range of
-  `[0, encoded_sq_norm_bound]`.
+  The result of this step allows Aggregators to check the squared L2-norm of
+  the Client's gradient, modulo `q`, falls in the desired range of `[0,
+  sq_norm_bound]`.
 * {{encode-wr-check}} involves encoding the results of running wraparound checks
   {{run-wr-check}}, based on the encoded gradient from the previous step, and
   the random vectors derived from a short, random seed using an XOF. The result
@@ -475,7 +475,7 @@ non-zero with high probability.
 ### L2 Norm Check {#valid-norm-check}
 
 The purpose of L2 norm check is to check the squared L2-norm of the encoded
-gradient is in the range of `[0, encoded_sq_norm_bound]`.
+gradient is in the range of `[0, sq_norm_bound]`.
 
 The validity circuit verifies two properties of the L2 norm reported by the
 Client:
@@ -487,8 +487,8 @@ Client:
   squared norm (as defined above in {{valid-bit-check}}), and check that the
   values are equal.
 * Range check: The squared norm reported by the Client is in the desired range
-  `[0, encoded_sq_norm_bound]`. For this, the Aggregators run the range check
-  described in {{valid-range-check}}.
+  `[0, sq_norm_bound]`. For this, the Aggregators run the range check described
+  in {{valid-range-check}}.
 
 > TODO Put `PineValid.eval_norm_check()` implementation here.
 

@@ -157,7 +157,7 @@ class TestOperationalParameters(unittest.TestCase):
             self.assertEqual(v.num_frac_bits, t["num_frac_bits"])
             self.assertEqual(v.dimension, 10000)
             self.assertEqual(v.chunk_length, 123)
-            self.assertEqual(v.encoded_sq_norm_bound,
+            self.assertEqual(v.sq_norm_bound,
                              t["expected_sq_norm_bound"])
             self.assertEqual(v.num_bits_for_sq_norm,
                              t["expected_num_bits_for_sq_norm"])
