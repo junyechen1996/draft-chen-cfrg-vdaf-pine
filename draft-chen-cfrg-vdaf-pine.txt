@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 5 September 2024                                     Cloudflare
-                                                            4 March 2024
+Expires: 8 September 2024                                     Cloudflare
+                                                            7 March 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -51,7 +51,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 5 September 2024.
+   This Internet-Draft will expire on 8 September 2024.
 
 Copyright Notice
 
@@ -333,7 +333,7 @@ Table of Contents
       |                       |       | wraparound checks that a    |
       |                       |       | Client must pass.           |
       +-----------------------+-------+-----------------------------+
-      | encoded_sq_norm_bound | Field | The square of l2_norm_bound |
+      | sq_norm_bound         | Field | The square of l2_norm_bound |
       |                       |       | encoded into a field        |
       |                       |       | element.                    |
       +-----------------------+-------+-----------------------------+
@@ -367,8 +367,8 @@ Table of Contents
    squared L2-norm, modulo q, of the encoded gradient.  The result of
    this step allows Aggregators to check the squared L2-norm of the
    Client's gradient, modulo q, falls in the desired range of [0,
-   encoded_sq_norm_bound]. * Section 4.1.4 involves encoding the results
-   of running wraparound checks Section 4.1.3, based on the encoded
+   sq_norm_bound]. * Section 4.1.4 involves encoding the results of
+   running wraparound checks Section 4.1.3, based on the encoded
    gradient from the previous step, and the random vectors derived from
    a short, random seed using an XOF.  The result of this step, along
    with the encoded gradient and the random vector that the Aggregators
@@ -536,7 +536,7 @@ Table of Contents
 4.2.3.  L2 Norm Check
 
    The purpose of L2 norm check is to check the squared L2-norm of the
-   encoded gradient is in the range of [0, encoded_sq_norm_bound].
+   encoded gradient is in the range of [0, sq_norm_bound].
 
    The validity circuit verifies two properties of the L2 norm reported
    by the Client:
@@ -550,8 +550,8 @@ Table of Contents
       equal.
 
    *  Range check: The squared norm reported by the Client is in the
-      desired range [0, encoded_sq_norm_bound].  For this, the
-      Aggregators run the range check described in Section 4.2.1.
+      desired range [0, sq_norm_bound].  For this, the Aggregators run
+      the range check described in Section 4.2.1.
 
       TODO Put PineValid.eval_norm_check() implementation here.
 
