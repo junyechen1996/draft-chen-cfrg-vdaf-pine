@@ -69,31 +69,30 @@ class PineValid(Valid):
                              "number of fractional bits, that causes the "
                              "encoded norm bound to be larger than "
                              "field modulus.")
-        self.encoded_sq_norm_bound = self.Field(
+        self.sq_norm_bound = self.Field(
             encoded_norm_bound_unsigned ** 2
         )
-        # Number of bits to represent the squared L2-norm, which should
-        # be in range `[0, encoded_sq_norm_bound]`. The total number of values
-        # in this range is `encoded_sq_norm_bound + 1`, so take the `log2`
-        # of this quantity.
+
+        # Number of bits to represent the number of possible squared norms. The
+        # squared norm must be in range `[0, sq_norm_bound]`, so this is the
+        # number of bits needed to encode `sq_norm_bound`.
         self.num_bits_for_sq_norm = \
-            math.ceil(math.log2(self.encoded_sq_norm_bound.as_unsigned() + 1))
+            self.sq_norm_bound.as_unsigned().bit_length()
 
         # Wraparound check bound, equal to the smallest power of 2 larger than
         # or equal to `ceil(alpha * encoded_norm_bound_unsigned) + 1`. Using a
         # power of 2 allows us to use the optimization of Remark 3.2 without
-        # degrading completeness. The range for wraparound check thus becomes
-        # `[-wr_check_bound + 1, wr_check_bound]`.
+        # degrading completeness.
         self.wr_check_bound = self.Field(
             next_power_of_2(math.ceil(alpha * encoded_norm_bound_unsigned) + 1)
         )
 
         # Check field size requirement in:
         # - Figure 1: Range check for squared L2-norm,
-        #   `q > 3 * encoded_sq_norm_bound + 2`.
+        #   `q > 3 * sq_norm_bound + 2`.
         # - Lemma 3.3: `q > max(81 * alpha^2 * B, 100, 2 * num_wr_checks)`, or,
         #   `q > max(81 * wr_check_bound**2, 100, 2 * num_wr_checks)`.
-        if ((self.Field.MODULUS - 2) / self.encoded_sq_norm_bound.as_unsigned()
+        if ((self.Field.MODULUS - 2) / self.sq_norm_bound.as_unsigned()
             <= 3):
             raise ValueError("User parameter is too large that range check "
                              "is infeasible given the field modulus.")
@@ -106,13 +105,12 @@ class PineValid(Valid):
             raise ValueError("User parameter is too large that wraparound "
                              "check is infeasible given the field modulus.")
 
-        # Number of bits to represent each wraparound check result, which
-        # should be in range `[-wr_check_bound + 1, wr_check_bound]`. The number
-        # of values in this range is `2 * wr_check_bound`, so take the `log2`
-        # of `wr_check_bound` and add 1 to it.
-        self.num_bits_for_wr_check = 1 + math.ceil(math.log2(
-            self.wr_check_bound.as_unsigned()
-        ))
+        # Number of bits to represent the number of possible wraparound check
+        # results. The result must be in range `[-wr_check_bound + 1,
+        # wr_check_bound]`, so this is the number of bits needed to encode `2 *
+        # wr_check_bound - 1`.
+        self.num_bits_for_wr_check = \
+            (2*self.wr_check_bound.as_unsigned()-1).bit_length()
 
         # Length of the encoded gradient and the L2-norm check.
         self.encoded_gradient_and_norm_len = \
@@ -276,7 +274,7 @@ class PineValid(Valid):
             # the value claimed by the Client.
             sq_norm_v - computed_sq_norm,
             # Check the squared L2-norm is in range (see [ROCT23], Figure 1).
-            sq_norm_v + sq_norm_u - self.encoded_sq_norm_bound * shares_inv,
+            sq_norm_v + sq_norm_u - self.sq_norm_bound * shares_inv,
         )
 
     def eval_wr_checks(self,
@@ -363,7 +361,7 @@ class PineValid(Valid):
         # Encode results for range check of the squared L2-norm.
         sq_norm = sum((x**2 for x in encoded_gradient), self.Field(0))
         (_, sq_norm_v, sq_norm_u) = range_check(
-            sq_norm, self.Field(0), self.encoded_sq_norm_bound,
+            sq_norm, self.Field(0), self.sq_norm_bound,
         )
         return encoded_gradient + \
             self.Field.encode_into_bit_vector(
