@@ -1516,7 +1516,7 @@ derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a
             <td class="text-left" rowspan="1" colspan="1">Minimum number of wraparound checks that a Client must pass.</td>
           </tr>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">encoded_sq_norm_bound</td>
+            <td class="text-left" rowspan="1" colspan="1">sq_norm_bound</td>
             <td class="text-left" rowspan="1" colspan="1">Field</td>
             <td class="text-left" rowspan="1" colspan="1">The square of <code>l2_norm_bound</code> encoded into a field element.</td>
           </tr>
@@ -1558,9 +1558,9 @@ derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a
   Client gradient into field elements <a href="#float-to-field" class="auto internal xref">Section 4.1.2.1</a>, and encoding the
   results for L2-norm check <a href="#l2-norm-check" class="auto internal xref">Section 4.1.2.2</a>, by computing the bit
   representation of the squared L2-norm, modulo <code>q</code>, of the encoded gradient.
-  The result of this step allows Aggregators to check the squared L2-norm of the
-  Client's gradient, modulo <code>q</code>, falls in the desired range of
-  <code>[0, encoded_sq_norm_bound]</code>.
+  The result of this step allows Aggregators to check the squared L2-norm of
+  the Client's gradient, modulo <code>q</code>, falls in the desired range of <code>[0,
+  sq_norm_bound]</code>.
 * <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a> involves encoding the results of running wraparound checks
   <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>, based on the encoded gradient from the previous step, and
   the random vectors derived from a short, random seed using an XOF. The result
@@ -1772,7 +1772,7 @@ non-zero with high probability.<a href="#section-4.2.2-4" class="pilcrow">¶</a>
 <a href="#section-4.2.3" class="section-number selfRef">4.2.3. </a><a href="#name-l2-norm-check" class="section-name selfRef">L2 Norm Check</a>
           </h4>
 <p id="section-4.2.3-1">The purpose of L2 norm check is to check the squared L2-norm of the encoded
-gradient is in the range of <code>[0, encoded_sq_norm_bound]</code>.<a href="#section-4.2.3-1" class="pilcrow">¶</a></p>
+gradient is in the range of <code>[0, sq_norm_bound]</code>.<a href="#section-4.2.3-1" class="pilcrow">¶</a></p>
 <p id="section-4.2.3-2">The validity circuit verifies two properties of the L2 norm reported by the
 Client:<a href="#section-4.2.3-2" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -1786,8 +1786,8 @@ values are equal.<a href="#section-4.2.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-4.2.3-3.2">
               <p id="section-4.2.3-3.2.1">Range check: The squared norm reported by the Client is in the desired range
-<code>[0, encoded_sq_norm_bound]</code>. For this, the Aggregators run the range check
-described in <a href="#valid-range-check" class="auto internal xref">Section 4.2.1</a>.<a href="#section-4.2.3-3.2.1" class="pilcrow">¶</a></p>
+<code>[0, sq_norm_bound]</code>. For this, the Aggregators run the range check described
+in <a href="#valid-range-check" class="auto internal xref">Section 4.2.1</a>.<a href="#section-4.2.3-3.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <ul class="normal ulEmpty">
