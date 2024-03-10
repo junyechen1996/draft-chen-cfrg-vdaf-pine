@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-07T00:59:22.455484+00:00",
+  "timestamp": "2024-03-10T01:16:01.317973+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9139,6 +9139,81 @@
           "createdAt": "2024-03-04T20:50:48Z",
           "updatedAt": "2024-03-04T20:50:48Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 80,
+      "id": "PR_kwDOJWdxls5pBBrx",
+      "title": "flp: Unify computation of bit length for range checks",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/80",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The number of bits for each range check is equal to the number of bits required the number of possible values.",
+      "createdAt": "2024-03-07T21:03:22Z",
+      "updatedAt": "2024-03-07T21:28:09Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "f71ddd11cacb0079733c3c84911fdb472cb30edd",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/cleanup",
+      "headRefOid": "5c28a6e041203b652ff74f37051ecad036144199",
+      "closedAt": "2024-03-07T21:28:09Z",
+      "mergedAt": "2024-03-07T21:28:09Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "998a0a5c43aee00125369b65182ad311ce1fb548"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5yp02n",
+          "commit": {
+            "abbreviatedOid": "8e5f378"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-03-07T21:17:03Z",
+          "updatedAt": "2024-03-07T21:18:10Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "There should be some places in the draft that also has `encoded_sq_norm_bound`, can you change those too?",
+              "createdAt": "2024-03-07T21:17:03Z",
+              "updatedAt": "2024-03-07T21:18:10Z"
+            },
+            {
+              "originalPosition": 84,
+              "body": "An alternative is to use `bit_length()` in python. I learned that from David when I implemented `MultiHotHistogram`: https://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/poc/flp_generic.py#L699",
+              "createdAt": "2024-03-07T21:17:41Z",
+              "updatedAt": "2024-03-07T21:18:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5yp4gw",
+          "commit": {
+            "abbreviatedOid": "8e5f378"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-03-07T21:24:53Z",
+          "updatedAt": "2024-03-07T21:24:53Z",
+          "comments": [
+            {
+              "originalPosition": 84,
+              "body": "Done!",
+              "createdAt": "2024-03-07T21:24:53Z",
+              "updatedAt": "2024-03-07T21:24:53Z"
+            }
+          ]
         }
       ]
     }
