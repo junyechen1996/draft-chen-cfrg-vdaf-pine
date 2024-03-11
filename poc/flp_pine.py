@@ -35,7 +35,7 @@ class PineValid(Valid):
                  l2_norm_bound: float,
                  num_frac_bits: int,
                  dimension: int,
-                 chunk_length: int,
+                 chunk_length: int = None,
                  alpha: float = ALPHA,
                  num_wr_checks: int = NUM_WR_CHECKS,
                  num_wr_successes: int = NUM_WR_SUCCESSES):
@@ -46,13 +46,14 @@ class PineValid(Valid):
         by `l2_norm_bound`.
         """
         if l2_norm_bound <= 0.0:
-            raise ValueError("Invalid L2-norm bound, it must be positive")
+            raise ValueError("Invalid L2-norm bound {}, it must be "
+                             "positive".format(l2_norm_bound))
         if num_frac_bits < 0 or num_frac_bits >= 128:
-            raise ValueError(
-                "Invalid number of fractional bits, it must be in [0, 128)"
-            )
+            raise ValueError("Invalid number of fractional bits {}, it must be "
+                             "in [0, 128)".format(num_frac_bits))
         if dimension <= 0:
-            raise ValueError("Invalid dimension, it must be positive")
+            raise ValueError("Invalid dimension {}, it must be positive".format(
+                             dimension))
 
         self.l2_norm_bound = l2_norm_bound
         self.num_frac_bits = num_frac_bits
@@ -65,10 +66,11 @@ class PineValid(Valid):
         if (self.Field.MODULUS / encoded_norm_bound_unsigned
             <= encoded_norm_bound_unsigned):
             # Squaring encoded norm bound overflows field size, reject.
-            raise ValueError("Invalid combination of L2-norm bound and "
-                             "number of fractional bits, that causes the "
-                             "encoded norm bound to be larger than "
-                             "field modulus.")
+            raise ValueError(
+                "Invalid combination of L2-norm bound {} and number of "
+                "fractional bits {}, that causes the encoded norm bound to be "
+                "larger than field modulus for {}.".format(
+                    l2_norm_bound, num_frac_bits, self.Field.__name__))
         self.sq_norm_bound = self.Field(
             encoded_norm_bound_unsigned ** 2
         )
@@ -94,16 +96,22 @@ class PineValid(Valid):
         #   `q > max(81 * wr_check_bound**2, 100, 2 * num_wr_checks)`.
         if ((self.Field.MODULUS - 2) / self.sq_norm_bound.as_unsigned()
             <= 3):
-            raise ValueError("User parameter is too large that range check "
-                             "is infeasible given the field modulus.")
+            raise ValueError(
+                "The combination of L2-norm bound {} and number of fractional "
+                "bits {} is too large that range check is infeasible with "
+                "field modulus for {}.".format(
+                    l2_norm_bound, num_frac_bits, self.Field.__name__))
         if (self.Field.MODULUS / num_wr_checks <= 2 or
             self.Field.MODULUS <= 100 or
             # Check `wr_check_bound` can be safely squared without overflow.
             (self.Field.MODULUS / self.wr_check_bound.as_unsigned() <=
                 self.wr_check_bound.as_unsigned()) or
             (self.Field.MODULUS / self.wr_check_bound.as_unsigned()**2 <= 81)):
-            raise ValueError("User parameter is too large that wraparound "
-                             "check is infeasible given the field modulus.")
+            raise ValueError(
+                "The combination of L2-norm bound {} and number of fractional "
+                "bits {} is too large that wraparound check is infeasible with "
+                "alpha {} and field modulus for {}.".format(
+                    l2_norm_bound, num_frac_bits, alpha, self.Field.__name__))
 
         # Number of bits to represent the number of possible wraparound check
         # results. The result must be in range `[-wr_check_bound + 1,
