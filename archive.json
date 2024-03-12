@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-10T01:16:01.317973+00:00",
+  "timestamp": "2024-03-12T01:11:11.089094+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9216,6 +9216,40 @@
           ]
         }
       ]
+    },
+    {
+      "number": 81,
+      "id": "PR_kwDOJWdxls5pNq67",
+      "title": "Improve wraparound check parameter search",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/81",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The improvements come as:\r\n- We now look for the smallest r_succ that satisfies soundness, then searches for alpha (if possible) that can satisfy ZK.\r\n- Then combine with dimension to compute the number of proofs to satisfy the overall soundness.\r\n\r\nTurns out with num_frac_bits = 24, neither Field56, nor Field48 can satisfy the field size requirement in wraparound checks.",
+      "createdAt": "2024-03-11T08:52:56Z",
+      "updatedAt": "2024-03-11T18:39:05Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "998a0a5c43aee00125369b65182ad311ce1fb548",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/improve-wr-param-search",
+      "headRefOid": "edaf8d632e9b336d26d75f65aaca1a863613b15f",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "Even with `r = 1500`, we cannot find possible `alpha` that can satisfy 2^-100 ZK error for Field48 and Field56, when `num_frac_bits = 24`, but it's possible for `num_frac_bits = 15`, \r\n\r\n```\r\n|r         |r_succ    |l2_norm   |frac_bits |field     |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:---------|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|1500      |971       |1         |15        |Field48   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field56   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field64   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |24        |Field64   |3              |376            |99             |40500     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field128  |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |24        |Field128  |3              |376            |99             |40500     |1.6920026163616637  |\r\n```",
+          "createdAt": "2024-03-11T08:54:26Z",
+          "updatedAt": "2024-03-11T08:54:26Z"
+        }
+      ],
+      "reviews": []
     }
   ]
 }
