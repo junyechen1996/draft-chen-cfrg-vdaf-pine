@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-12T01:11:11.089094+00:00",
+  "timestamp": "2024-03-14T01:11:45.084357+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9229,13 +9229,13 @@
       "labels": [],
       "body": "The improvements come as:\r\n- We now look for the smallest r_succ that satisfies soundness, then searches for alpha (if possible) that can satisfy ZK.\r\n- Then combine with dimension to compute the number of proofs to satisfy the overall soundness.\r\n\r\nTurns out with num_frac_bits = 24, neither Field56, nor Field48 can satisfy the field size requirement in wraparound checks.",
       "createdAt": "2024-03-11T08:52:56Z",
-      "updatedAt": "2024-03-11T18:39:05Z",
+      "updatedAt": "2024-03-13T11:47:28Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "998a0a5c43aee00125369b65182ad311ce1fb548",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/improve-wr-param-search",
-      "headRefOid": "edaf8d632e9b336d26d75f65aaca1a863613b15f",
+      "headRefOid": "33e57e26ee24fb8ae88caafdd18dbb604a10e9a9",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
