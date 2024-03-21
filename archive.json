@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-19T01:12:27.434190+00:00",
+  "timestamp": "2024-03-21T01:13:19.839037+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9229,7 +9229,7 @@
       "labels": [],
       "body": "The improvements come as:\r\n- We now look for the smallest r_succ that satisfies soundness, then searches for alpha (if possible) that can satisfy ZK.\r\n- Then combine with dimension to compute the number of proofs to satisfy the overall soundness.\r\n\r\nTurns out with num_frac_bits = 24, neither Field56, nor Field48 can satisfy the field size requirement in wraparound checks.",
       "createdAt": "2024-03-11T08:52:56Z",
-      "updatedAt": "2024-03-13T11:47:28Z",
+      "updatedAt": "2024-03-20T23:24:01Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "998a0a5c43aee00125369b65182ad311ce1fb548",
@@ -9249,7 +9249,148 @@
           "updatedAt": "2024-03-11T08:54:26Z"
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5zIWU9",
+          "commit": {
+            "abbreviatedOid": "33e57e2"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "I haven't worked my way through the code all the way yet, but I have a lot of comments and wanted to pause here. Two high level things:\r\n\r\n1. The code interleaves pretty printing with the actual logic for computing the parameters. It would be better if the parameters were computed first and stored in some data structure, then the data structure gets printted. That way the reader isn't distracted by irrelevant code.\r\n2. Let's get rid of the code for generating CSV. Note that I had suggested in an earlier PR that this might be more useful than pretty printing: I meant that we should do one or the other, not both. Let's wait to write code until we need it. If you prefer pretty printing, let's go with that.",
+          "createdAt": "2024-03-12T16:25:24Z",
+          "updatedAt": "2024-03-20T23:24:01Z",
+          "comments": [
+            {
+              "originalPosition": 8,
+              "body": "what does \"pmf\" stand for? (Document it.)",
+              "createdAt": "2024-03-12T16:25:24Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 26,
+              "body": "what happens?\r\n\r\nYou might try `alpha^2`, i.e., replace the Python `**` operator with the Sage `^` operator.",
+              "createdAt": "2024-03-20T22:18:24Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 547,
+              "body": "```suggestion\r\n# Field size, l2_norm_bound, and num_frac_bits affect the choice of wraparound\r\n```",
+              "createdAt": "2024-03-20T22:28:37Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 552,
+              "body": "I would compute this by constructing`PineValid()` like we do elsewhere.",
+              "createdAt": "2024-03-20T22:30:37Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 556,
+              "body": "More readable\r\n```suggestion\r\n        if field.MODULUS / 2 < encoded_norm_bound * max_num_clients:\r\n```",
+              "createdAt": "2024-03-20T22:31:31Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 544,
+              "body": "Add a comment here to summarize what it is we want to assess.",
+              "createdAt": "2024-03-20T22:34:33Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 566,
+              "body": "Add a comment here explaining what we're computing (the user parameters).",
+              "createdAt": "2024-03-20T22:34:48Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 565,
+              "body": "Add a comment explaining what this is.",
+              "createdAt": "2024-03-20T22:38:20Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 580,
+              "body": "Equivalent and more clear.\r\n```suggestion\r\n                        max_num_wr_checks,\r\n                        num_wr_checks_step)\r\n```",
+              "createdAt": "2024-03-20T22:38:54Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 533,
+              "body": "This is really icky because we're not doing arithmetic in the right field. I think we should just pick candidate moduli for Field48 and Field64. Fortunately this is really easy with sage:\r\n```\r\n*[junyec/improve-wr-param-search][~/github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/poc]$ sage\r\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\r\n\u2502 SageMath version 9.8, Release Date: 2023-02-11                     \u2502\r\n\u2502 Using Python 3.11.1. Type \"help()\" for help.                       \u2502\r\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\r\nsage: 2^48.previous_prime()\r\n140737488355328\r\n```\r\n\r\nNote: more than likely this won't work for FLP, as we need to find a prime that is \"special\" (i.e., FFT-friendly). But it's good enough for now.",
+              "createdAt": "2024-03-20T22:44:45Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 575,
+              "body": "Is this function really displaying \"user params\"? Note that there are two tables of output.",
+              "createdAt": "2024-03-20T22:46:19Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 302,
+              "body": "Dimensions are also part of the user parameters, right?",
+              "createdAt": "2024-03-20T22:47:26Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 306,
+              "body": "We might as well match the variable names used in the spec. Here and elsewhere.\r\n```suggestion\r\n      check parameters (if possible): `num_wr_checks` (the number of wraparound checks),\r\n      `num_wr_successes` (the number of successful wraparound checks), `alpha`.\r\n```",
+              "createdAt": "2024-03-20T22:48:38Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 297,
+              "body": "Don't specify defaults if they're not exercised. Otherwise we're likely to create code rot.\r\n```suggestion\r\n                        max_num_wr_checks,\r\n                        num_wr_checks_step):\r\n```",
+              "createdAt": "2024-03-20T22:55:16Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 118,
+              "body": "```suggestion\r\n      encode the wraparound check results. We pick the combination that gives the\r\n```",
+              "createdAt": "2024-03-20T23:01:44Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 122,
+              "body": "```suggestion\r\n    # Global max `alpha`. This ensures a sufficiently low ZK error for all user parameters.\r\n```",
+              "createdAt": "2024-03-20T23:05:29Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 125,
+              "body": "Why would this be a problem?",
+              "createdAt": "2024-03-20T23:09:48Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 78,
+              "body": "```suggestion\r\ndef search_r_succ(target_soundness_bits, r):\r\n    '''\r\n    What does this thing do?\r\n    '''\r\n    prob = 0\r\n```",
+              "createdAt": "2024-03-20T23:14:58Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 90,
+              "body": "```suggestion\r\n    # The code should never reach this point unless `target_soundness_bits` is 0, i.e., no\r\n```",
+              "createdAt": "2024-03-20T23:16:42Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 93,
+              "body": "If that's true, then it is probably more appropriate to panic here.\r\n```suggestion\r\n    raise SomeKindOfException\r\n```",
+              "createdAt": "2024-03-20T23:17:05Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            },
+            {
+              "originalPosition": 80,
+              "body": "I think I see what's going on here, but this is very hard to read. In this program we want to optimize for readability rather than performance. Let's just call `wr_sound()` and simplify accordingly.",
+              "createdAt": "2024-03-20T23:22:11Z",
+              "updatedAt": "2024-03-20T23:24:01Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
