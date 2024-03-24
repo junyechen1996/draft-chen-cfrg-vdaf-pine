@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-21T01:13:19.839037+00:00",
+  "timestamp": "2024-03-24T01:18:42.760252+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9229,13 +9229,13 @@
       "labels": [],
       "body": "The improvements come as:\r\n- We now look for the smallest r_succ that satisfies soundness, then searches for alpha (if possible) that can satisfy ZK.\r\n- Then combine with dimension to compute the number of proofs to satisfy the overall soundness.\r\n\r\nTurns out with num_frac_bits = 24, neither Field56, nor Field48 can satisfy the field size requirement in wraparound checks.",
       "createdAt": "2024-03-11T08:52:56Z",
-      "updatedAt": "2024-03-20T23:24:01Z",
+      "updatedAt": "2024-03-22T12:00:20Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "998a0a5c43aee00125369b65182ad311ce1fb548",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/improve-wr-param-search",
-      "headRefOid": "33e57e26ee24fb8ae88caafdd18dbb604a10e9a9",
+      "headRefOid": "f3a30bd1cf1b0684f8a9ac1e8f1b7ade0436ecf2",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -9247,6 +9247,13 @@
           "body": "Even with `r = 1500`, we cannot find possible `alpha` that can satisfy 2^-100 ZK error for Field48 and Field56, when `num_frac_bits = 24`, but it's possible for `num_frac_bits = 15`, \r\n\r\n```\r\n|r         |r_succ    |l2_norm   |frac_bits |field     |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |alpha               |\r\n|:---------|:---------|:---------|:---------|:---------|:--------------|:--------------|:--------------|:---------|:-------------------|\r\n|1500      |971       |1         |15        |Field48   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field56   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field64   |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |24        |Field64   |3              |376            |99             |40500     |1.6920026163616637  |\r\n|1500      |971       |1         |15        |Field128  |3              |376            |99             |27000     |1.6920026163616637  |\r\n|1500      |971       |1         |24        |Field128  |3              |376            |99             |40500     |1.6920026163616637  |\r\n```",
           "createdAt": "2024-03-11T08:54:26Z",
           "updatedAt": "2024-03-11T08:54:26Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "With `num_frac_bits = 20`, `Field56`, there are some interesting outputs (`num_wr_successes < num_wr_checks`):\r\n\r\n```\r\nParameters to satisfy 2^-100 soundness and 2^-100 ZK error\r\nFailed to find alpha in [0.8325546111576977, 10.0] with any combination of num_wr_checks and num_wr_successes, for user parameters l2_norm_bound = 1, num_frac_bits = 20, field = Field48.\r\nDisplaying feasible set of wraparound check and user parameters:\r\n|l2_norm   |frac_bits |field     |num_wr_checks  |num_wr_successes    |alpha               |-log2(eta)     |-log2(zk)      |-log2(sound)   |overhead  |\r\n|:---------|:---------|:---------|:--------------|:-------------------|:-------------------|:--------------|:--------------|:--------------|:---------|\r\n|1         |15        |Field48   |100            |100                 |8.639207325093722   |106            |99             |100            |2100      |\r\n|1         |15        |Field56   |100            |100                 |8.639207325093722   |106            |99             |100            |2100      |\r\n|1         |20        |Field56   |150            |140                 |3.2676572925689347  |14             |100            |99             |3600      |\r\n|1         |15        |Field64   |100            |100                 |8.639207325093722   |106            |99             |100            |2100      |\r\n|1         |20        |Field64   |100            |100                 |8.639207325093722   |106            |99             |100            |2600      |\r\n|1         |24        |Field64   |100            |100                 |8.639207325093722   |106            |99             |100            |3000      |\r\n|1         |15        |Field128  |100            |100                 |8.639207325093722   |106            |99             |100            |2100      |\r\n|1         |20        |Field128  |100            |100                 |8.639207325093722   |106            |99             |100            |2600      |\r\n|1         |24        |Field128  |100            |100                 |8.639207325093722   |106            |99             |100            |3000      |\r\n\r\nDisplaying full VDAF parameters:\r\n|l2_norm   |frac_bits |dimension |chunk_len |field     |proofs    |num_wr_checks  |num_wr_successes    |-log2(zk) |-log2(sound)        |\r\n|:---------|:---------|:---------|:---------|:---------|:---------|:--------------|:-------------------|:---------|:-------------------|\r\n|1         |15        |1000      |57        |Field48   |3         |100            |100                 |99        |99                  |\r\n|1         |15        |10000     |110       |Field48   |3         |100            |100                 |99        |99                  |\r\n|1         |15        |100000    |319       |Field48   |3         |100            |100                 |99        |99                  |\r\n|1         |15        |1000      |57        |Field56   |3         |100            |100                 |99        |99                  |\r\n|1         |15        |10000     |110       |Field56   |3         |100            |100                 |99        |99                  |\r\n|1         |15        |100000    |319       |Field56   |3         |100            |100                 |99        |99                  |\r\n|1         |20        |1000      |69        |Field56   |3         |150            |140                 |100       |99                  |\r\n|1         |20        |10000     |117       |Field56   |3         |150            |140                 |100       |99                  |\r\n|1         |20        |100000    |322       |Field56   |3         |150            |140                 |100       |99                  |\r\n|1         |15        |1000      |57        |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |15        |10000     |110       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |15        |100000    |319       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |20        |1000      |61        |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |20        |10000     |113       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |20        |100000    |320       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |24        |1000      |64        |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |24        |10000     |114       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |24        |100000    |321       |Field64   |2         |100            |100                 |99        |99                  |\r\n|1         |15        |1000      |57        |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |15        |10000     |110       |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |15        |100000    |319       |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |20        |1000      |61        |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |20        |10000     |113       |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |20        |100000    |320       |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |24        |1000      |64        |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |24        |10000     |114       |Field128  |1         |100            |100                 |99        |99                  |\r\n|1         |24        |100000    |321       |Field128  |1         |100            |100                 |99        |99                  |\r\n```\r\n",
+          "createdAt": "2024-03-22T11:57:32Z",
+          "updatedAt": "2024-03-22T11:57:32Z"
         }
       ],
       "reviews": [
@@ -9387,6 +9394,62 @@
               "body": "I think I see what's going on here, but this is very hard to read. In this program we want to optimize for readability rather than performance. Let's just call `wr_sound()` and simplify accordingly.",
               "createdAt": "2024-03-20T23:22:11Z",
               "updatedAt": "2024-03-20T23:24:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls50ZV-m",
+          "commit": {
+            "abbreviatedOid": "f3a30bd"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "I refactored the code more based on the feedbacks:\r\n\r\n- I decoupled the search logic and printing logic, so now there are two functions that do the searching: `search_wr_params` and `search_vdaf_params` (not sure about the name of the second one, it's basically computing the number of proofs for FLP soundness), and for printing: `display_wr_params` and `display_vdaf_params`.\r\n- I won't compute the `max_alpha` given Lemma 3.3. Instead I used a fixed `max_alpha`, e.g., 10, and then do the binary searching of `alpha` between `min_alpha` and `max_alpha`, and delegate the field size checking of each `alpha` to `PineValid.__init__`. This makes the program a little more inefficient, but a lot cleaner, since we can leave Lemma 3.3 logic in `PineValid.__init__` completely.\r\n- Removed `bin_pmf`, instead I binary search `num_wr_successes`. This still runs reasonably fast.\r\n- Added more code comments.\r\n\r\nI squashed commits, since reviewing the new diff on top of the initial diff might get really confusing.",
+          "createdAt": "2024-03-21T16:45:01Z",
+          "updatedAt": "2024-03-22T11:56:07Z",
+          "comments": [
+            {
+              "originalPosition": 125,
+              "body": "`eta` is a probability itself, and shouldn't be greater than 1. Added a comment here.",
+              "createdAt": "2024-03-21T16:45:01Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 8,
+              "body": "Removed this part to address the comment [here](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/81/files#r1533036224).",
+              "createdAt": "2024-03-22T10:54:56Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 80,
+              "body": "Removed this part. I used a binary search to find `num_wr_succcesses`. it should be reasonably fast.",
+              "createdAt": "2024-03-22T10:55:25Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 302,
+              "body": "I put a dummy `dimension` in `user_params` now, so we are consistent with what are included in user parameters.",
+              "createdAt": "2024-03-22T10:55:56Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 533,
+              "body": "Thanks. Added a comment here.",
+              "createdAt": "2024-03-22T10:57:01Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 575,
+              "body": "I renamed `display_user_params` to `display_vdaf_params`, i.e., the full VDAF parameters for PINE (still not sure if this is the best name, or maybe `display_all_params`?).",
+              "createdAt": "2024-03-22T11:03:05Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
+            },
+            {
+              "originalPosition": 26,
+              "body": "I just tried, it still gives me this error:\r\n\r\n```\r\nTraceback (most recent call last):\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 486, in <module>\r\n    wr_and_user_params = search_wr_params(target_bits,\r\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 177, in search_wr_params\r\n    if (bits_of_security(zk(num_wr_checks, num_wr_successes, eta)) <\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 85, in bits_of_security\r\n    return floor(-log(x)/log(_sage_const_2 ))\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/private/var/tmp/sage-10.1-current/local/var/lib/sage/venv-python3.11.1/lib/python3.11/site-packages/sage/functions/other.py\", line 595, in __call__\r\n    return _eval_floor_ceil(self, x, \"floor\", **kwds)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/private/var/tmp/sage-10.1-current/local/var/lib/sage/venv-python3.11.1/lib/python3.11/site-packages/sage/functions/other.py\", line 273, in _eval_floor_ceil\r\n    a = getattr(y_interval.lower(), method)()\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"sage/rings/real_mpfr.pyx\", line 3037, in sage.rings.real_mpfr.RealNumber.floor (build/cythonized/sage/rings/real_mpfr.c:23053)\r\nValueError: Calling floor() on infinity or NaN\r\n```",
+              "createdAt": "2024-03-22T11:33:01Z",
+              "updatedAt": "2024-03-22T11:56:07Z"
             }
           ]
         }
