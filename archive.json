@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-03-31T01:18:58.767964+00:00",
+  "timestamp": "2024-04-02T01:16:43.232206+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9229,7 +9229,7 @@
       "labels": [],
       "body": "The improvements come as:\r\n- We now look for the smallest r_succ that satisfies soundness, then searches for alpha (if possible) that can satisfy ZK.\r\n- Then combine with dimension to compute the number of proofs to satisfy the overall soundness.\r\n\r\nTurns out with num_frac_bits = 24, neither Field56, nor Field48 can satisfy the field size requirement in wraparound checks.",
       "createdAt": "2024-03-11T08:52:56Z",
-      "updatedAt": "2024-03-22T12:00:20Z",
+      "updatedAt": "2024-04-02T00:14:41Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "998a0a5c43aee00125369b65182ad311ce1fb548",
@@ -9450,6 +9450,68 @@
               "body": "I just tried, it still gives me this error:\r\n\r\n```\r\nTraceback (most recent call last):\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 486, in <module>\r\n    wr_and_user_params = search_wr_params(target_bits,\r\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 177, in search_wr_params\r\n    if (bits_of_security(zk(num_wr_checks, num_wr_successes, eta)) <\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/Users/junyec/Desktop/dedisco_v2/draft-chen-cfrg-vdaf-pine/poc/find_wr_params.sage.py\", line 85, in bits_of_security\r\n    return floor(-log(x)/log(_sage_const_2 ))\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/private/var/tmp/sage-10.1-current/local/var/lib/sage/venv-python3.11.1/lib/python3.11/site-packages/sage/functions/other.py\", line 595, in __call__\r\n    return _eval_floor_ceil(self, x, \"floor\", **kwds)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"/private/var/tmp/sage-10.1-current/local/var/lib/sage/venv-python3.11.1/lib/python3.11/site-packages/sage/functions/other.py\", line 273, in _eval_floor_ceil\r\n    a = getattr(y_interval.lower(), method)()\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"sage/rings/real_mpfr.pyx\", line 3037, in sage.rings.real_mpfr.RealNumber.floor (build/cythonized/sage/rings/real_mpfr.c:23053)\r\nValueError: Calling floor() on infinity or NaN\r\n```",
               "createdAt": "2024-03-22T11:33:01Z",
               "updatedAt": "2024-03-22T11:56:07Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls51j6ZU",
+          "commit": {
+            "abbreviatedOid": "f3a30bd"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "Huge improvement, thanks for the hard work. One blocking change request, which is to preoprly compute `Field48.gf` (likewise for `Field56.gf`).",
+          "createdAt": "2024-04-01T23:37:48Z",
+          "updatedAt": "2024-04-02T00:14:41Z",
+          "comments": [
+            {
+              "originalPosition": 620,
+              "body": "What's the \"aggregation requirement\"?",
+              "createdAt": "2024-04-01T23:37:49Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 604,
+              "body": "Likewise below.\r\n```suggestion\r\n    gf = GF(MODULUS)\r\n```",
+              "createdAt": "2024-04-01T23:44:05Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 658,
+              "body": "To what extent is this true? The higher the dimension, the more gadget calls? When we tuned the field size / number of proofs in https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/311, we ended up with a recommendation that does not consider the number of gadget calls. Is there anything about PINE that would lead us to a different conclusion?",
+              "createdAt": "2024-04-01T23:53:03Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 151,
+              "body": "I'd add an assertion here that `min_alpha <= max_alpha`.",
+              "createdAt": "2024-04-01T23:58:19Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 157,
+              "body": "Not immediately obvious to the reader why this `range()` is valid. (Answer: one more wraparound check results in one additional bit of soundness?)",
+              "createdAt": "2024-04-02T00:00:04Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 102,
+              "body": "Do we ever expect the search space to be large, say millions of possible values? If not, I'd suggest making this iterative so that it's easier to read.",
+              "createdAt": "2024-04-02T00:03:42Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 165,
+              "body": "It's good hygiene to name anonymous variables so that the reader knows what's being unpacked. (Replace \"thing\" with whatever this variable actually is.)\r\n```suggestion\r\n    for (l2_norm_bound, num_frac_bits, _thing, field) in user_params:\r\n```",
+              "createdAt": "2024-04-02T00:07:19Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
+            },
+            {
+              "originalPosition": 182,
+              "body": "There are two binary searches in this program. Consider refactoring so that they use the same function.",
+              "createdAt": "2024-04-02T00:09:39Z",
+              "updatedAt": "2024-04-02T00:14:41Z"
             }
           ]
         }
