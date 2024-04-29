@@ -92,8 +92,10 @@ class PineValid(Valid):
         # Check field size requirement in:
         # - Figure 1: Range check for squared L2-norm,
         #   `q > 3 * sq_norm_bound + 2`.
-        # - Lemma 3.3: `q > max(81 * alpha^2 * B, 100, 2 * num_wr_checks)`, or,
-        #   `q > max(81 * wr_check_bound**2, 100, 2 * num_wr_checks)`.
+        # - Lemma 3.3: `q >= max(alpha^2*B/4000, 2600*alpha*sqrt(B), 2*r)`, or
+        #   in terms of `wr_check_bound` and `num_wr_checks`:
+        #   `q >= max(wr_check_bound^2 / 4000, 2600 * wr_check_bound,
+        #   2 * num_wr_checks)`.
         if ((self.Field.MODULUS - 2) / self.sq_norm_bound.as_unsigned()
             <= 3):
             raise ValueError(
@@ -101,12 +103,9 @@ class PineValid(Valid):
                 "bits {} is too large that range check is infeasible with "
                 "field modulus for {}.".format(
                     l2_norm_bound, num_frac_bits, self.Field.__name__))
-        if (self.Field.MODULUS / num_wr_checks <= 2 or
-            self.Field.MODULUS <= 100 or
-            # Check `wr_check_bound` can be safely squared without overflow.
-            (self.Field.MODULUS / self.wr_check_bound.as_unsigned() <=
-                self.wr_check_bound.as_unsigned()) or
-            (self.Field.MODULUS / self.wr_check_bound.as_unsigned()**2 <= 81)):
+        if (self.Field.MODULUS / num_wr_checks < 2 or
+            self.Field.MODULUS / self.wr_check_bound.as_unsigned() < 2600 or
+            self.wr_check_bound.as_unsigned()**2 / self.Field.MODULUS > 4000):
             raise ValueError(
                 "The combination of L2-norm bound {} and number of fractional "
                 "bits {} is too large that wraparound check is infeasible with "
