@@ -436,13 +436,13 @@ class Field56(Field):
 # from `max_num_clients` so that the sum of the floating point values don't
 # overflow the field size.
 user_params = []
-max_num_clients = 1_000_000
+max_num_clients = 100_000
 # Use fixed `l2_norm_bound` and `dimension` when we search for wraparound
 # check parameters.
 l2_norm_bound = 1
-dimension = 100_000
+dimension = 200_000
 for field in [Field32, Field40, Field48, Field56, Field64, Field128]:
-    for num_frac_bits in [15, 20, 24]:
+    for num_frac_bits in [14, 20, 24]:
         try:
             # Check if this combination of user parameters can be used to
             # initialize `PineValid`, with the smallest `alpha` possible
