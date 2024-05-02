@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-30T01:15:03.790667+00:00",
+  "timestamp": "2024-05-02T01:14:56.124427+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9735,13 +9735,13 @@
       "labels": [],
       "body": "",
       "createdAt": "2024-04-29T17:05:59Z",
-      "updatedAt": "2024-04-30T00:27:52Z",
+      "updatedAt": "2024-05-01T15:13:38Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "f803bb9034a4ed6f85b9ef37180ae07ffcaebb6f",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/wr-check-field-req",
-      "headRefOid": "c397c0bcd7a678dbfdc065a12ab6f5a3cc8f8fc0",
+      "headRefOid": "aa25703a7a812151e5e31333326bebb85d890f51",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -9791,6 +9791,66 @@
               "body": "Don't forget to update the comment above.",
               "createdAt": "2024-04-30T00:27:49Z",
               "updatedAt": "2024-04-30T00:27:52Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls55IKt9",
+          "commit": {
+            "abbreviatedOid": "c397c0b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "",
+          "createdAt": "2024-04-30T18:24:03Z",
+          "updatedAt": "2024-04-30T18:24:20Z",
+          "comments": [
+            {
+              "originalPosition": 11,
+              "body": "I'm not sure the math is correct. Expressing things in terms of $\\alpha$ and the bound $B$, we want:\r\n$q \\geq \\frac{B \\alpha^2}{4000}$, $q \\geq 2600 \\alpha \\sqrt{B}$, and $q \\geq 2r$.",
+              "createdAt": "2024-04-30T18:24:03Z",
+              "updatedAt": "2024-04-30T18:24:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls55NMrO",
+          "commit": {
+            "abbreviatedOid": "c397c0b"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-01T11:55:16Z",
+          "updatedAt": "2024-05-01T11:55:16Z",
+          "comments": [
+            {
+              "originalPosition": 11,
+              "body": "Updated comments. I believe this is correct, so we fail if either fails:\r\n\r\n- q / num_wr_checks <= 2\r\n- q / wr_check_bound <= 2600\r\n- q / wr_check_bound / wr_check_bound <= 1/4000",
+              "createdAt": "2024-05-01T11:55:16Z",
+              "updatedAt": "2024-05-01T11:55:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls55OXC7",
+          "commit": {
+            "abbreviatedOid": "c397c0b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-01T15:13:36Z",
+          "updatedAt": "2024-05-01T15:13:36Z",
+          "comments": [
+            {
+              "originalPosition": 11,
+              "body": "Oh I see. I missed the $q \\geq 2r$ check above. \r\n\r\nLet's see if we can simplify this a bit. \r\n\r\nFirst, ideally we would do this computation in a way that doesn't require floating point arithmetic. Is it possible to rearange the inequalities such that the arithmetic is over integers?\r\n\r\nSecond, `q / wr_check_bound**2` is much more readable than `q / wr_check_bound / wr_check_bound`.",
+              "createdAt": "2024-05-01T15:13:36Z",
+              "updatedAt": "2024-05-01T15:13:36Z"
             }
           ]
         }
