@@ -10,6 +10,7 @@ sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import (Unsigned, byte, concat, front, to_be_bytes,
                     vec_add, vec_sub, zeros)
 from field import Field, Field128, Field64
+from field_pine import Field48
 from flp_generic import FlpGeneric
 from flp_pine import PineValid, ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES
 from vdaf import Vdaf
@@ -722,6 +723,29 @@ class Pine64(Pine):
                                    chunk_length = chunk_length,
                                    num_shares = num_shares,
                                    field = Field64,
+                                   num_proofs = 2,
+                                   alpha = alpha,
+                                   num_wr_checks = num_wr_checks,
+                                   num_wr_successes = num_wr_successes)
+
+
+class Pine48(Pine):
+    @classmethod
+    def with_params(cls,
+                    l2_norm_bound,
+                    num_frac_bits,
+                    dimension,
+                    chunk_length,
+                    num_shares,
+                    alpha = ALPHA,
+                    num_wr_checks = NUM_WR_CHECKS,
+                    num_wr_successes = NUM_WR_SUCCESSES):
+        return super().with_params(l2_norm_bound,
+                                   num_frac_bits,
+                                   dimension,
+                                   chunk_length,
+                                   num_shares = num_shares,
+                                   field = Field48,
                                    num_proofs = 3,
                                    alpha = alpha,
                                    num_wr_checks = num_wr_checks,

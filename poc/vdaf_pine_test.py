@@ -10,7 +10,7 @@ sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import TEST_VECTOR, gen_rand
 from field import Field64, Field128
 from vdaf import test_vdaf
-from vdaf_pine import Pine, Pine128, Pine64, VERSION
+from vdaf_pine import Pine, Field48, Pine128, Pine48, Pine64, VERSION
 from vdaf_prio3 import (
     USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
     USAGE_PROVE_RANDOMNESS, USAGE_QUERY_RANDOMNESS, USAGE_JOINT_RAND_SEED,
@@ -90,7 +90,16 @@ class TestPineVdafEndToEnd(unittest.TestCase):
             test_vec_instance=pine.Flp.Valid.Field.__name__
         )
 
-    def test_field64_three_proofs(self):
+    def test_field48(self):
+        pine = Pine48.with_params(l2_norm_bound = self.l2_norm_bound,
+                                  dimension = self.dimension,
+                                  num_frac_bits = self.num_frac_bits,
+                                  chunk_length = self.chunk_length,
+                                  num_shares = self.num_shares)
+        self.assertEqual(pine.Flp.Field, Field48)
+        self.run_pine_vdaf(pine)
+
+    def test_field64(self):
         pine = Pine64.with_params(l2_norm_bound = self.l2_norm_bound,
                                   dimension = self.dimension,
                                   num_frac_bits = self.num_frac_bits,
@@ -99,7 +108,7 @@ class TestPineVdafEndToEnd(unittest.TestCase):
         self.assertEqual(pine.Flp.Field, Field64)
         self.run_pine_vdaf(pine)
 
-    def test_field128_one_proof(self):
+    def test_field128(self):
         pine = Pine128.with_params(l2_norm_bound = self.l2_norm_bound,
                                    dimension = self.dimension,
                                    num_frac_bits = self.num_frac_bits,
