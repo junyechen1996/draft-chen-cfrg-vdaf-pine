@@ -180,15 +180,6 @@ class TestOperationalParameters(unittest.TestCase):
                 "expected_success": False,
             },
             {
-                # After rounding up `alpha * encoded_norm_bound_unsigned`, the
-                # field modulus does not meet the requirement in wraparound
-                # check.
-                "l2_norm_bound": 1.0,
-                "num_frac_bits": 25,
-                "valid": PineValid.with_field(Field64),
-                "expected_success": False,
-            },
-            {
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 24,
                 "valid": PineValid.with_field(Field64),
@@ -202,33 +193,38 @@ class TestOperationalParameters(unittest.TestCase):
                 "expected_success": False,
             },
             {
-                # After rounding up `alpha * encoded_norm_bound_unsigned`, the
-                # field modulus does not meet the requirement in wraparound
-                # check.
-                "l2_norm_bound": 1.0,
-                "num_frac_bits": 57,
-                "valid": PineValid.with_field(Field128),
-                "expected_success": False,
-            },
-            {
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 56,
                 "valid": PineValid.with_field(Field128),
                 "expected_success": True,
             },
+            {
+                # Intentionally specify a large `alpha` to cause wraparound
+                # check's field size requirement to fail.
+                "l2_norm_bound": 1.0,
+                "num_frac_bits": 56,
+                "valid": PineValid.with_field(Field128),
+                "alpha": 1_000_000,
+                "expected_success": False,
+            },
         ]
 
         for t in test_cases:
+            alpha = t.get("alpha", ALPHA)
             # The dimension and chunk_length don't impact these tests.
             if t["expected_success"]:
                 v = t["valid"](
-                    t["l2_norm_bound"], t["num_frac_bits"], 10000, 123
+                    t["l2_norm_bound"], t["num_frac_bits"], 10000, 123, alpha
                 )
                 self.assertIsNotNone(v)
             else:
                 with self.assertRaises(ValueError):
                     v = t["valid"](
-                        t["l2_norm_bound"], t["num_frac_bits"], 10000, 123
+                        t["l2_norm_bound"],
+                        t["num_frac_bits"],
+                        10000,
+                        123,
+                        alpha
                     )
 
 
