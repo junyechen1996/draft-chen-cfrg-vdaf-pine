@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-06-11T01:21:29.402001+00:00",
+  "timestamp": "2024-06-13T01:20:44.378680+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9728,24 +9728,26 @@
       "id": "PR_kwDOJWdxls5uClDx",
       "title": "Better field size requirement for wraparound check",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/82",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2024-04-29T17:05:59Z",
-      "updatedAt": "2024-05-08T20:40:20Z",
+      "updatedAt": "2024-06-12T21:52:44Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "f803bb9034a4ed6f85b9ef37180ae07ffcaebb6f",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/wr-check-field-req",
       "headRefOid": "b88baf36fb6d7b9a3f98e1b0cdf99288b7c5eef4",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-06-11T22:47:58Z",
+      "mergedAt": "2024-06-11T22:47:58Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "c12e02ae82ee20c4d1512d779d17bef444284e99"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -9948,6 +9950,180 @@
               "updatedAt": "2024-05-08T19:41:39Z"
             }
           ]
+        }
+      ]
+    },
+    {
+      "number": 83,
+      "id": "PR_kwDOJWdxls5yKvuo",
+      "title": "Add a GitHub action for running the unit tests",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/83",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Partially addresses #75.",
+      "createdAt": "2024-06-11T23:28:53Z",
+      "updatedAt": "2024-06-12T23:23:26Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "d7ed2add2a00255749c9550ee766e9fd2f7ccf32",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/ci",
+      "headRefOid": "ba9b2ed46847e3db28761cb2efa083b8d912a2ed",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 84,
+      "id": "PR_kwDOJWdxls5yKxlH",
+      "title": "Define Pine48 and change the number of proofs for Pine64",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/84",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Pine48 has three proofs and a 48-bit field. Not accounting for offline attacks, our current estimate suggests this yields at least 100 bits of security.\r\n\r\nBased on the same estimate, only two proofs are required to achieve the same level of security for Pine64.",
+      "createdAt": "2024-06-11T23:38:17Z",
+      "updatedAt": "2024-06-12T23:40:23Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "c12e02ae82ee20c4d1512d779d17bef444284e99",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/field48",
+      "headRefOid": "898c7bf5d433dbb3f5bde8c67f0f09757f3edf6c",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 85,
+      "id": "PR_kwDOJWdxls5yRkxP",
+      "title": "Fix tests that fail after updating wraparound check field size requir\u2026",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/85",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "\u2026ement",
+      "createdAt": "2024-06-12T18:40:31Z",
+      "updatedAt": "2024-06-12T21:52:31Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "c12e02ae82ee20c4d1512d779d17bef444284e99",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/wr-check-field-test",
+      "headRefOid": "256da9efc0eb4e20b3615a238f2e81ea25def053",
+      "closedAt": "2024-06-12T21:52:28Z",
+      "mergedAt": "2024-06-12T21:52:28Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "d7ed2add2a00255749c9550ee766e9fd2f7ccf32"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls59__jw",
+          "commit": {
+            "abbreviatedOid": "7f91166"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-06-12T19:02:06Z",
+          "updatedAt": "2024-06-12T19:02:09Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "If I recall correctly, this was picked because `num_frac_bits` is one bit larger than we can accommodate. Is that the case? If so, is the same test reproducible here?",
+              "createdAt": "2024-06-12T19:02:06Z",
+              "updatedAt": "2024-06-12T19:02:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5-AkxJ",
+          "commit": {
+            "abbreviatedOid": "7f91166"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-06-12T19:53:43Z",
+          "updatedAt": "2024-06-12T19:53:43Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "Yes we cannot accommodate it because the old wraparound check field size requirement will fail. I've added tests to still test wraparound check field size requirement on line 215 to 224 (basically making `alpha` really big).",
+              "createdAt": "2024-06-12T19:53:43Z",
+              "updatedAt": "2024-06-12T19:53:43Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5-Amyy",
+          "commit": {
+            "abbreviatedOid": "7f91166"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-06-12T19:56:26Z",
+          "updatedAt": "2024-06-12T19:56:29Z",
+          "comments": [
+            {
+              "originalPosition": 45,
+              "body": "It looks like we run this test with each test case. Is it helpful to test each test case with a big alpha? I wonder if it would make more sense to just add this as another test case that we expect to fail.",
+              "createdAt": "2024-06-12T19:56:26Z",
+              "updatedAt": "2024-06-12T19:56:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5-Axqx",
+          "commit": {
+            "abbreviatedOid": "7f91166"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-06-12T20:13:57Z",
+          "updatedAt": "2024-06-12T20:13:57Z",
+          "comments": [
+            {
+              "originalPosition": 45,
+              "body": "Works for me. I added one test case that intentionally sets a large alpha.",
+              "createdAt": "2024-06-12T20:13:57Z",
+              "updatedAt": "2024-06-12T20:13:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls5-Ay2T",
+          "commit": {
+            "abbreviatedOid": "256da9e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-06-12T20:16:40Z",
+          "updatedAt": "2024-06-12T20:16:40Z",
+          "comments": []
         }
       ]
     }
