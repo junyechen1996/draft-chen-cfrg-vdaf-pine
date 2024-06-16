@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-06-13T01:20:44.378680+00:00",
+  "timestamp": "2024-06-16T01:33:05.092534+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -9958,26 +9958,42 @@
       "id": "PR_kwDOJWdxls5yKvuo",
       "title": "Add a GitHub action for running the unit tests",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/83",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Partially addresses #75.",
       "createdAt": "2024-06-11T23:28:53Z",
-      "updatedAt": "2024-06-12T23:23:26Z",
+      "updatedAt": "2024-06-13T14:29:47Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "d7ed2add2a00255749c9550ee766e9fd2f7ccf32",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/ci",
       "headRefOid": "ba9b2ed46847e3db28761cb2efa083b8d912a2ed",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-06-13T14:29:47Z",
+      "mergedAt": "2024-06-13T14:29:47Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "f1295e586d40a5d5c4d3506bc42fa6b12db2f48a"
+      },
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5-FzTT",
+          "commit": {
+            "abbreviatedOid": "ba9b2ed"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-06-13T10:52:24Z",
+          "updatedAt": "2024-06-13T10:52:24Z",
+          "comments": []
+        }
+      ]
     },
     {
       "number": 84,
