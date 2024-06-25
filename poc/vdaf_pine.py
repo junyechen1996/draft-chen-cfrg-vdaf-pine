@@ -722,7 +722,7 @@ class Pine64(Pine):
                                    chunk_length = chunk_length,
                                    num_shares = num_shares,
                                    field = Field64,
-                                   num_proofs = 3,
+                                   num_proofs = 2,
                                    alpha = alpha,
                                    num_wr_checks = num_wr_checks,
                                    num_wr_successes = num_wr_successes)
