@@ -90,7 +90,7 @@ class TestPineVdafEndToEnd(unittest.TestCase):
             test_vec_instance=pine.Flp.Valid.Field.__name__
         )
 
-    def test_field64_three_proofs(self):
+    def test_field64(self):
         pine = Pine64.with_params(l2_norm_bound = self.l2_norm_bound,
                                   dimension = self.dimension,
                                   num_frac_bits = self.num_frac_bits,
@@ -99,7 +99,7 @@ class TestPineVdafEndToEnd(unittest.TestCase):
         self.assertEqual(pine.Flp.Field, Field64)
         self.run_pine_vdaf(pine)
 
-    def test_field128_one_proof(self):
+    def test_field128(self):
         pine = Pine128.with_params(l2_norm_bound = self.l2_norm_bound,
                                    dimension = self.dimension,
                                    num_frac_bits = self.num_frac_bits,
