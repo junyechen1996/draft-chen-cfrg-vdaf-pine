@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-06-25T01:21:20.740666+00:00",
+  "timestamp": "2024-06-27T01:21:32.881435+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10000,21 +10000,21 @@
       "id": "PR_kwDOJWdxls5yKxlH",
       "title": "Define Pine48 and change the number of proofs for Pine64",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/84",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Pine48 has three proofs and a 48-bit field. Not accounting for offline attacks, our current estimate suggests this yields at least 100 bits of security.\r\n\r\nBased on the same estimate, only two proofs are required to achieve the same level of security for Pine64.",
       "createdAt": "2024-06-11T23:38:17Z",
-      "updatedAt": "2024-06-12T23:40:23Z",
+      "updatedAt": "2024-06-25T23:19:27Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "c12e02ae82ee20c4d1512d779d17bef444284e99",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/field48",
       "headRefOid": "898c7bf5d433dbb3f5bde8c67f0f09757f3edf6c",
-      "closedAt": null,
+      "closedAt": "2024-06-25T23:19:27Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
@@ -10139,6 +10139,48 @@
           "body": "",
           "createdAt": "2024-06-12T20:16:40Z",
           "updatedAt": "2024-06-12T20:16:40Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 86,
+      "id": "PR_kwDOJWdxls5zjw-C",
+      "title": "Change the number of proofs for Pine64 from 3 to 2",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/86",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Based on our current estimate, two proofs are sufficient to achieve 100 bits of security.",
+      "createdAt": "2024-06-25T23:22:07Z",
+      "updatedAt": "2024-06-26T17:46:14Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "f1295e586d40a5d5c4d3506bc42fa6b12db2f48a",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/pine64",
+      "headRefOid": "cb1f783743a91eebfc44b62d33ccc76e965b3a62",
+      "closedAt": "2024-06-26T17:46:14Z",
+      "mergedAt": "2024-06-26T17:46:14Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "924b07e49946fbc17fa873a74701434a1d4e9fa6"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls5_tKC4",
+          "commit": {
+            "abbreviatedOid": "cb1f783"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-06-26T17:29:17Z",
+          "updatedAt": "2024-06-26T17:29:17Z",
           "comments": []
         }
       ]
