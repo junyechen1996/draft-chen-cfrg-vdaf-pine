@@ -26,13 +26,17 @@ class PineValid(Valid):
     Field = None  # Set by `with_field()`.
 
     @classmethod
+    def encode_float(_cls, x: float, num_frac_bits: int) -> int:
+        return math.floor(x * 2**num_frac_bits)
+
+    @classmethod
     def with_field(PineValid, TheField):
         class PineValidWithField(PineValid):
             Field = TheField
         return PineValidWithField
 
     def __init__(self,
-                 l2_norm_bound: float,
+                 l2_norm_bound: int,
                  num_frac_bits: int,
                  dimension: int,
                  chunk_length: int = None,
@@ -45,7 +49,7 @@ class PineValid(Valid):
         fractional bits, and the L2-norm bound of each gradient is bounded
         by `l2_norm_bound`.
         """
-        if l2_norm_bound <= 0.0:
+        if l2_norm_bound <= 0:
             raise ValueError("Invalid L2-norm bound {}, it must be "
                              "positive".format(l2_norm_bound))
         if num_frac_bits < 0 or num_frac_bits >= 128:
@@ -61,19 +65,11 @@ class PineValid(Valid):
         self.alpha = alpha
         self.num_wr_checks = num_wr_checks
         self.num_wr_successes = num_wr_successes
-        encoded_norm_bound_unsigned = \
-            self.encode_f64_into_field(l2_norm_bound).as_unsigned()
-        if (self.Field.MODULUS / encoded_norm_bound_unsigned
-            <= encoded_norm_bound_unsigned):
+        if (self.Field.MODULUS / l2_norm_bound <= l2_norm_bound):
             # Squaring encoded norm bound overflows field size, reject.
             raise ValueError(
-                "Invalid combination of L2-norm bound {} and number of "
-                "fractional bits {}, that causes the encoded norm bound to be "
-                "larger than field modulus for {}.".format(
-                    l2_norm_bound, num_frac_bits, self.Field.__name__))
-        self.sq_norm_bound = self.Field(
-            encoded_norm_bound_unsigned ** 2
-        )
+                "squared L2-norm bound exceeds the field modulus")
+        self.sq_norm_bound = self.Field(l2_norm_bound ** 2)
 
         # Number of bits to represent the number of possible squared norms. The
         # squared norm must be in range `[0, sq_norm_bound]`, so this is the
@@ -82,11 +78,11 @@ class PineValid(Valid):
             self.sq_norm_bound.as_unsigned().bit_length()
 
         # Wraparound check bound, equal to the smallest power of 2 larger than
-        # or equal to `ceil(alpha * encoded_norm_bound_unsigned) + 1`. Using a
-        # power of 2 allows us to use the optimization of Remark 3.2 without
-        # degrading completeness.
+        # or equal to `ceil(alpha * l2_norm_bound) + 1`. Using a power of 2
+        # allows us to use the optimization of Remark 3.2 without degrading
+        # completeness.
         self.wr_check_bound = self.Field(
-            next_power_of_2(math.ceil(alpha * encoded_norm_bound_unsigned) + 1)
+            next_power_of_2(math.ceil(alpha * l2_norm_bound) + 1)
         )
 
         # Check field size requirement in:
@@ -492,8 +488,7 @@ class PineValid(Valid):
             # per {{fp-encoding}}.
             raise ValueError("f64 encoding doesn't accept NAN, "
                              "infinite, or subnormal floats.")
-        x_encoded = math.floor(x * (2 ** self.num_frac_bits))
-        return self.Field(x_encoded)
+        return self.Field(self.encode_float(x, self.num_frac_bits))
 
     def decode_f64_from_field(self, field_elem: Field) -> float:
         decoded = field_elem.as_unsigned()

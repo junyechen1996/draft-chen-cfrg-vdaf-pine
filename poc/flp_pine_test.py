@@ -74,7 +74,10 @@ class TestEncoding(unittest.TestCase):
             self.assertEqual(decoded, t["expected_result"])
 
     def test_roundtrip_gradient(self):
-        valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
+        num_frac_bits = 15
+        l2_norm_bound = PineValid.encode_float(1.0, num_frac_bits)
+        valid = PineValid.with_field(Field128)(
+            l2_norm_bound, num_frac_bits, 2, 1)
         f64_vals = [0.5, 0.5]
         self.assertEqual(
             f64_vals,
@@ -148,12 +151,13 @@ class TestOperationalParameters(unittest.TestCase):
         ]
 
         for t in test_cases:
+            l2_norm_bound = Valid.encode_float(t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
-            v = Valid(t["l2_norm_bound"], t["num_frac_bits"], 10000, 123)
+            v = Valid(l2_norm_bound, t["num_frac_bits"], 10000, 123)
             self.assertEqual(v.alpha, ALPHA)
             self.assertEqual(v.num_wr_checks, NUM_WR_CHECKS)
             self.assertEqual(v.num_wr_successes, NUM_WR_SUCCESSES)
-            self.assertEqual(v.l2_norm_bound, t["l2_norm_bound"])
+            self.assertEqual(v.l2_norm_bound, l2_norm_bound)
             self.assertEqual(v.num_frac_bits, t["num_frac_bits"])
             self.assertEqual(v.dimension, 10000)
             self.assertEqual(v.chunk_length, 123)
@@ -211,16 +215,17 @@ class TestOperationalParameters(unittest.TestCase):
 
         for t in test_cases:
             alpha = t.get("alpha", ALPHA)
+            l2_norm_bound = t["valid"].encode_float(t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
             if t["expected_success"]:
                 v = t["valid"](
-                    t["l2_norm_bound"], t["num_frac_bits"], 10000, 123, alpha
+                    l2_norm_bound, t["num_frac_bits"], 10000, 123, alpha
                 )
                 self.assertIsNotNone(v)
             else:
                 with self.assertRaises(ValueError):
                     v = t["valid"](
-                        t["l2_norm_bound"],
+                        l2_norm_bound,
                         t["num_frac_bits"],
                         10000,
                         123,
@@ -253,13 +258,14 @@ class TestCircuit(unittest.TestCase):
         Run `test_flp_generic()` from the upstream VDAF repo for various
         parameters.
         """
-        # `PineValid` with `l2_norm_bound = 1.0`, `num_frac_bits = 4`,
+        # `PineValid` with L2-norm bound `1.0`, `num_frac_bits = 4`,
         # `dimension = 4`, `chunk_length = 150`.
-        l2_norm_bound = 1.0
+        num_frac_bits = 4
+        l2_norm_bound = PineValid.encode_float(1.0, num_frac_bits)
         dimension = 4
-        args = [l2_norm_bound, 4, dimension, 150]
+        args = [l2_norm_bound, num_frac_bits, dimension, 150]
         # A gradient with a L2-norm of exactly 1.0.
-        measurement = [l2_norm_bound / 2] * dimension
+        measurement = [1.0 / 2] * dimension
         for field in [Field64, Field128]:
             pine_valid = PineValid.with_field(field)(*args)
             flp = FlpGeneric(pine_valid)
