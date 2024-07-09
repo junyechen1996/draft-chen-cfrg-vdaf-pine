@@ -1,5 +1,6 @@
 """Unit tests for PINE VDAF. """
 
+import math
 import os
 import sys
 import unittest
@@ -10,6 +11,7 @@ sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
 from common import TEST_VECTOR, gen_rand
 from field import Field64, Field128
 from vdaf import test_vdaf
+from flp_pine import PineValid
 from vdaf_pine import Pine, Pine128, Pine64, VERSION
 from vdaf_prio3 import (
     USAGE_MEAS_SHARE, USAGE_PROOF_SHARE, USAGE_JOINT_RANDOMNESS,
@@ -69,9 +71,9 @@ class TestShard(unittest.TestCase):
 class TestPineVdafEndToEnd(unittest.TestCase):
 
     def setUp(self):
-        self.l2_norm_bound = 1.0
-        self.dimension = 20
         self.num_frac_bits = 4
+        self.l2_norm_bound = PineValid.encode_float(1.0, 2**self.num_frac_bits)
+        self.dimension = 20
         self.chunk_length = 150
         self.num_shares = 2
 
