@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-07T01:34:45.929232+00:00",
+  "timestamp": "2024-07-09T01:23:20.442788+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10184,6 +10184,32 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 87,
+      "id": "PR_kwDOJWdxls50wkGI",
+      "title": "Change type of `l2_norm_bound` from `float` to `int`",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/87",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The caller is expected to compute it as `floor(b * 2**num_frac_bits)` where `b` is the real-valued L2-norm.",
+      "createdAt": "2024-07-09T00:16:45Z",
+      "updatedAt": "2024-07-09T00:16:45Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "924b07e49946fbc17fa873a74701434a1d4e9fa6",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/pine-config",
+      "headRefOid": "c95ab9fae6fb1d4f15f35960f9dd582ec82f6255",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
