@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-09T01:23:20.442788+00:00",
+  "timestamp": "2024-07-11T01:23:54.501564+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10197,19 +10197,121 @@
       "labels": [],
       "body": "The caller is expected to compute it as `floor(b * 2**num_frac_bits)` where `b` is the real-valued L2-norm.",
       "createdAt": "2024-07-09T00:16:45Z",
-      "updatedAt": "2024-07-09T00:16:45Z",
+      "updatedAt": "2024-07-10T22:15:10Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "924b07e49946fbc17fa873a74701434a1d4e9fa6",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/pine-config",
-      "headRefOid": "c95ab9fae6fb1d4f15f35960f9dd582ec82f6255",
+      "headRefOid": "947ae241ac168f9a4aa09c600cb9da4141f17aaa",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
-      "reviews": []
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@albertpl please take another look.",
+          "createdAt": "2024-07-10T21:27:58Z",
+          "updatedAt": "2024-07-10T21:27:58Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6BORdX",
+          "commit": {
+            "abbreviatedOid": "c95ab9f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-10T04:26:06Z",
+          "updatedAt": "2024-07-10T04:26:14Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "In other languages,  likely we write another constructor/initializer, instead of having callers to implement this. In Python, perhaps `@classmethod`?",
+              "createdAt": "2024-07-10T04:26:06Z",
+              "updatedAt": "2024-07-10T04:26:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6BUuaV",
+          "commit": {
+            "abbreviatedOid": "c95ab9f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-10T16:27:08Z",
+          "updatedAt": "2024-07-10T16:27:08Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "I'm not sure I understand. Do you mean computing `math.floor(1.0 * 2**self.num_frac_bits)`? \r\n\r\nThe challenge is that, in taskprov, we will encode `l2_norm_bound` as a `uint64`, not a float. So this is what the constructor will get.",
+              "createdAt": "2024-07-10T16:27:08Z",
+              "updatedAt": "2024-07-10T16:27:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6BVUxO",
+          "commit": {
+            "abbreviatedOid": "c95ab9f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-10T17:43:20Z",
+          "updatedAt": "2024-07-10T17:43:20Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "Let me clarify. We can add the canonical implementation as class method for `PineValid`.\r\nSo we will have two ways to instantiate it. One with floating value `l2_norm_bound` and the other with `uint64`.",
+              "createdAt": "2024-07-10T17:43:20Z",
+              "updatedAt": "2024-07-10T17:43:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6BVjk-",
+          "commit": {
+            "abbreviatedOid": "c95ab9f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-10T18:17:03Z",
+          "updatedAt": "2024-07-10T18:17:04Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "That's a good idea, will do.",
+              "createdAt": "2024-07-10T18:17:03Z",
+              "updatedAt": "2024-07-10T18:17:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6BXrOF",
+          "commit": {
+            "abbreviatedOid": "947ae24"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-10T22:15:10Z",
+          "updatedAt": "2024-07-10T22:15:10Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
