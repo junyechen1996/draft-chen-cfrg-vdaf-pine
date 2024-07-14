@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-11T01:23:54.501564+00:00",
+  "timestamp": "2024-07-14T01:36:28.410293+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10190,24 +10190,26 @@
       "id": "PR_kwDOJWdxls50wkGI",
       "title": "Change type of `l2_norm_bound` from `float` to `int`",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/87",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "The caller is expected to compute it as `floor(b * 2**num_frac_bits)` where `b` is the real-valued L2-norm.",
       "createdAt": "2024-07-09T00:16:45Z",
-      "updatedAt": "2024-07-10T22:15:10Z",
+      "updatedAt": "2024-07-12T16:33:18Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "924b07e49946fbc17fa873a74701434a1d4e9fa6",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/pine-config",
       "headRefOid": "947ae241ac168f9a4aa09c600cb9da4141f17aaa",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-07-12T16:33:18Z",
+      "mergedAt": "2024-07-12T16:33:18Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "dfc91fb9ad8b3246a98e6515e86469cbd9e2fdb6"
+      },
       "comments": [
         {
           "author": "cjpatton",
@@ -10309,6 +10311,19 @@
           "body": "",
           "createdAt": "2024-07-10T22:15:10Z",
           "updatedAt": "2024-07-10T22:15:10Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls6BqEGk",
+          "commit": {
+            "abbreviatedOid": "947ae24"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-12T16:22:23Z",
+          "updatedAt": "2024-07-12T16:22:23Z",
           "comments": []
         }
       ]
