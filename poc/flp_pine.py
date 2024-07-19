@@ -49,7 +49,7 @@ class PineValid(Valid):
         fractional bits, and the L2-norm bound of each gradient is bounded
         by `l2_norm_bound`.
         """
-        if l2_norm_bound <= 0:
+        if l2_norm_bound <= 0 or l2_norm_bound > self.Field.MODULUS/2:
             raise ValueError("Invalid L2-norm bound {}, it must be "
                              "positive".format(l2_norm_bound))
         if num_frac_bits < 0 or num_frac_bits >= 128:
@@ -359,7 +359,7 @@ class PineValid(Valid):
         """
         if len(measurement) != self.dimension:
             raise ValueError("Unexpected gradient dimension.")
-        encoded_gradient = [self.encode_f64_into_field(x) for x in measurement]
+        encoded_gradient = [self.encode_float_into_field(x) for x in measurement]
 
         # Encode results for range check of the squared L2-norm.
         sq_norm = sum((x**2 for x in encoded_gradient), self.Field(0))
@@ -479,9 +479,9 @@ class PineValid(Valid):
     def decode(self,
                output: list[Field],
                num_measurements: Unsigned) -> AggResult:
-        return [self.decode_f64_from_field(x) for x in output]
+        return [self.decode_float_from_field(x) for x in output]
 
-    def encode_f64_into_field(self, x: float) -> Field:
+    def encode_float_into_field(self, x: float) -> Field:
         if (math.isnan(x) or not math.isfinite(x) or
             (x != 0.0 and abs(x) < sys.float_info.min)):
             # Reject NAN, infinity, and subnormal floats,
@@ -490,7 +490,7 @@ class PineValid(Valid):
                              "infinite, or subnormal floats.")
         return self.Field(self.encode_float(x, self.num_frac_bits))
 
-    def decode_f64_from_field(self, field_elem: Field) -> float:
+    def decode_float_from_field(self, field_elem: Field) -> float:
         decoded = field_elem.as_unsigned()
         # If the field is larger than half of the field size, then
         # decoded result should be negative.
