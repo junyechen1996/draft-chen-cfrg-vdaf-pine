@@ -64,13 +64,13 @@ class TestEncoding(unittest.TestCase):
             },
         ]
         for (i, t) in enumerate(test_cases):
-            encoded = valid.encode_f64_into_field(t["input"])
+            encoded = valid.encode_float_into_field(t["input"])
             if t["input"] < 0:
                 # Negative values are represented with the upper half of the
                 # field bits.
                 self.assertTrue(
                     encoded.as_unsigned() > math.floor(valid.Field.MODULUS/2))
-            decoded = valid.decode_f64_from_field(encoded)
+            decoded = valid.decode_float_from_field(encoded)
             self.assertEqual(decoded, t["expected_result"])
 
     def test_roundtrip_gradient(self):
