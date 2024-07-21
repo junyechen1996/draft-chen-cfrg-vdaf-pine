@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-18T01:22:43.371210+00:00",
+  "timestamp": "2024-07-21T01:35:45.146590+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10324,6 +10324,90 @@
           "body": "",
           "createdAt": "2024-07-12T16:22:23Z",
           "updatedAt": "2024-07-12T16:22:23Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 88,
+      "id": "PR_kwDOJWdxls518BMk",
+      "title": "Make sure l2_norm_bound is not negative",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/88",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The upper bits of the field are used for negative numbers. If l2_norm_bound is larger than the field modulus divided by 2, then it will be interpreted as a negative number.\r\n\r\nAlso rename `encode_f64_into_field()` to `encode_float_into_field()` since Python doesn't have an f64 type.",
+      "createdAt": "2024-07-19T19:41:40Z",
+      "updatedAt": "2024-07-19T20:57:01Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "dfc91fb9ad8b3246a98e6515e86469cbd9e2fdb6",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/neg-floats",
+      "headRefOid": "15b8b7daed05012a79a0ad8dad4c6fc40225f093",
+      "closedAt": "2024-07-19T20:57:01Z",
+      "mergedAt": "2024-07-19T20:57:01Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "3454cf448c99f79e8193b70faaf3b378c34b82be"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6Ce-f0",
+          "commit": {
+            "abbreviatedOid": "15b8b7d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-19T20:33:59Z",
+          "updatedAt": "2024-07-19T20:33:59Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 89,
+      "id": "PR_kwDOJWdxls518B9i",
+      "title": "Bump VERSION and generate test vectors",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/89",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-07-19T19:44:45Z",
+      "updatedAt": "2024-07-19T20:57:15Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "dfc91fb9ad8b3246a98e6515e86469cbd9e2fdb6",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/bump",
+      "headRefOid": "db02aae265ba5059d3194748becdfd43262c4f59",
+      "closedAt": "2024-07-19T20:57:15Z",
+      "mergedAt": "2024-07-19T20:57:15Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "f06d5344b0b9879d678e9b5ea01878b9a899dd9c"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6Ce-tV",
+          "commit": {
+            "abbreviatedOid": "db02aae"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-19T20:34:19Z",
+          "updatedAt": "2024-07-19T20:34:19Z",
           "comments": []
         }
       ]
