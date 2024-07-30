@@ -3,24 +3,21 @@
 import math
 import os
 import sys
-
-# Access poc folder in submoduled VDAF draft.
-dir_name = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-
-from common import gen_rand
-from flp_pine import PineValid, bit_chunks, ALPHA, NUM_WR_CHECKS, \
-    NUM_WR_SUCCESSES
-from field import Field64, Field128
-from flp_generic import FlpGeneric, test_flp_generic
-
 import unittest
+
+from flp_pine import (PineValid, bit_chunks, ALPHA, NUM_WR_CHECKS,
+                      NUM_WR_SUCCESSES, encode_float)
+
+from vdaf_poc.common import gen_rand
+from vdaf_poc.field import Field64, Field128
+from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19, test_flp_bbcggi19
+from vdaf_poc.xof import XofTurboShake128
 
 
 class TestEncoding(unittest.TestCase):
 
     def test_roundtrip_f64(self):
-        valid = PineValid.with_field(Field128)(1.0, 15, 2, 1)
+        valid = PineValid(Field128, 1.0, 15, 2, 1)
         test_cases = [
             {
                 "input": -100.0,
@@ -69,15 +66,14 @@ class TestEncoding(unittest.TestCase):
                 # Negative values are represented with the upper half of the
                 # field bits.
                 self.assertTrue(
-                    encoded.as_unsigned() > math.floor(valid.Field.MODULUS/2))
+                    encoded.as_unsigned() > math.floor(valid.field.MODULUS/2))
             decoded = valid.decode_float_from_field(encoded)
             self.assertEqual(decoded, t["expected_result"])
 
     def test_roundtrip_gradient(self):
         num_frac_bits = 15
-        l2_norm_bound = PineValid.encode_float(1.0, num_frac_bits)
-        valid = PineValid.with_field(Field128)(
-            l2_norm_bound, num_frac_bits, 2, 1)
+        l2_norm_bound = encode_float(1.0, num_frac_bits)
+        valid = PineValid(Field128, l2_norm_bound, num_frac_bits, 2, 1)
         f64_vals = [0.5, 0.5]
         self.assertEqual(
             f64_vals,
@@ -96,8 +92,6 @@ class TestOperationalParameters(unittest.TestCase):
         various parameters and the default alpha, number of wraparound tests,
         and number of successes.
         """
-
-        Valid = PineValid.with_field(Field128)
 
         test_cases = [
             {
@@ -151,9 +145,9 @@ class TestOperationalParameters(unittest.TestCase):
         ]
 
         for t in test_cases:
-            l2_norm_bound = Valid.encode_float(t["l2_norm_bound"], t["num_frac_bits"])
+            l2_norm_bound = encode_float(t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
-            v = Valid(l2_norm_bound, t["num_frac_bits"], 10000, 123)
+            v = PineValid(Field128, l2_norm_bound, t["num_frac_bits"], 10000, 123)
             self.assertEqual(v.alpha, ALPHA)
             self.assertEqual(v.num_wr_checks, NUM_WR_CHECKS)
             self.assertEqual(v.num_wr_successes, NUM_WR_SUCCESSES)
@@ -180,26 +174,26 @@ class TestOperationalParameters(unittest.TestCase):
                 # Violate range check requirement.
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 32,
-                "valid": PineValid.with_field(Field64),
+                "field": Field64,
                 "expected_success": False,
             },
             {
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 24,
-                "valid": PineValid.with_field(Field64),
+                "field": Field64,
                 "expected_success": True,
             },
             {
                 # Violate range check requirement.
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 64,
-                "valid": PineValid.with_field(Field128),
+                "field": Field128,
                 "expected_success": False,
             },
             {
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 56,
-                "valid": PineValid.with_field(Field128),
+                "field": Field128,
                 "expected_success": True,
             },
             {
@@ -207,7 +201,7 @@ class TestOperationalParameters(unittest.TestCase):
                 # check's field size requirement to fail.
                 "l2_norm_bound": 1.0,
                 "num_frac_bits": 56,
-                "valid": PineValid.with_field(Field128),
+                "field": Field128,
                 "alpha": 1_000_000,
                 "expected_success": False,
             },
@@ -215,16 +209,16 @@ class TestOperationalParameters(unittest.TestCase):
 
         for t in test_cases:
             alpha = t.get("alpha", ALPHA)
-            l2_norm_bound = t["valid"].encode_float(t["l2_norm_bound"], t["num_frac_bits"])
+            l2_norm_bound = encode_float(t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
             if t["expected_success"]:
-                v = t["valid"](
-                    l2_norm_bound, t["num_frac_bits"], 10000, 123, alpha
-                )
+                v = PineValid(t["field"], l2_norm_bound, t["num_frac_bits"],
+                              10000, 123, alpha)
                 self.assertIsNotNone(v)
             else:
                 with self.assertRaises(ValueError):
-                    v = t["valid"](
+                    v = PineValid(
+                        t["field"],
                         l2_norm_bound,
                         t["num_frac_bits"],
                         10000,
@@ -261,24 +255,24 @@ class TestCircuit(unittest.TestCase):
         # `PineValid` with L2-norm bound `1.0`, `num_frac_bits = 4`,
         # `dimension = 4`, `chunk_length = 150`.
         num_frac_bits = 4
-        l2_norm_bound = PineValid.encode_float(1.0, num_frac_bits)
+        l2_norm_bound = encode_float(1.0, num_frac_bits)
         dimension = 4
         args = [l2_norm_bound, num_frac_bits, dimension, 150]
         # A gradient with a L2-norm of exactly 1.0.
         measurement = [1.0 / 2] * dimension
         for field in [Field64, Field128]:
-            pine_valid = PineValid.with_field(field)(*args)
-            flp = FlpGeneric(pine_valid)
+            pine_valid = PineValid(field, *args)
+            flp = FlpBBCGGI19(pine_valid)
 
             # Test PINE FLP with verification.
-            xof = PineValid.Xof(gen_rand(16), b"", b"")
+            xof = XofTurboShake128(gen_rand(16), b"", b"")
             encoded_gradient_and_norm = \
-                flp.Valid.encode_gradient_and_norm(measurement)
+                flp.valid.encode_gradient_and_norm(measurement)
             (wr_check_bits, wr_check_results) = \
                 pine_valid.encode_wr_checks(encoded_gradient_and_norm[:dimension],
                                             xof)
             meas = encoded_gradient_and_norm + wr_check_bits + wr_check_results
-            test_flp_generic(flp, [(meas, True)])
+            test_flp_bbcggi19(flp, [(meas, True)])
 
 
 if __name__ == '__main__':
