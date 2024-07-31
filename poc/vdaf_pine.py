@@ -1,24 +1,21 @@
 """PINE VDAF. """
 
-from abc import abstractmethod
 import os
-import sys
-from typing import Generic, Optional, TypeAlias, TypeVar, Union, cast
+from abc import abstractmethod
+from typing import Generic, TypeAlias, TypeVar, Union, cast
 
 from vdaf_poc.common import (byte, concat, front, to_be_bytes, vec_add,
                              vec_sub, zeros)
-from vdaf_poc.field import Field, Field128, Field64, FftField
-from vdaf_poc.flp import Flp
+from vdaf_poc.field import FftField, Field64, Field128
 from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19
 from vdaf_poc.vdaf import Vdaf
-from vdaf_poc.vdaf_prio3 import (USAGE_MEAS_SHARE, USAGE_PROOF_SHARE,
-                                 USAGE_JOINT_RANDOMNESS,
-                                 USAGE_PROVE_RANDOMNESS,
-                                 USAGE_QUERY_RANDOMNESS, USAGE_JOINT_RAND_SEED,
-                                 USAGE_JOINT_RAND_PART)
+from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
+                                 USAGE_JOINT_RANDOMNESS, USAGE_MEAS_SHARE,
+                                 USAGE_PROOF_SHARE, USAGE_PROVE_RANDOMNESS,
+                                 USAGE_QUERY_RANDOMNESS)
 from vdaf_poc.xof import Xof, XofTurboShake128
 
-from flp_pine import PineValid, ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES
+from flp_pine import ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid
 
 F = TypeVar("F", bound=FftField)
 X = TypeVar("X", bound=Xof)
@@ -214,7 +211,7 @@ class Pine(
         # `Flp.Valid.eval()` later to avoid computing the dot products again.
         (wr_check_bits, wr_check_results) = \
             self.valid.encode_wr_checks(meas[:self.valid.dimension],
-                                            wr_joint_rand_xof)
+                                        wr_joint_rand_xof)
         meas += wr_check_bits
         assert len(meas) == self.MEAS_LEN
 
@@ -228,7 +225,7 @@ class Pine(
                 k_leader_vf_joint_rand_blind,
                 nonce,
                 USAGE_JOINT_RAND_PART
-            )
+        )
         # Compute verification joint randomness field elements.
         vf_joint_rands = self.vf_joint_rands(self.joint_rand_seed(
             k_vf_joint_rand_parts, USAGE_JOINT_RAND_SEED,
@@ -280,8 +277,7 @@ class Pine(
             (k_wr_joint_rand_parts, k_vf_joint_rand_parts), input_shares
         )
 
-    @classmethod
-    def is_valid(Pine, _agg_param, previous_agg_params):
+    def is_valid(self, _agg_param, previous_agg_params):
         """
         Checks if `previous_agg_params` is empty, as input shares in Pine may
         only be used once.
@@ -316,7 +312,7 @@ class Pine(
                 k_wr_joint_rand_parts,
                 USAGE_WR_JOINT_RAND_PART,
                 USAGE_WR_JOINT_RAND_SEED,
-            )
+        )
         # Now initialize the wraparound joint randomness XOF, in order to
         # compute the dot products in wraparound checks.
         wr_joint_rand_xof = \
@@ -335,7 +331,7 @@ class Pine(
                 k_vf_joint_rand_parts,
                 USAGE_JOINT_RAND_PART,
                 USAGE_JOINT_RAND_SEED,
-            )
+        )
         vf_joint_rands = self.vf_joint_rands(k_corrected_vf_joint_rand_seed)
 
         # Query the measurement and proof share.
@@ -345,7 +341,8 @@ class Pine(
         query_rands = self.query_rands(verify_key, nonce)
         verifiers_share = []
         for _ in range(self.PROOFS):
-            (proof_share, proofs_share) = front(self.flp.PROOF_LEN, proofs_share)
+            (proof_share, proofs_share) = front(
+                self.flp.PROOF_LEN, proofs_share)
             (vf_joint_rand, vf_joint_rands) = \
                 front(self.flp.JOINT_RAND_LEN, vf_joint_rands)
             (query_rand, query_rands) = \
@@ -420,7 +417,7 @@ class Pine(
         # Make sure the seeds from the Leader are consistent with what the
         # current Aggregator sees.
         if (k_wr_joint_rand_seed != k_corrected_wr_joint_rand_seed or
-            k_vf_joint_rand_seed != k_corrected_vf_joint_rand_seed):
+                k_vf_joint_rand_seed != k_corrected_vf_joint_rand_seed):
             raise ValueError("Inconsistency between the seed from Leader and "
                              "the seed seen by the current Aggregator.")
         return out_share
@@ -491,7 +488,8 @@ class Pine(
                 k_vf_joint_rand_blind,
             ) = input_share
             return (
-                self.helper_meas_share(agg_id, cast(bytes, k_meas_share), self.MEAS_LEN),
+                self.helper_meas_share(agg_id, cast(
+                    bytes, k_meas_share), self.MEAS_LEN),
                 self.helper_proofs_share(agg_id, cast(bytes, k_proofs_share)),
                 k_wr_joint_rand_blind,
                 k_vf_joint_rand_blind,
@@ -672,48 +670,49 @@ class Pine(
 
 class Pine128(Pine[Field128, XofTurboShake128]):
     def __init__(self,
-                    l2_norm_bound: int,
-                    num_frac_bits: int,
-                    dimension: int,
-                    chunk_length: int,
-                    num_shares: int,
-                    alpha: float = ALPHA,
-                    num_wr_checks: int = NUM_WR_CHECKS,
-                    num_wr_successes: int = NUM_WR_SUCCESSES):
+                 l2_norm_bound: int,
+                 num_frac_bits: int,
+                 dimension: int,
+                 chunk_length: int,
+                 num_shares: int,
+                 alpha: float = ALPHA,
+                 num_wr_checks: int = NUM_WR_CHECKS,
+                 num_wr_successes: int = NUM_WR_SUCCESSES):
         return super().__init__(
             Field128,
             XofTurboShake128,
-            l2_norm_bound = l2_norm_bound,
-            num_frac_bits = num_frac_bits,
-            dimension = dimension,
-            chunk_length = chunk_length,
-            num_shares = num_shares,
-            num_proofs = 1,
-            alpha = alpha,
-            num_wr_checks = num_wr_checks,
-            num_wr_successes = num_wr_successes
+            l2_norm_bound=l2_norm_bound,
+            num_frac_bits=num_frac_bits,
+            dimension=dimension,
+            chunk_length=chunk_length,
+            num_shares=num_shares,
+            num_proofs=1,
+            alpha=alpha,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes
         )
+
 
 class Pine64(Pine[Field64, XofTurboShake128]):
     def __init__(self,
-                    l2_norm_bound: int,
-                    num_frac_bits: int,
-                    dimension: int,
-                    chunk_length: int,
-                    num_shares: int,
-                    alpha: float = ALPHA,
-                    num_wr_checks: int = NUM_WR_CHECKS,
-                    num_wr_successes: int = NUM_WR_SUCCESSES):
+                 l2_norm_bound: int,
+                 num_frac_bits: int,
+                 dimension: int,
+                 chunk_length: int,
+                 num_shares: int,
+                 alpha: float = ALPHA,
+                 num_wr_checks: int = NUM_WR_CHECKS,
+                 num_wr_successes: int = NUM_WR_SUCCESSES):
         return super().__init__(
             Field64,
             XofTurboShake128,
-            l2_norm_bound = l2_norm_bound,
-            num_frac_bits = num_frac_bits,
-            dimension = dimension,
-            chunk_length = chunk_length,
-            num_shares = num_shares,
-            num_proofs = 2,
-            alpha = alpha,
-            num_wr_checks = num_wr_checks,
-            num_wr_successes = num_wr_successes
+            l2_norm_bound=l2_norm_bound,
+            num_frac_bits=num_frac_bits,
+            dimension=dimension,
+            chunk_length=chunk_length,
+            num_shares=num_shares,
+            num_proofs=2,
+            alpha=alpha,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes
         )
