@@ -19,21 +19,25 @@ jobs:
     container:
       image: sagemath/sagemath:latest
       options: --user root
-
     steps:
-    - name: Install git on container
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install git
       run: |
         apt update
         apt install -y git
 
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-
+      # TODO Point to tag draft-irtf-cfrg-vdaf-11 when it's available.
     - name: Install dependencies
-      run: sage -pip install git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@fefc5a2f563e70e73a74d3c57b7145e0dd1c2e3f#subdirectory=poc
+      run: |
+        sage -pip install mypy
+        sage -pip install git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@fefc5a2f563e70e73a74d3c57b7145e0dd1c2e3f#subdirectory=poc
 
     - name: Run tests
       working-directory: poc
-      run: sage -python -m unittest *_test.py
+      run: sage -python -m unittest
+
+    - name: Enforce type hints
+      working-directory: poc
+      run: sage -python -m mypy *.py tests/*.py

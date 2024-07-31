@@ -1,21 +1,21 @@
 """Validity circuit for PINE. """
 
-from typing import TypeVar
 import math
-import os
 import sys
+from typing import TypeVar
 
 # Access poc folder in submoduled VDAF draft.
 from vdaf_poc.common import front, next_power_of_2
 from vdaf_poc.field import FftField, Field
-from vdaf_poc.flp_bbcggi19 import Gadget, Mul, ParallelSum, Valid
-from vdaf_poc.xof import Xof, XofTurboShake128
+from vdaf_poc.flp_bbcggi19 import Mul, ParallelSum, Valid
+from vdaf_poc.xof import Xof
 
 F = TypeVar("F", bound=FftField)
 
 ALPHA = 8.7
 NUM_WR_CHECKS = 100
 NUM_WR_SUCCESSES = 100
+
 
 class PineValid(
         Valid[
@@ -86,7 +86,7 @@ class PineValid(
         #   `q >= max(wr_check_bound^2 / 4000, 2600 * wr_check_bound,
         #   2 * num_wr_checks)`.
         if ((self.field.MODULUS - 2) / self.sq_norm_bound.as_unsigned()
-            <= 3):
+                <= 3):
             raise ValueError(
                 "The combination of L2-norm bound {} and number of fractional "
                 "bits {} is too large that range check is infeasible with "
@@ -94,7 +94,7 @@ class PineValid(
                     l2_norm_bound, num_frac_bits, self.field.__name__))
         if (self.field.MODULUS / num_wr_checks < 2 or
             self.field.MODULUS / self.wr_check_bound.as_unsigned() < 2600 or
-            self.wr_check_bound.as_unsigned()**2 / self.field.MODULUS > 4000):
+                self.wr_check_bound.as_unsigned()**2 / self.field.MODULUS > 4000):
             raise ValueError(
                 "The combination of L2-norm bound {} and number of fractional "
                 "bits {} is too large that wraparound check is infeasible with "
@@ -134,8 +134,8 @@ class PineValid(
 
         self.chunk_length = chunk_length
         self.GADGET_CALLS = [
-            chunk_count(self.chunk_length, self.bit_checked_len) + \
-            chunk_count(self.chunk_length, dimension) + \
+            chunk_count(self.chunk_length, self.bit_checked_len) +
+            chunk_count(self.chunk_length, dimension) +
             chunk_count(self.chunk_length, num_wr_checks)
         ]
         self.GADGETS = [ParallelSum(Mul(), self.chunk_length)]
@@ -359,7 +359,8 @@ class PineValid(
         """
         if len(measurement) != self.dimension:
             raise ValueError("Unexpected gradient dimension.")
-        encoded_gradient = [self.encode_float_into_field(x) for x in measurement]
+        encoded_gradient = [
+            self.encode_float_into_field(x) for x in measurement]
 
         # Encode results for range check of the squared L2-norm.
         sq_norm = sum((x**2 for x in encoded_gradient), self.field(0))
@@ -483,7 +484,7 @@ class PineValid(
 
     def encode_float_into_field(self, x: float) -> F:
         if (math.isnan(x) or not math.isfinite(x) or
-            (x != 0.0 and abs(x) < sys.float_info.min)):
+                (x != 0.0 and abs(x) < sys.float_info.min)):
             # Reject NAN, infinity, and subnormal floats,
             # per {{fp-encoding}}.
             raise ValueError("f64 encoding doesn't accept NAN, "
@@ -514,17 +515,19 @@ class PineValid(
         return ["l2_norm_bound", "num_frac_bits", "dimension", "field",
                 "num_wr_checks", "num_wr_successes", "alpha"]
 
+
 def bit_chunks(buf: bytes, num_chunk_bits: int):
     """
     Output the bit chunks, at `num_chunk_bits` bits at a time, from `buf`.
     """
-    assert(8 % num_chunk_bits == 0 and
-           0 < num_chunk_bits and num_chunk_bits <= 8)
+    assert (8 % num_chunk_bits == 0 and
+            0 < num_chunk_bits and num_chunk_bits <= 8)
     # Mask to extract the least significant `num_chunk_bits` bits.
     mask = (1 << num_chunk_bits) - 1
     for byte in buf:
         for chunk_start in reversed(range(0, 8, num_chunk_bits)):
             yield (byte >> chunk_start) & mask
+
 
 def range_check(dot_prod: F,
                 lower_bound: F,
@@ -539,8 +542,10 @@ def range_check(dot_prod: F,
         v.as_unsigned() <= (upper_bound - lower_bound).as_unsigned()
     return (is_in_range, v, u)
 
+
 def chunk_count(chunk_length, length):
     return (length + chunk_length - 1) // chunk_length
+
 
 def encode_float(x: float, num_frac_bits: int) -> int:
     return math.floor(x * 2**num_frac_bits)

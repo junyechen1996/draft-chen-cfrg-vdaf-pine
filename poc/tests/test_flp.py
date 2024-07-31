@@ -2,16 +2,15 @@
 
 import math
 import os
-import sys
 import unittest
-
-from flp_pine import (PineValid, bit_chunks, ALPHA, NUM_WR_CHECKS,
-                      NUM_WR_SUCCESSES, encode_float)
 
 from vdaf_poc.common import gen_rand
 from vdaf_poc.field import Field64, Field128
 from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19, test_flp_bbcggi19
 from vdaf_poc.xof import XofTurboShake128
+
+from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
+                      bit_chunks, encode_float)
 
 
 class TestEncoding(unittest.TestCase):
@@ -145,9 +144,11 @@ class TestOperationalParameters(unittest.TestCase):
         ]
 
         for t in test_cases:
-            l2_norm_bound = encode_float(t["l2_norm_bound"], t["num_frac_bits"])
+            l2_norm_bound = encode_float(
+                t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
-            v = PineValid(Field128, l2_norm_bound, t["num_frac_bits"], 10000, 123)
+            v = PineValid(Field128, l2_norm_bound,
+                          t["num_frac_bits"], 10000, 123)
             self.assertEqual(v.alpha, ALPHA)
             self.assertEqual(v.num_wr_checks, NUM_WR_CHECKS)
             self.assertEqual(v.num_wr_successes, NUM_WR_SUCCESSES)
@@ -209,7 +210,8 @@ class TestOperationalParameters(unittest.TestCase):
 
         for t in test_cases:
             alpha = t.get("alpha", ALPHA)
-            l2_norm_bound = encode_float(t["l2_norm_bound"], t["num_frac_bits"])
+            l2_norm_bound = encode_float(
+                t["l2_norm_bound"], t["num_frac_bits"])
             # The dimension and chunk_length don't impact these tests.
             if t["expected_success"]:
                 v = PineValid(t["field"], l2_norm_bound, t["num_frac_bits"],
