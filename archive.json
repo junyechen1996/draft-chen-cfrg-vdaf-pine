@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-30T01:24:35.439183+00:00",
+  "timestamp": "2024-08-01T01:37:57.662472+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -634,7 +634,7 @@
       "labels": [],
       "body": "The FLP circuit evaluation is the most expensive part PINE. Since we might generate multiple proofs, we want to de-duplicate any redundant computation that we can.\r\n\r\nOur current FLP circuit is composed of three sub-circuits, which produce five intermediate outputs:\r\n```python\r\n        bit_checks_result = self.eval_bit_checks(r_bit_check,\r\n                                                 bit_checked,\r\n                                                 shares_inv)\r\n\r\n        (wr_checks_result, wr_success_count_check_result) = \\\r\n            self.eval_wr_checks(r_wr_check,\r\n                                wr_check_v_bits,\r\n                                wr_check_g,\r\n                                wr_check_results,\r\n                                shares_inv)\r\n\r\n        (sq_norm_equality_check_result, sq_norm_range_check_result) = \\\r\n            self.eval_norm_check(encoded_gradient,\r\n                                 sq_norm_v_bits,\r\n                                 sq_norm_u_bits,\r\n                                 shares_inv)\r\n```\r\n\r\nConsider the computation of each intermediate output:\r\n* `bit_checks_result`\r\n* `wr_checks_result`\r\n* `wr_success_count_check_result`\r\n* `sq_norm_equality_check_result`\r\n* `sq_norm_range_check_result`\r\n\r\n**Observation 1:** We can't avoid repeating any computation that depends on the joint randomness, as the joint randomness needs to be fresh for each proof. Only `bit_checks_result` and `wr_checks_result` depend on the joint randomness; the others need only be computed once.\r\n\r\n**Observation 2**: Re-computing an intermediate output is only expensive if the computation is non-linear, as this requires calling the gadget, which increases the size of the proof and verifier. Linear computations do not have this side-effect. Only \r\n`bit_checks_result`, `wr_checks_result`, and `sq_norm_equality_check_result` are non-linear.\r\n\r\n**Idea:** We can avoid re-computing `sq_norm_equality_check_result` since it does not depend on the joint randomness. Plus, doing so is worth it because it is non-linear (and particularly expensive because the number of gadget calls depends on the dimension).\r\n\r\nConcretely, we can compute the squared norm check with a separate FLP that is evaluated once and does not take joint randomness. During VDAF preparation, the Aggregators would need to verify two FLPs: one for `sq_norm_equality_check_result` and another for all the intermediate outputs and does the reduction.",
       "createdAt": "2024-01-14T19:15:53Z",
-      "updatedAt": "2024-04-09T17:01:45Z",
+      "updatedAt": "2024-07-31T21:26:57Z",
       "closedAt": null,
       "comments": [
         {
@@ -755,17 +755,17 @@
       "id": "I_kwDOJWdxls6A-rhM",
       "title": "Run tests and linter in CI",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/75",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [
-        "junyechen1996"
+        "cjpatton"
       ],
       "labels": [],
       "body": "We could more or less copy the workflows from the base draft:\r\nhttps://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/.github/workflows/test.yml\r\nhttps://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/.github/workflows/lint-python.yml\r\n",
       "createdAt": "2024-03-01T17:57:54Z",
-      "updatedAt": "2024-04-09T17:01:52Z",
-      "closedAt": null,
+      "updatedAt": "2024-07-31T20:23:25Z",
+      "closedAt": "2024-07-31T20:23:25Z",
       "comments": []
     }
   ],
@@ -10408,6 +10408,508 @@
           "body": "",
           "createdAt": "2024-07-19T20:34:19Z",
           "updatedAt": "2024-07-19T20:34:19Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 90,
+      "id": "PR_kwDOJWdxls53AWe4",
+      "title": "Align reference code with draft-irtf-cfrg-vdaf-10",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/90",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We need https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/383 before we can merge this.\r\n\r\nRemove the submodule and require the user to install the reference code the VDAF draft via pip:\r\n\r\n```\r\nsage -pip install git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@72227878#subdirectory=poc\r\n```\r\n\r\nThis installs a package `vdaf_poc` that can be imported from PINE. Hacking in the module by adding the submodule to Python's PATH is no longer necessary.\r\n\r\n- Replace class-factory patterns with standard Python OOP patterns. In particular, methods on `Vdaf` are no longer class methods, but methods on an instance of the class that is constructed with all the necessary parameters.\r\n\r\nEnforce type hints:\r\n\r\n```\r\nsage -python -m mypy *pine*.py\r\n```\r\n\r\nThis required minor changes to the code in some cases. For instance, previously we allowed `chunk_length` to be `None`, but the type is `int`, not `Optional[int]`. There are also situations where it's necessary to call `cast()` to tell the type checker that an `Optional[SomeType]` is a `SomeType` and not `None`.\r\n\r\nAnother notable change is that, in some cases, we were treating generic types as class constructors. In particular, we often want to be generic in the finite field, but then invoke the constructor for that type with the same variable. Python's type hints doesn't actually support this.\r\n\r\nFinally, rename `encode_gradient_and_norm()` to `encode()`, which is an abstract method of `Flp`. This was pointed out by the type checker.",
+      "createdAt": "2024-07-31T14:43:37Z",
+      "updatedAt": "2024-07-31T22:37:28Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "f06d5344b0b9879d678e9b5ea01878b9a899dd9c",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/vdaf-10",
+      "headRefOid": "8d2f9730e13bd04d2f9eb084c9b87f607985bffb",
+      "closedAt": "2024-07-31T20:18:28Z",
+      "mergedAt": "2024-07-31T20:18:28Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "5dc22425079ca4b74ea4fc8a4363a761dd7d24cf"
+      },
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Squashed and updated the VDAF repo commit to https://github.com/cfrg/draft-irtf-cfrg-vdaf/commit/fefc5a2f563e70e73a74d3c57b7145e0dd1c2e3f.",
+          "createdAt": "2024-07-31T20:04:09Z",
+          "updatedAt": "2024-07-31T20:04:09Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6DwJj1",
+          "commit": {
+            "abbreviatedOid": "cb0394c"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T15:01:22Z",
+          "updatedAt": "2024-07-31T15:01:23Z",
+          "comments": [
+            {
+              "originalPosition": 432,
+              "body": "Reviewer note: This was previously a class method. I decided to make it a regular function because it never actually used any of the class parameters.",
+              "createdAt": "2024-07-31T15:01:22Z",
+              "updatedAt": "2024-07-31T15:01:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DwKwP",
+          "commit": {
+            "abbreviatedOid": "cb0394c"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T15:03:15Z",
+          "updatedAt": "2024-07-31T15:05:21Z",
+          "comments": [
+            {
+              "originalPosition": 138,
+              "body": "Reviewer note: This behavior no longer works because an `int` can't take `None` as a value. We could instead make `chunk_length: Optional[int]`, but I don't really think a default is necessary. Better to keep the code simple.",
+              "createdAt": "2024-07-31T15:03:15Z",
+              "updatedAt": "2024-07-31T15:05:21Z"
+            },
+            {
+              "originalPosition": 648,
+              "body": "Reviewer note: This is a situation where the code was taking advantage of Python's dynamic types. When we start enforcing type hints, the type of a variable is not supposed to change while it's in scope.",
+              "createdAt": "2024-07-31T15:05:11Z",
+              "updatedAt": "2024-07-31T15:05:21Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DxZg6",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Thanks for doing this. Just a few questions/comments.",
+          "createdAt": "2024-07-31T17:36:45Z",
+          "updatedAt": "2024-07-31T17:58:14Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Curiously. What is `@72227878` for? Doesn't look like branch name or commit.",
+              "createdAt": "2024-07-31T17:36:45Z",
+              "updatedAt": "2024-07-31T17:58:15Z"
+            },
+            {
+              "originalPosition": 284,
+              "body": "The new name suggests it implements `Valid.encode`. But actually they are not exactly the same. The latter requires both `encode_gradient_and_norm` and append results from `encode_wr_checks`, right?",
+              "createdAt": "2024-07-31T17:54:30Z",
+              "updatedAt": "2024-07-31T17:58:15Z"
+            },
+            {
+              "originalPosition": 432,
+              "body": "Maybe decorate with `@staticmethod`? ",
+              "createdAt": "2024-07-31T17:57:09Z",
+              "updatedAt": "2024-07-31T17:58:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DxnhC",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T18:07:18Z",
+          "updatedAt": "2024-07-31T18:07:19Z",
+          "comments": [
+            {
+              "originalPosition": 284,
+              "body": "yeesssss, good catch! I'll revert.",
+              "createdAt": "2024-07-31T18:07:18Z",
+              "updatedAt": "2024-07-31T18:07:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DxoKs",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T18:08:26Z",
+          "updatedAt": "2024-07-31T18:08:26Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "It's a truncated commit, it refers to a commit in the draft-irtf-cfrg-vdaf repo. We'll eventually replace this with the next tag, which will be draft-irtf-cfrg-vdaf-11.",
+              "createdAt": "2024-07-31T18:08:26Z",
+              "updatedAt": "2024-07-31T18:08:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DxogW",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T18:08:58Z",
+          "updatedAt": "2024-07-31T18:08:58Z",
+          "comments": [
+            {
+              "originalPosition": 432,
+              "body": "Why?",
+              "createdAt": "2024-07-31T18:08:58Z",
+              "updatedAt": "2024-07-31T18:08:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DyF1O",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T19:15:13Z",
+          "updatedAt": "2024-07-31T19:15:13Z",
+          "comments": [
+            {
+              "originalPosition": 284,
+              "body": "Done.",
+              "createdAt": "2024-07-31T19:15:13Z",
+              "updatedAt": "2024-07-31T19:15:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DyLlo",
+          "commit": {
+            "abbreviatedOid": "07c2cb2"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "One question about the difference between all uppercase properties and all lowercase properties.",
+          "createdAt": "2024-07-31T19:30:01Z",
+          "updatedAt": "2024-07-31T19:36:12Z",
+          "comments": [
+            {
+              "originalPosition": 318,
+              "body": "```suggestion\r\n    def run_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof):\r\n```",
+              "createdAt": "2024-07-31T19:30:46Z",
+              "updatedAt": "2024-07-31T19:36:12Z"
+            },
+            {
+              "originalPosition": 353,
+              "body": "```suggestion\r\n    def encode_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof):\r\n```",
+              "createdAt": "2024-07-31T19:31:12Z",
+              "updatedAt": "2024-07-31T19:36:12Z"
+            },
+            {
+              "originalPosition": 155,
+              "body": "What's the difference between all lowercase properties and all uppercase properties?",
+              "createdAt": "2024-07-31T19:33:37Z",
+              "updatedAt": "2024-07-31T19:36:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DyQZU",
+          "commit": {
+            "abbreviatedOid": "07c2cb2"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T19:41:12Z",
+          "updatedAt": "2024-07-31T19:41:12Z",
+          "comments": [
+            {
+              "originalPosition": 155,
+              "body": "None. I've been using all caps for things that are constants, but we've blurred this somewhat in this codebase. We should try to be consistent.",
+              "createdAt": "2024-07-31T19:41:12Z",
+              "updatedAt": "2024-07-31T19:41:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DyPIR",
+          "commit": {
+            "abbreviatedOid": "c0c0b2a"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T19:38:18Z",
+          "updatedAt": "2024-07-31T19:43:20Z",
+          "comments": [
+            {
+              "originalPosition": 180,
+              "body": "```suggestion\r\n                        shares_inv: F) -> F:\r\n```",
+              "createdAt": "2024-07-31T19:38:18Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 353,
+              "body": "```suggestion\r\n    def encode_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof) -> tuple[list[F], list[F]]:\r\n```",
+              "createdAt": "2024-07-31T19:41:27Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 388,
+              "body": "```suggestion\r\n    def truncate(self, meas: list[F]) -> list[F]:\r\n```\r\n\r\nFor consistency, since `decode` has return type annotated as well.",
+              "createdAt": "2024-07-31T19:41:59Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 318,
+              "body": "```suggestion\r\n    def run_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof) -> list[F]:\r\n```",
+              "createdAt": "2024-07-31T19:42:26Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 262,
+              "body": "```suggestion\r\n    def parallel_sum(self, mul_inputs: list[F]) -> F:\r\n```",
+              "createdAt": "2024-07-31T19:42:39Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 231,
+              "body": "```suggestion\r\n                       shares_inv: F) -> tuple[F, F]:\r\n```",
+              "createdAt": "2024-07-31T19:42:58Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            },
+            {
+              "originalPosition": 203,
+              "body": "```suggestion\r\n                        shares_inv: F) -> tuple[F, F]:\r\n```",
+              "createdAt": "2024-07-31T19:43:15Z",
+              "updatedAt": "2024-07-31T19:43:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DyZq3",
+          "commit": {
+            "abbreviatedOid": "2259b7a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T20:03:30Z",
+          "updatedAt": "2024-07-31T20:03:30Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Updated to fefc5a2f563e70e73a74d3c57b7145e0dd1c2e3f.",
+              "createdAt": "2024-07-31T20:03:30Z",
+              "updatedAt": "2024-07-31T20:03:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DzNcJ",
+          "commit": {
+            "abbreviatedOid": "cb0394c"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T22:36:09Z",
+          "updatedAt": "2024-07-31T22:36:09Z",
+          "comments": [
+            {
+              "originalPosition": 432,
+              "body": "It is merged. But to answer your question, without the decorations, it could be confused as instance method.",
+              "createdAt": "2024-07-31T22:36:09Z",
+              "updatedAt": "2024-07-31T22:37:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DzNz6",
+          "commit": {
+            "abbreviatedOid": "cb0394c"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T22:37:28Z",
+          "updatedAt": "2024-07-31T22:37:28Z",
+          "comments": [
+            {
+              "originalPosition": 432,
+              "body": "It's no longer a method on a class or an instance of a class: it's just a normal function",
+              "createdAt": "2024-07-31T22:37:28Z",
+              "updatedAt": "2024-07-31T22:37:28Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 91,
+      "id": "PR_kwDOJWdxls53AabK",
+      "title": "Add GitHub Actions for linting and type checking",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/91",
+      "state": "MERGED",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #75.\r\nBased on #90 (merge that first).\r\n\r\nAlso, put the tests in a module so that we can use the unittest module to invoke the unit tests.",
+      "createdAt": "2024-07-31T14:51:51Z",
+      "updatedAt": "2024-07-31T20:23:24Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "5dc22425079ca4b74ea4fc8a4363a761dd7d24cf",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/ci-improvements",
+      "headRefOid": "cc624fde95fff38bbf4723a7ea55f6a8279705a5",
+      "closedAt": "2024-07-31T20:23:24Z",
+      "mergedAt": "2024-07-31T20:23:24Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "e7ff306f5cef9aa698fdf8e4f5c5b3626873edc5"
+      },
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Rebased.",
+          "createdAt": "2024-07-31T20:06:15Z",
+          "updatedAt": "2024-07-31T20:06:15Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6DyHJn",
+          "commit": {
+            "abbreviatedOid": "f9f3058"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T19:18:36Z",
+          "updatedAt": "2024-07-31T19:18:37Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "TODO: Update once https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/383 is merged.",
+              "createdAt": "2024-07-31T19:18:36Z",
+              "updatedAt": "2024-07-31T19:18:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6DySgx",
+          "commit": {
+            "abbreviatedOid": "f9f3058"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-31T19:45:17Z",
+          "updatedAt": "2024-07-31T19:45:17Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 92,
+      "id": "PR_kwDOJWdxls53B26p",
+      "title": "Introduce a second FLP inside the PINE VDAF which performs prove/query for 2nd and above proofs",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/92",
+      "state": "OPEN",
+      "author": "albertpl",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "# Changes\r\n\r\nAdd another `PineValid` in `Pine` which omits  `eval_norm_check`. This FLP is used for 2nd and above proofs. \r\n* The main motivation is to reduce complexity and run time  for `Pine.shard` and `Pine.prep_init`.\r\n\r\n\r\n",
+      "createdAt": "2024-07-31T18:49:46Z",
+      "updatedAt": "2024-07-31T21:46:55Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "f06d5344b0b9879d678e9b5ea01878b9a899dd9c",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "albertpl/perform-normcheck-once",
+      "headRefOid": "d2025e597d7419381089a51c72a64b9230963eaa",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I suppose we need thorough security review on this approach. \r\nThe intuition is that `eval_norm_check` doesn't depend on joint randomness. Although we still use joint randomness to combine results of all sub-circuits, the degree of the joint randomness doesn't change. So this won't make it easy to guess the joint randomness (if the guess is uniformly distributed)?",
+          "createdAt": "2024-07-31T18:53:40Z",
+          "updatedAt": "2024-07-31T18:54:56Z"
+        },
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "> This like it adds a flag to make the squared norm equality and range checks optional? That's not quite what we need.\r\n> \r\n> The circuit checks for five properties, as shown here:\r\n> \r\n> https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/f06d5344b0b9879d678e9b5ea01878b9a899dd9c/poc/flp_pine.py#L230-L234\r\n> \r\n> We always need to check all five of these properties: it's not acceptable to skip the squared norm equality or range check under any circumstances.\r\n> \r\n> The idea behind #53 is that that we can split out the squared norm equality check into its own circuit. We would then generate FLPs for two circuits: one for the squared norm equality check and another for all the other checks. This saves us computation because the squared norm equality check can be done without joint randomness, so we only need to generate one proof for it.\r\n\r\nAgreed. The current interface for `PineValid` makes it seem like norm equality check is optional. I think we should have one `Valid` circuit that just does the squared norm equality check which doesn't need joint randomness, something like `PineValidSquaredNormEqualityCheck`, and another `Valid` circuit that computes all other checks that require joint randomness, something like `PineValidOtherChecks`..?",
+          "createdAt": "2024-07-31T19:49:19Z",
+          "updatedAt": "2024-07-31T19:49:19Z"
+        },
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Let me double confirm.\r\n\r\n* FLP1: squared norm equality check\r\n* FLP2: all the other checks\r\n\r\nIn the context of multiple proofs, we will produce 1 proof for FLP1 and `num_proofs` proofs for FLP2. Both FLPs are consisted of `ParallelSum` gadget. These proofs are then concatenated. \r\n\r\n",
+          "createdAt": "2024-07-31T21:44:18Z",
+          "updatedAt": "2024-07-31T21:44:18Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Confirmed! Note you'll need to rebase this PR.",
+          "createdAt": "2024-07-31T21:46:54Z",
+          "updatedAt": "2024-07-31T21:46:54Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6DyFCX",
+          "commit": {
+            "abbreviatedOid": "d2025e5"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "This like it adds a flag to make the squared norm equality and range checks optional? That's not quite what we need.\r\n\r\nThe circuit checks for five properties, as shown here:\r\nhttps://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/f06d5344b0b9879d678e9b5ea01878b9a899dd9c/poc/flp_pine.py#L230-L234\r\n\r\nWe always need to check all five of these properties: it's not acceptable to skip the squared norm equality or range check under any circumstances.\r\n\r\nThe idea behind #53 is that that we can split out the squared norm equality check into its own circuit. We would then generate FLPs for two circuits: one for the squared norm equality check and another for all the other checks. This saves us computation because the squared norm equality check can be done without joint randomness, so we only need to generate one proof for it.",
+          "createdAt": "2024-07-31T19:13:10Z",
+          "updatedAt": "2024-07-31T19:13:10Z",
           "comments": []
         }
       ]
