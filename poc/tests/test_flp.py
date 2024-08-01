@@ -10,7 +10,7 @@ from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19, test_flp_bbcggi19
 from vdaf_poc.xof import XofTurboShake128
 
 from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
-                      bit_chunks, encode_float)
+                      bit_chunks, construct_circuits, encode_float)
 
 
 class TestEncoding(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestEncoding(unittest.TestCase):
                 # Negative values are represented with the upper half of the
                 # field bits.
                 self.assertTrue(
-                    encoded.as_unsigned() > math.floor(valid.field.MODULUS/2))
+                    encoded.as_unsigned() > math.floor(valid.field.MODULUS / 2))
             decoded = valid.decode_float_from_field(encoded)
             self.assertEqual(decoded, t["expected_result"])
 
@@ -259,14 +259,16 @@ class TestCircuit(unittest.TestCase):
         num_frac_bits = 4
         l2_norm_bound = encode_float(1.0, num_frac_bits)
         dimension = 4
-        args = [l2_norm_bound, num_frac_bits, dimension, 150]
+        chunk_length = 150
+        chunk_length_norm_equality = 2
+        args = [l2_norm_bound, num_frac_bits, dimension,
+                chunk_length, chunk_length_norm_equality]
         # A gradient with a L2-norm of exactly 1.0.
         measurement = [1.0 / 2] * dimension
         for field in [Field64, Field128]:
-            pine_valid = PineValid(field, *args)
+            valids = construct_circuits(field, *args)
+            pine_valid = valids[1]
             flp = FlpBBCGGI19(pine_valid)
-
-            # Test PINE FLP with verification.
             xof = XofTurboShake128(gen_rand(16), b"", b"")
             encoded_gradient_and_norm = \
                 flp.valid.encode_gradient_and_norm(measurement)
@@ -274,7 +276,11 @@ class TestCircuit(unittest.TestCase):
                 pine_valid.encode_wr_checks(encoded_gradient_and_norm[:dimension],
                                             xof)
             meas = encoded_gradient_and_norm + wr_check_bits + wr_check_results
-            test_flp_bbcggi19(flp, [(meas, True)])
+
+            for valid in valids:
+                test_flp = FlpBBCGGI19(valid)
+                # Test PINE FLP with verification.
+                test_flp_bbcggi19(test_flp, [(meas, True)])
 
 
 if __name__ == '__main__':
