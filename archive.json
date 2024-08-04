@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-01T01:37:57.662472+00:00",
+  "timestamp": "2024-08-04T01:36:42.422197+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10848,22 +10848,22 @@
     {
       "number": 92,
       "id": "PR_kwDOJWdxls53B26p",
-      "title": "Introduce a second FLP inside the PINE VDAF which performs prove/query for 2nd and above proofs",
+      "title": "[WIP] Split squared norm equality check into a separate FLP",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/92",
       "state": "OPEN",
       "author": "albertpl",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
-      "body": "# Changes\r\n\r\nAdd another `PineValid` in `Pine` which omits  `eval_norm_check`. This FLP is used for 2nd and above proofs. \r\n* The main motivation is to reduce complexity and run time  for `Pine.shard` and `Pine.prep_init`.\r\n\r\n\r\n",
+      "body": "This implements #53.",
       "createdAt": "2024-07-31T18:49:46Z",
-      "updatedAt": "2024-07-31T21:46:55Z",
+      "updatedAt": "2024-08-01T16:10:53Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
-      "baseRefOid": "f06d5344b0b9879d678e9b5ea01878b9a899dd9c",
+      "baseRefOid": "e7ff306f5cef9aa698fdf8e4f5c5b3626873edc5",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "albertpl/perform-normcheck-once",
-      "headRefOid": "d2025e597d7419381089a51c72a64b9230963eaa",
+      "headRefOid": "b91beab644c08bb5e6ec6f431811a9dde19b57ec",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -10896,6 +10896,20 @@
           "body": "Confirmed! Note you'll need to rebase this PR.",
           "createdAt": "2024-07-31T21:46:54Z",
           "updatedAt": "2024-07-31T21:46:54Z"
+        },
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Still WIP.  \r\nI will be out of office for the rest of the week. So plan to get it ready for review early next week. ",
+          "createdAt": "2024-08-01T04:25:25Z",
+          "updatedAt": "2024-08-01T04:26:59Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks @albertpl, this is heading in the right direction :)",
+          "createdAt": "2024-08-01T16:10:52Z",
+          "updatedAt": "2024-08-01T16:10:52Z"
         }
       ],
       "reviews": [
