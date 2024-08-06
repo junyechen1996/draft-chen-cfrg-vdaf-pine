@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-04T01:36:42.422197+00:00",
+  "timestamp": "2024-08-06T01:24:57.002503+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10848,7 +10848,7 @@
     {
       "number": 92,
       "id": "PR_kwDOJWdxls53B26p",
-      "title": "[WIP] Split squared norm equality check into a separate FLP",
+      "title": "Split squared norm equality check into a separate FLP",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/92",
       "state": "OPEN",
       "author": "albertpl",
@@ -10857,13 +10857,13 @@
       "labels": [],
       "body": "This implements #53.",
       "createdAt": "2024-07-31T18:49:46Z",
-      "updatedAt": "2024-08-01T16:10:53Z",
+      "updatedAt": "2024-08-06T00:34:56Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "e7ff306f5cef9aa698fdf8e4f5c5b3626873edc5",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "albertpl/perform-normcheck-once",
-      "headRefOid": "b91beab644c08bb5e6ec6f431811a9dde19b57ec",
+      "headRefOid": "559cd2785e3c2062111c00443181c71f80f51001",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -10910,6 +10910,13 @@
           "body": "Thanks @albertpl, this is heading in the right direction :)",
           "createdAt": "2024-08-01T16:10:52Z",
           "updatedAt": "2024-08-01T16:10:52Z"
+        },
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Rewrite this PR. May need more polishing but I want to collect feedback to make sure I am on the right track. \r\nPls take another look.",
+          "createdAt": "2024-08-05T23:09:24Z",
+          "updatedAt": "2024-08-06T00:24:31Z"
         }
       ],
       "reviews": [
@@ -10925,6 +10932,124 @@
           "createdAt": "2024-07-31T19:13:10Z",
           "updatedAt": "2024-07-31T19:13:10Z",
           "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EUvI6",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T00:04:18Z",
+          "updatedAt": "2024-08-06T00:23:38Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "How do you guys run these linting tools?",
+              "createdAt": "2024-08-06T00:04:19Z",
+              "updatedAt": "2024-08-06T00:23:38Z"
+            },
+            {
+              "originalPosition": 28,
+              "body": "Based on [this](https://github.com/cfrg/draft-irtf-cfrg-vdaf/pull/382) PR.",
+              "createdAt": "2024-08-06T00:15:59Z",
+              "updatedAt": "2024-08-06T00:23:38Z"
+            },
+            {
+              "originalPosition": 24,
+              "body": "Alternatively we can factor the common codes into some utility class and use \"has-a\" relationship. ",
+              "createdAt": "2024-08-06T00:17:45Z",
+              "updatedAt": "2024-08-06T00:23:38Z"
+            },
+            {
+              "originalPosition": 28,
+              "body": "The optimal `chunk_length` can be quite different between `PineValidSquaredNormEqualityCheck` and `PineValidOtherChecks`. It makes senses to introduce a new parameter?",
+              "createdAt": "2024-08-06T00:21:14Z",
+              "updatedAt": "2024-08-06T00:23:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EUzrl",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T00:29:53Z",
+          "updatedAt": "2024-08-06T00:29:53Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "I think most of them are available through `brew`.",
+              "createdAt": "2024-08-06T00:29:53Z",
+              "updatedAt": "2024-08-06T00:29:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EUz10",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T00:30:56Z",
+          "updatedAt": "2024-08-06T00:30:57Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "That seems sensible to me!",
+              "createdAt": "2024-08-06T00:30:56Z",
+              "updatedAt": "2024-08-06T00:30:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EU0Ug",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T00:33:53Z",
+          "updatedAt": "2024-08-06T00:33:54Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "I'm worried about this Makefile diverging from the CI definitions. We should either:\r\n1. Have CI call this Makefile\r\n2. Have no Makefile at all.\r\n\r\nI'd prefer the second one. If you want the Makefile for convenience, then you could include this in your local directory and add it to .gitignore so you don't accidentally check it in.",
+              "createdAt": "2024-08-06T00:33:54Z",
+              "updatedAt": "2024-08-06T00:33:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EU0fG",
+          "commit": {
+            "abbreviatedOid": "559cd27"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T00:34:55Z",
+          "updatedAt": "2024-08-06T00:34:56Z",
+          "comments": [
+            {
+              "originalPosition": 24,
+              "body": "What's your goal here? ",
+              "createdAt": "2024-08-06T00:34:56Z",
+              "updatedAt": "2024-08-06T00:34:56Z"
+            }
+          ]
         }
       ]
     }
