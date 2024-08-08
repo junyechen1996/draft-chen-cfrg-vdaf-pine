@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-06T01:24:57.002503+00:00",
+  "timestamp": "2024-08-08T01:25:26.214976+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10857,13 +10857,13 @@
       "labels": [],
       "body": "This implements #53.",
       "createdAt": "2024-07-31T18:49:46Z",
-      "updatedAt": "2024-08-06T00:34:56Z",
+      "updatedAt": "2024-08-08T00:28:48Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "e7ff306f5cef9aa698fdf8e4f5c5b3626873edc5",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "albertpl/perform-normcheck-once",
-      "headRefOid": "559cd2785e3c2062111c00443181c71f80f51001",
+      "headRefOid": "cc7b647b6acf682110c78c0222f5adb831c7a37d",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -10917,6 +10917,13 @@
           "body": "Rewrite this PR. May need more polishing but I want to collect feedback to make sure I am on the right track. \r\nPls take another look.",
           "createdAt": "2024-08-05T23:09:24Z",
           "updatedAt": "2024-08-06T00:24:31Z"
+        },
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> It seems like the pattern you want to follow is: PineValid implements the functionality shared by both circuits, then sub-classes implement the circuit-specific functionality. This pattern might make sense, but as it is, I think base class PineValid is doing too much:\r\nNot all parameters set by the constructor are relevant to both circuits\r\nThe base class includes the sub-circuits that are used by PineValidOtherChecks but not by PineValidSquaredNormEqualityCheck\r\nThe base class includes encoding routines that are not relevant to both\r\nI'd like to see a cleaner separation of the two circuits.\r\n\r\n\r\n* I relocated all the evaluation sub-circuits.\r\n* but the encoding routines are shared by both circuits such that both can be used individually.\r\n* most of parameters are shared by both too. One reason is that we initialize them together, with dependencies on each other. Two initialization of these parameters would be a little bit tricky? Lots of the parameters are used by the shared routines as well, e.g. `unpack_encoded_measurement`.\r\n\r\n",
+          "createdAt": "2024-08-07T22:40:37Z",
+          "updatedAt": "2024-08-07T22:40:37Z"
         }
       ],
       "reviews": [
@@ -11048,6 +11055,348 @@
               "body": "What's your goal here? ",
               "createdAt": "2024-08-06T00:34:56Z",
               "updatedAt": "2024-08-06T00:34:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EVPrg",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T02:37:39Z",
+          "updatedAt": "2024-08-06T02:37:39Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Not installation part. So we just manually invoke those commands?",
+              "createdAt": "2024-08-06T02:37:39Z",
+              "updatedAt": "2024-08-06T02:37:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EVTBX",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T02:51:53Z",
+          "updatedAt": "2024-08-06T02:51:53Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "So we ask users to figure out how to run these steps by reading the CI workflow? And possibly reading man page for each command? e.g. \r\n\r\nIn `workflow/lint-python.yml`, it runs the command with `--diff --exit-code`\r\n`autopep8 --diff --exit-code *.py tests/*.py`\r\n\r\nbut we can use `--in-place` to automatically update before commit\r\n`sage -python -m autopep8 -i *.py tests/*.py`\r\n\r\nI was hoping to automate these steps to minimize developers' efforts. \r\nBut I see your concerns too.  Although, if we make changes in CI, I am wondering if we can simply update the Makefile. Otherwise *everyone* else has to figure out the changes anyway.\r\n\r\n\r\nIn any case, this is unrelated change. I just reverted the change (there was a basic Makefile).",
+              "createdAt": "2024-08-06T02:51:53Z",
+              "updatedAt": "2024-08-06T03:19:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EVUio",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T02:58:42Z",
+          "updatedAt": "2024-08-06T02:58:42Z",
+          "comments": [
+            {
+              "originalPosition": 24,
+              "body": "Just want to mention the alternative approach I have considered.",
+              "createdAt": "2024-08-06T02:58:42Z",
+              "updatedAt": "2024-08-06T02:58:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EZWGD",
+          "commit": {
+            "abbreviatedOid": "22358e0"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-06T12:59:59Z",
+          "updatedAt": "2024-08-06T13:12:39Z",
+          "comments": [
+            {
+              "originalPosition": 156,
+              "body": "```suggestion\r\n    def eval_norm_range_check(self,\r\n```\r\n\r\n?",
+              "createdAt": "2024-08-06T12:59:59Z",
+              "updatedAt": "2024-08-06T13:12:39Z"
+            },
+            {
+              "originalPosition": 24,
+              "body": "I think we can stick with the approach in the base VDAF poc.",
+              "createdAt": "2024-08-06T13:06:15Z",
+              "updatedAt": "2024-08-06T13:12:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Eq9qX",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "I've gone through the FLP bits and have some suggestions there. I'll take a look at the VDAF bits once we've resolved the FLP part.\r\n\r\nThanks for working on this!",
+          "createdAt": "2024-08-07T18:04:16Z",
+          "updatedAt": "2024-08-07T18:18:04Z",
+          "comments": [
+            {
+              "originalPosition": 24,
+              "body": "It seems like the pattern you want to follow is: `PineValid` implements the functionality shared by both circuits, then sub-classes implement the circuit-specific functionality. This pattern might make sense, but as it is, I think base class `PineValid` is doing too much:\r\n\r\n1. Not all parameters set by the constructor are relevant to both circuits\r\n2. The base class includes the sub-circuits that are used by `PineValidOtherChecks` but not by `PineValidSquaredNormEqualityCheck`\r\n3. The base class includes encoding routines that are not relevant to both\r\n\r\nI'd like to see a cleaner separation of the two circuits.",
+              "createdAt": "2024-08-07T18:04:16Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 40,
+              "body": "1. I think some of the details in this docucomment are still relevant?\r\n2. Wrap lines at 80 characters",
+              "createdAt": "2024-08-07T18:04:51Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 146,
+              "body": "Wrap lines at 80 characters",
+              "createdAt": "2024-08-07T18:06:28Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 227,
+              "body": "Readability: naming the variables we don't need would help I think:\r\n```python\r\n(encoded_gradient,\r\n _bit_checked,\r\n_wr_check_results,\r\n...\r\n_wr_check_g) = self.unpack_measurement(meas)\r\n```\r\n",
+              "createdAt": "2024-08-07T18:08:38Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 88,
+              "body": "We should try to distinguish between \"measurement\" and \"encoded measurement\" \r\n```suggestion\r\n    def unpack_encoded_measurement(self,\r\n```",
+              "createdAt": "2024-08-07T18:09:17Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 237,
+              "body": "Hmm, the name `PineValidOtherChecks` is a little confusing. If I may make a suggestion:\r\n\r\n* Circuit `PineValid` is the \"main\" circuit that checks for bounded L2 norm. It assumes that the squared norm of the encoded gradient is equal to the value claimed by the prover.\r\n* `SquaredNormEqualityCheck`: checks that the squared norm is equal to the value claimed by the prover.\r\n",
+              "createdAt": "2024-08-07T18:15:31Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            },
+            {
+              "originalPosition": 102,
+              "body": "This test encodes the measurement each iteration of the for loop. What about encoding outside the for loop?",
+              "createdAt": "2024-08-07T18:17:14Z",
+              "updatedAt": "2024-08-07T18:18:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6ErRcU",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T18:43:50Z",
+          "updatedAt": "2024-08-07T18:43:50Z",
+          "comments": [
+            {
+              "originalPosition": 237,
+              "body": "So you suggest we rename the base class, perhaps from `PineValid` -> `PineValidBase` or something else?",
+              "createdAt": "2024-08-07T18:43:50Z",
+              "updatedAt": "2024-08-07T18:43:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EraEm",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T19:00:26Z",
+          "updatedAt": "2024-08-07T19:00:26Z",
+          "comments": [
+            {
+              "originalPosition": 146,
+              "body": "Is this enforced in any linting rule?\r\n> Wrap lines at 80 characters",
+              "createdAt": "2024-08-07T19:00:26Z",
+              "updatedAt": "2024-08-07T19:00:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6ErqOt",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T19:38:39Z",
+          "updatedAt": "2024-08-07T19:38:39Z",
+          "comments": [
+            {
+              "originalPosition": 146,
+              "body": "It doesn't appear to be at the moment.",
+              "createdAt": "2024-08-07T19:38:39Z",
+              "updatedAt": "2024-08-07T19:38:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Er4mS",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T20:11:38Z",
+          "updatedAt": "2024-08-07T20:11:39Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Yes.",
+              "createdAt": "2024-08-07T20:11:38Z",
+              "updatedAt": "2024-08-07T20:11:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Er5Il",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T20:12:50Z",
+          "updatedAt": "2024-08-07T20:12:51Z",
+          "comments": [
+            {
+              "originalPosition": 28,
+              "body": "At the moment the \"users\" are just us :) I think for now we shouldn't try over do it on tooling, since this is likely to change quickly while we develop. Less is more?",
+              "createdAt": "2024-08-07T20:12:51Z",
+              "updatedAt": "2024-08-07T20:12:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EsdJf",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T21:39:37Z",
+          "updatedAt": "2024-08-07T21:39:37Z",
+          "comments": [
+            {
+              "originalPosition": 40,
+              "body": "I split & moved these details to its subclasses, s.t. we don't have to duplicate these documents. What do you think?",
+              "createdAt": "2024-08-07T21:39:37Z",
+              "updatedAt": "2024-08-07T21:39:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Eseey",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T21:44:02Z",
+          "updatedAt": "2024-08-07T21:44:03Z",
+          "comments": [
+            {
+              "originalPosition": 237,
+              "body": "`PineValidBase` sounds reasonable.",
+              "createdAt": "2024-08-07T21:44:02Z",
+              "updatedAt": "2024-08-07T21:44:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EspK2",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T22:24:29Z",
+          "updatedAt": "2024-08-07T22:24:29Z",
+          "comments": [
+            {
+              "originalPosition": 102,
+              "body": "Encoding requires an instant of `flp`, which is created inside the loop?\r\nSo test with one `flp` to encode and then create another `flp` to test the rest. A little bit weird?",
+              "createdAt": "2024-08-07T22:24:29Z",
+              "updatedAt": "2024-08-07T22:24:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Esr10",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-07T22:35:21Z",
+          "updatedAt": "2024-08-07T22:35:21Z",
+          "comments": [
+            {
+              "originalPosition": 146,
+              "body": "OK. I add `--max-line` to my local config. ",
+              "createdAt": "2024-08-07T22:35:21Z",
+              "updatedAt": "2024-08-07T22:35:21Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6EtPM8",
+          "commit": {
+            "abbreviatedOid": "f20fc3b"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-08T00:28:48Z",
+          "updatedAt": "2024-08-08T00:28:48Z",
+          "comments": [
+            {
+              "originalPosition": 24,
+              "body": "* I relocated all the evaluation sub-circuits.\r\n* But the encoding routines are shared by both circuits such that both can be used individually.\r\n* Also Most of parameters are shared by both too. One reason is that we initialize them together, with dependencies on each other. Two initialization of these parameters would be a little bit tricky? Lots of the parameters are used by the shared routines as well, e.g. unpack_encoded_measurement.",
+              "createdAt": "2024-08-08T00:28:48Z",
+              "updatedAt": "2024-08-08T00:28:48Z"
             }
           ]
         }
