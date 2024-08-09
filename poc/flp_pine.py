@@ -2,6 +2,7 @@
 
 import math
 import sys
+from abc import ABCMeta, abstractmethod
 from typing import TypeVar
 
 # Access poc folder in submoduled VDAF draft.
@@ -17,12 +18,14 @@ NUM_WR_CHECKS = 100
 NUM_WR_SUCCESSES = 100
 
 
-class PineValid(
-        Valid[
-            list[float],  # Measurement
-            list[float],  # AggResult
-            F,
-        ]):
+class PineValidBase(
+    Valid[
+        list[float],  # Measurement
+        list[float],  # AggResult
+        F,
+    ],
+    metaclass=ABCMeta
+):
 
     EVAL_OUTPUT_LEN: int = 1
 
@@ -41,7 +44,7 @@ class PineValid(
         fractional bits, and the L2-norm bound of each gradient is bounded
         by `l2_norm_bound`.
         """
-        if l2_norm_bound <= 0 or l2_norm_bound > field.MODULUS/2:
+        if l2_norm_bound <= 0 or l2_norm_bound > field.MODULUS / 2:
             raise ValueError("Invalid L2-norm bound {}, it must be "
                              "positive".format(l2_norm_bound))
         if num_frac_bits < 0 or num_frac_bits >= 128:
@@ -106,7 +109,7 @@ class PineValid(
         # wr_check_bound]`, so this is the number of bits needed to encode `2 *
         # wr_check_bound - 1`.
         self.num_bits_for_wr_check = \
-            (2*self.wr_check_bound.as_unsigned()-1).bit_length()
+            (2 * self.wr_check_bound.as_unsigned() - 1).bit_length()
 
         # Length of the encoded gradient and the L2-norm check.
         self.encoded_gradient_and_norm_len = \
@@ -126,44 +129,20 @@ class PineValid(
         # gradient, the expected bits, and the dot products in wraparound
         # checks.
         self.MEAS_LEN = dimension + self.bit_checked_len + num_wr_checks
-        # 1 for bit check, 1 for wraparound check, 1 for final reduction.
-        # Note we don't include the number of wraparound joint randomness field
-        # elements in `JOINT_RAND_LEN`.
-        self.JOINT_RAND_LEN = 1 + 1 + 1
         self.OUTPUT_LEN = dimension
 
         self.chunk_length = chunk_length
-        self.GADGET_CALLS = [
-            chunk_count(self.chunk_length, self.bit_checked_len) +
-            chunk_count(self.chunk_length, dimension) +
-            chunk_count(self.chunk_length, num_wr_checks)
-        ]
         self.GADGETS = [ParallelSum(Mul(), self.chunk_length)]
 
+    @abstractmethod
     def eval(self,
              meas: list[F],
              joint_rand: list[F],
              num_shares: int) -> list[F]:
-        """Validity circuit for PINE.
+        pass
 
-        The goal of this circuit is to recognize gradients with bounded L2-norm
-        (hereafter "norm"). This is accomplished by computing the squared norm
-        of the gradient and checking that its value is in the desired range. We
-        also need to ensure the squared norm is not so large that it wraps
-        around the field modulus. Otherwise, a squared norm that is too large
-        (or too small) may appear to be in range when in fact it is not.
-
-        Wraparound enforcement is accomplished by a sequence of probabilistic
-        tests devised by [ROCT23]. A successful wraparound test indicates,
-        w.h.p., that the squared norm of the gradient, as it is represented in
-        the field, is a value between 0 and an upper bound that depends on the
-        circuit parameters.
-        """
-        self.check_valid_eval(meas, joint_rand)
-        # `shares_inv` is used to normalize constants when we compute the
-        # validity circuit when `num_shares > 1`.
-        shares_inv = self.field(num_shares).inv()
-
+    def unpack_encoded_measurement(self,
+                                   meas: list[F]):
         # Unpack the encoded measurement. It is composed of the following
         # components:
         #
@@ -195,6 +174,168 @@ class PineValid(
             ([g], rest) = front(1, rest)
             wr_check_g.append(g)
         assert len(rest) == 0
+        return (encoded_gradient, bit_checked, wr_check_results,
+                sq_norm_v_bits, sq_norm_u_bits, wr_check_v_bits, wr_check_g)
+
+    def parallel_sum(self, mul_inputs: list[F]) -> F:
+        """
+        Split `mul_inputs` into chunks, call the gadget on each chunk, and
+        return the sum of the results. If there is a partial leftover, then it
+        is padded with zeros.
+        """
+        s = self.field(0)
+        while len(mul_inputs) >= 2 * self.chunk_length:
+            (chunk, mul_inputs) = front(2 * self.chunk_length, mul_inputs)
+            s += self.GADGETS[0].eval(self.field, chunk)
+        if len(mul_inputs) > 0:
+            chunk = self.field.zeros(2 * self.chunk_length)
+            for i in range(len(mul_inputs)):
+                chunk[i] = mul_inputs[i]
+            s += self.GADGETS[0].eval(self.field, chunk)
+        return s
+
+    def encode(self, _measurement: list[float]) -> list[F]:
+        # NOTE We encode the measurement in two steps. First we encode the
+        # gradient and the range-checked norm by calling
+        # `encoded_gradient_and_norm()`, then we append the output of
+        # `run_wr_checks()`.
+        raise NotImplementedError("not implemented for Pine")
+
+    def truncate(self, meas: list[F]) -> list[F]:
+        return meas[:self.dimension]
+
+    def decode(self,
+               output: list[F],
+               num_measurements: int) -> list[float]:
+        return [self.decode_float_from_field(x) for x in output]
+
+    def decode_float_from_field(self, field_elem: Field) -> float:
+        decoded = field_elem.as_unsigned()
+        # If the field is larger than half of the field size, then
+        # decoded result should be negative.
+        if decoded > math.floor(field_elem.MODULUS / 2):
+            # We need to take the difference between the result
+            # and the field modulus, and return the result as negative.
+            decoded = -(field_elem.MODULUS - decoded)
+        # Divide by 2^num_frac_bits and we will get a float back.
+        decoded_float = decoded / (2 ** self.num_frac_bits)
+        return decoded_float
+
+
+class PineValidNormEquality(
+    PineValidBase[F]
+):
+    """
+    PINE validation circuit that computes the squared L2-norm result
+    and checks that it matches the value claimed by the Client.
+        * This circuit does not use joint randomness.
+        * The result is only valid if the other circuit
+        `PineValid` is also valid.
+    """
+
+    def __init__(self,
+                 field: type[F],
+                 l2_norm_bound: int,
+                 num_frac_bits: int,
+                 dimension: int,
+                 chunk_length: int,
+                 alpha: float = ALPHA,
+                 num_wr_checks: int = NUM_WR_CHECKS,
+                 num_wr_successes: int = NUM_WR_SUCCESSES):
+        super().__init__(field,
+                         l2_norm_bound,
+                         num_frac_bits,
+                         dimension,
+                         chunk_length,
+                         alpha,
+                         num_wr_checks,
+                         num_wr_successes)
+        self.JOINT_RAND_LEN = 0
+        self.GADGET_CALLS = [chunk_count(self.chunk_length, dimension)]
+
+    def eval(self,
+             meas: list[F],
+             joint_rand: list[F],
+             _num_shares: int) -> list[F]:
+        self.check_valid_eval(meas, joint_rand)
+        (encoded_gradient, _bit_checked, _wr_check_results, sq_norm_v_bits,
+            _sq_norm_u_bits, _wr_check_v_bits, _wr_check_g) = self.unpack_encoded_measurement(
+                meas)
+        return [self.eval_norm_equality_check(encoded_gradient, sq_norm_v_bits)]
+
+    def eval_norm_equality_check(self,
+                                 encoded_gradient: list[F],
+                                 sq_norm_v_bits: list[F]) -> F:
+        """Check that the computed squared L2-norm result matches the value
+        claimed by the Client. """
+        # Compute the squared norm.
+        mul_inputs = []
+        for val in encoded_gradient:
+            mul_inputs += [val, val]
+        computed_sq_norm = self.parallel_sum(mul_inputs)
+        sq_norm_v = self.field.decode_from_bit_vector(sq_norm_v_bits)
+
+        return sq_norm_v - computed_sq_norm
+
+    def test_vec_set_type_param(self, test_vec):
+        test_vec["chunk_length_norm_equality"] = self.chunk_length
+        return ["chunk_length_norm_equality"]
+
+
+class PineValid(
+    PineValidBase[F]
+):
+    """
+    Validity circuit for all checks for PINE except the squared norm quality
+    check. The result is only valid if the circuit
+    `PineValidSquaredNormEqualityCheck` is also valid.
+
+    Wraparound enforcement is accomplished by a sequence of probabilistic
+    tests devised by [ROCT23]. A successful wraparound test indicates,
+    w.h.p., that the squared norm of the gradient, as it is represented in
+    the field, is a value between 0 and an upper bound that depends on the
+    circuit parameters.
+    """
+
+    def __init__(self,
+                 field: type[F],
+                 l2_norm_bound: int,
+                 num_frac_bits: int,
+                 dimension: int,
+                 chunk_length: int,
+                 alpha: float = ALPHA,
+                 num_wr_checks: int = NUM_WR_CHECKS,
+                 num_wr_successes: int = NUM_WR_SUCCESSES):
+        super().__init__(field,
+                         l2_norm_bound,
+                         num_frac_bits,
+                         dimension,
+                         chunk_length,
+                         alpha,
+                         num_wr_checks,
+                         num_wr_successes)
+        # 1 for bit check, 1 for wraparound check, 1 for final reduction.
+        # Note we don't include the number of wraparound joint randomness field
+        # elements in `JOINT_RAND_LEN`.
+        self.JOINT_RAND_LEN = 1 + 1 + 1
+        self.GADGET_CALLS = [
+            chunk_count(self.chunk_length, self.bit_checked_len) +
+            chunk_count(self.chunk_length, num_wr_checks)
+        ]
+
+    def eval(self,
+             meas: list[F],
+             joint_rand: list[F],
+             num_shares: int) -> list[F]:
+        self.check_valid_eval(meas, joint_rand)
+        # `shares_inv` is used to normalize constants when we compute the
+        # validity circuit when `num_shares > 1`.
+        shares_inv = self.field(num_shares).inv()
+
+        (_encoded_gradient, bit_checked, wr_check_results, sq_norm_v_bits,
+            sq_norm_u_bits, wr_check_v_bits, wr_check_g) = \
+            self.unpack_encoded_measurement(
+                meas)
 
         # Unpack the joint randomness.
         [r_bit_check, r_wr_check, r_final] = joint_rand
@@ -210,17 +351,15 @@ class PineValid(
                                 wr_check_results,
                                 shares_inv)
 
-        (sq_norm_equality_check_result, sq_norm_range_check_result) = \
-            self.eval_norm_check(encoded_gradient,
-                                 sq_norm_v_bits,
-                                 sq_norm_u_bits,
-                                 shares_inv)
+        sq_norm_range_check_result = \
+            self.eval_norm_range_check(sq_norm_v_bits,
+                                       sq_norm_u_bits,
+                                       shares_inv)
 
         result = bit_checks_result + \
-            r_final * sq_norm_equality_check_result + \
-            r_final**2 * sq_norm_range_check_result + \
-            r_final**3 * wr_quadratic_check_result + \
-            r_final**4 * wr_success_count_check_result
+            r_final * sq_norm_range_check_result + \
+            r_final**2 * wr_quadratic_check_result + \
+            r_final**3 * wr_success_count_check_result
         return [result]
 
     def eval_bit_checks(self,
@@ -246,32 +385,16 @@ class PineValid(
             r_power *= r_bit_check
         return self.parallel_sum(mul_inputs)
 
-    def eval_norm_check(self,
-                        encoded_gradient: list[F],
-                        sq_norm_v_bits: list[F],
-                        sq_norm_u_bits: list[F],
-                        shares_inv: F) -> tuple[F, F]:
+    def eval_norm_range_check(self,
+                              sq_norm_v_bits: list[F],
+                              sq_norm_u_bits: list[F],
+                              shares_inv: F) -> F:
+        """ Check the squared L2-norm is in range (see [ROCT23], Figure 1).
         """
-        Check that (1) the reported squared was computed correctly and (2) the
-        squared norm is in range. The result is only valid if the bit checks
-        and the wraparound checks were successful.
-        """
-        # Compute the squared norm.
-        mul_inputs = []
-        for val in encoded_gradient:
-            mul_inputs += [val, val]
-        computed_sq_norm = self.parallel_sum(mul_inputs)
-
         sq_norm_v = self.field.decode_from_bit_vector(sq_norm_v_bits)
         sq_norm_u = self.field.decode_from_bit_vector(sq_norm_u_bits)
 
-        return (
-            # Check that the computed squared L2-norm result matches
-            # the value claimed by the Client.
-            sq_norm_v - computed_sq_norm,
-            # Check the squared L2-norm is in range (see [ROCT23], Figure 1).
-            sq_norm_v + sq_norm_u - self.sq_norm_bound * shares_inv,
-        )
+        return sq_norm_v + sq_norm_u - self.sq_norm_bound * shares_inv
 
     def eval_wr_checks(self,
                        r_wr_check: F,
@@ -328,30 +451,6 @@ class PineValid(
             self.parallel_sum(mul_inputs),
             wr_success_count - self.field(self.num_wr_successes) * shares_inv
         )
-
-    def parallel_sum(self, mul_inputs: list[F]) -> F:
-        """
-        Split `mul_inputs` into chunks, call the gadget on each chunk, and
-        return the sum of the results. If there is a partial leftover, then it
-        is padded with zeros.
-        """
-        s = self.field(0)
-        while len(mul_inputs) >= 2*self.chunk_length:
-            (chunk, mul_inputs) = front(2*self.chunk_length, mul_inputs)
-            s += self.GADGETS[0].eval(self.field, chunk)
-        if len(mul_inputs) > 0:
-            chunk = self.field.zeros(2*self.chunk_length)
-            for i in range(len(mul_inputs)):
-                chunk[i] = mul_inputs[i]
-            s += self.GADGETS[0].eval(self.field, chunk)
-        return s
-
-    def encode(self, _measurement: list[float]) -> list[F]:
-        # NOTE We encode the measurement in two steps. First we encode the
-        # gradient and the range-checked norm by calling
-        # `encoded_gradient_and_norm()`, then we append the output of
-        # `run_wr_checks()`.
-        raise NotImplementedError("not implemented for Pine")
 
     def encode_gradient_and_norm(self, measurement: list[float]) -> list[F]:
         """
@@ -413,7 +512,9 @@ class PineValid(
             wr_check_results[wr_check_index] += rand_field * x
         return wr_check_results
 
-    def encode_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof) -> tuple[list[F], list[F]]:
+    def encode_wr_checks(self,
+                         encoded_gradient: list[F],
+                         wr_joint_rand_xof: Xof) -> tuple[list[F], list[F]]:
         """
         Run the wraparound checks and return the dot product for each check
         (`wr_check_results`) and the range-checked result for each check
@@ -474,14 +575,6 @@ class PineValid(
             )
         return (wr_check_bits, wr_check_results)
 
-    def truncate(self, meas: list[F]) -> list[F]:
-        return meas[:self.dimension]
-
-    def decode(self,
-               output: list[F],
-               num_measurements: int) -> list[float]:
-        return [self.decode_float_from_field(x) for x in output]
-
     def encode_float_into_field(self, x: float) -> F:
         if (math.isnan(x) or not math.isfinite(x) or
                 (x != 0.0 and abs(x) < sys.float_info.min)):
@@ -491,29 +584,20 @@ class PineValid(
                              "infinite, or subnormal floats.")
         return self.field(encode_float(x, self.num_frac_bits))
 
-    def decode_float_from_field(self, field_elem: Field) -> float:
-        decoded = field_elem.as_unsigned()
-        # If the field is larger than half of the field size, then
-        # decoded result should be negative.
-        if decoded > math.floor(field_elem.MODULUS / 2):
-            # We need to take the difference between the result
-            # and the field modulus, and return the result as negative.
-            decoded = -(field_elem.MODULUS - decoded)
-        # Divide by 2^num_frac_bits and we will get a float back.
-        decoded_float = decoded / (2 ** self.num_frac_bits)
-        return decoded_float
-
     def test_vec_set_type_param(self, test_vec):
-        test_vec["l2_norm_bound"] = self.l2_norm_bound
-        test_vec["num_frac_bits"] = self.num_frac_bits
-        test_vec["dimension"] = self.dimension
-        test_vec["chunk_length"] = self.chunk_length
-        test_vec["field"] = self.field.__name__
-        test_vec["num_wr_checks"] = self.num_wr_checks
-        test_vec["num_wr_successes"] = self.num_wr_successes
-        test_vec["alpha"] = self.alpha
-        return ["l2_norm_bound", "num_frac_bits", "dimension", "field",
-                "num_wr_checks", "num_wr_successes", "alpha"]
+        params = {
+            "l2_norm_bound": self.l2_norm_bound,
+            "num_frac_bits": self.num_frac_bits,
+            "dimension": self.dimension,
+            "chunk_length": self.chunk_length,
+            "field": self.field.__name__,
+            "num_wr_checks": self.num_wr_checks,
+            "num_wr_successes": self.num_wr_successes,
+            "alpha": self.alpha,
+        }
+
+        test_vec.update(params)
+        return list(params.keys())
 
 
 def bit_chunks(buf: bytes, num_chunk_bits: int):
@@ -549,3 +633,35 @@ def chunk_count(chunk_length, length):
 
 def encode_float(x: float, num_frac_bits: int) -> int:
     return math.floor(x * 2**num_frac_bits)
+
+
+def construct_circuits(
+    field: type[F],
+    l2_norm_bound: int,
+    num_frac_bits: int,
+    dimension: int,
+    chunk_length: int,
+    chunk_length_norm_equality: int,
+    alpha: float = ALPHA,
+    num_wr_checks: int = NUM_WR_CHECKS,
+    num_wr_successes: int = NUM_WR_SUCCESSES
+) -> tuple[PineValidNormEquality[F], PineValid[F]]:
+    return PineValidNormEquality(
+        field,
+        l2_norm_bound,
+        num_frac_bits,
+        dimension,
+        chunk_length_norm_equality,
+        alpha,
+        num_wr_checks,
+        num_wr_successes,
+    ), PineValid(
+        field,
+        l2_norm_bound,
+        num_frac_bits,
+        dimension,
+        chunk_length,
+        alpha,
+        num_wr_checks,
+        num_wr_successes,
+    )

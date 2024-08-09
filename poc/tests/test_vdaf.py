@@ -28,7 +28,7 @@ class TestDomainSeparationTag(unittest.TestCase):
         version, 4 bytes for algorithm ID, 2 bytes for usage string.
         """
         pine = Pine64(l2_norm_bound=2**4, dimension=100, num_frac_bits=4,
-                      chunk_length=10, num_shares=2)
+                      chunk_length=30, chunk_length_norm_equality=10, num_shares=2)
         self.assertEqual(len(pine.domain_separation_tag(0)), 7)
 
 
@@ -40,6 +40,7 @@ class TestShard(unittest.TestCase):
                       num_frac_bits=4,
                       dimension=4,
                       chunk_length=150,
+                      chunk_length_norm_equality=2,
                       num_shares=2)
         measurement = [0.0] * pine.valid.dimension
         nonce = gen_rand(pine.NONCE_SIZE)
@@ -61,7 +62,10 @@ class TestShard(unittest.TestCase):
         (meas_share, proofs_share, wr_joint_rand_blind, vf_joint_rand_blind) = \
             input_shares[0]
         self.assertEqual(len(meas_share), pine.MEAS_LEN)
-        self.assertEqual(len(proofs_share), pine.flp.PROOF_LEN * pine.PROOFS)
+        self.assertEqual(
+            len(proofs_share),
+            pine.flp_norm_equality.PROOF_LEN + pine.flp.PROOF_LEN * pine.PROOFS
+        )
 
 
 class TestPineVdafEndToEnd(unittest.TestCase):
@@ -70,6 +74,7 @@ class TestPineVdafEndToEnd(unittest.TestCase):
         self.num_frac_bits = 4
         self.l2_norm_bound = encode_float(1.0, 2**self.num_frac_bits)
         self.dimension = 20
+        self.chunk_length_norm_equality = 4
         self.chunk_length = 150
         self.num_shares = 2
 
@@ -89,23 +94,17 @@ class TestPineVdafEndToEnd(unittest.TestCase):
             test_vec_instance=pine.valid.field.__name__
         )
 
-    def test_field64(self):
-        pine = Pine64(l2_norm_bound=self.l2_norm_bound,
-                      dimension=self.dimension,
-                      num_frac_bits=self.num_frac_bits,
-                      chunk_length=self.chunk_length,
-                      num_shares=self.num_shares)
-        self.assertEqual(pine.flp.field, Field64)
-        self.run_pine_vdaf(pine)
-
-    def test_field128(self):
-        pine = Pine128(l2_norm_bound=self.l2_norm_bound,
-                       dimension=self.dimension,
-                       num_frac_bits=self.num_frac_bits,
-                       chunk_length=self.chunk_length,
-                       num_shares=self.num_shares)
-        self.assertEqual(pine.flp.field, Field128)
-        self.run_pine_vdaf(pine)
+    def test_fields(self):
+        for PineType, FieldType in [(Pine64, Field64), (Pine128, Field128)]:
+            pine = PineType(l2_norm_bound=self.l2_norm_bound,
+                            dimension=self.dimension,
+                            num_frac_bits=self.num_frac_bits,
+                            chunk_length=self.chunk_length,
+                            chunk_length_norm_equality=self.chunk_length_norm_equality,
+                            num_shares=self.num_shares)
+            self.assertEqual(pine.flp_norm_equality.field, FieldType)
+            self.assertEqual(pine.flp.field, FieldType)
+            self.run_pine_vdaf(pine)
 
 
 if __name__ == '__main__':

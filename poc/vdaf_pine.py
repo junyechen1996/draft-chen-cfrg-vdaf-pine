@@ -15,7 +15,8 @@ from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_QUERY_RANDOMNESS)
 from vdaf_poc.xof import Xof, XofTurboShake128
 
-from flp_pine import ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid
+from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
+                      construct_circuits)
 
 F = TypeVar("F", bound=FftField)
 X = TypeVar("X", bound=Xof)
@@ -87,6 +88,7 @@ class Pine(
 
     # Parameters set by constructor.
     valid: PineValid[F]
+    flp_norm_equality: FlpBBCGGI19[list[float], list[float], F]
     flp: FlpBBCGGI19[list[float], list[float], F]
     xof: type[X]
     PROOFS: int
@@ -106,21 +108,24 @@ class Pine(
                  num_frac_bits: int,
                  dimension: int,
                  chunk_length: int,
+                 chunk_length_norm_equality: int,
                  num_shares: int,
                  num_proofs: int,
                  alpha: float = ALPHA,
                  num_wr_checks: int = NUM_WR_CHECKS,
                  num_wr_successes: int = NUM_WR_SUCCESSES):
-        self.valid = PineValid(
-            field,
-            l2_norm_bound,
-            num_frac_bits,
-            dimension,
-            chunk_length,
-            alpha,
-            num_wr_checks,
-            num_wr_successes,
+        (valid_norm_equality, self.valid) = construct_circuits(
+            field=field,
+            l2_norm_bound=l2_norm_bound,
+            num_frac_bits=num_frac_bits,
+            dimension=dimension,
+            chunk_length=chunk_length,
+            chunk_length_norm_equality=chunk_length_norm_equality,
+            alpha=alpha,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes,
         )
+        self.flp_norm_equality = FlpBBCGGI19(valid_norm_equality)
         self.flp = FlpBBCGGI19(self.valid)
         self.xof = xof
         self.PROOFS = num_proofs
@@ -143,7 +148,7 @@ class Pine(
               rand: bytes
               ) -> tuple[PinePublicShare, list[PineInputShare]]:
         l = self.xof.SEED_SIZE
-        seeds = [rand[i:i+l] for i in range(0, self.RAND_SIZE, l)]
+        seeds = [rand[i:i + l] for i in range(0, self.RAND_SIZE, l)]
 
         meas = self.valid.encode_gradient_and_norm(measurement)
         assert len(meas) == self.valid.encoded_gradient_and_norm_len
@@ -235,6 +240,12 @@ class Pine(
         meas += wr_check_results
         prove_rands = self.prove_rands(k_prove)
         leader_proofs_share = []
+
+        # Always produce 1 proof for flp_norm_equality
+        (prove_rand, prove_rands) = \
+            front(self.flp_norm_equality.PROVE_RAND_LEN, prove_rands)
+        leader_proofs_share += self.flp_norm_equality.prove(
+            meas, prove_rand, [])
         for _ in range(self.PROOFS):
             (prove_rand, prove_rands) = \
                 front(self.flp.PROVE_RAND_LEN, prove_rands)
@@ -246,10 +257,10 @@ class Pine(
         # Sanity check:
         assert len(prove_rands) == 0
         assert len(vf_joint_rands) == 0
-        for j in range(self.SHARES-1):
+        for j in range(self.SHARES - 1):
             leader_proofs_share = vec_sub(
                 leader_proofs_share,
-                self.helper_proofs_share(j+1, k_helper_proofs_shares[j]),
+                self.helper_proofs_share(j + 1, k_helper_proofs_shares[j]),
             )
 
         # Each Aggregator's input share contains:
@@ -266,7 +277,7 @@ class Pine(
             k_leader_wr_joint_rand_blind,
             k_leader_vf_joint_rand_blind,
         ))
-        for j in range(self.SHARES-1):
+        for j in range(self.SHARES - 1):
             input_shares.append((
                 k_helper_meas_shares[j],
                 k_helper_proofs_shares[j],
@@ -340,6 +351,15 @@ class Pine(
         flp_meas_share = meas_share + wr_check_results
         query_rands = self.query_rands(verify_key, nonce)
         verifiers_share = []
+        (proof_share, proofs_share) = front(
+            self.flp_norm_equality.PROOF_LEN, proofs_share)
+        (query_rand, query_rands) = \
+            front(self.flp_norm_equality.QUERY_RAND_LEN, query_rands)
+        verifiers_share += self.flp_norm_equality.query(flp_meas_share,
+                                                        proof_share,
+                                                        query_rand,
+                                                        [],
+                                                        self.SHARES)
         for _ in range(self.PROOFS):
             (proof_share, proofs_share) = front(
                 self.flp.PROOF_LEN, proofs_share)
@@ -372,9 +392,11 @@ class Pine(
             )
         )
 
-    def prep_shares_to_prep(self, _agg_param: None, prep_shares: list[PinePrepShare[F]]):
+    def prep_shares_to_prep(self, _agg_param: None,
+                            prep_shares: list[PinePrepShare[F]]):
         # Unshard the verifier shares into the verifier message.
-        verifiers = self.flp.field.zeros(self.flp.VERIFIER_LEN * self.PROOFS)
+        verifiers = self.flp.field.zeros(
+            self.flp_norm_equality.VERIFIER_LEN + self.flp.VERIFIER_LEN * self.PROOFS)
         k_wr_joint_rand_parts = []
         k_vf_joint_rand_parts = []
         for (verifiers_share,
@@ -384,7 +406,13 @@ class Pine(
             k_wr_joint_rand_parts.append(k_wr_joint_rand_part)
             k_vf_joint_rand_parts.append(k_vf_joint_rand_part)
 
-        # Verify that each proof is well-formed and input is valid.
+        # Verify that each proof is well-formed and input is valid2.
+        (verifier, verifiers) = front(
+            self.flp_norm_equality.VERIFIER_LEN, verifiers)
+        if not self.flp_norm_equality.decide(verifier):
+            # Proof verifier check failed.
+            raise ValueError("Decision function failed after combining all "
+                             "verifier shares.")
         for _ in range(self.PROOFS):
             (verifier, verifiers) = front(self.flp.VERIFIER_LEN, verifiers)
             if not self.flp.decide(verifier):
@@ -423,13 +451,15 @@ class Pine(
         return out_share
 
     def aggregate(self, _agg_param, out_shares):
-        agg_share = self.flp.field.zeros(self.flp.OUTPUT_LEN)
+        agg_share = self.flp.field.zeros(
+            self.flp.OUTPUT_LEN)
         for out_share in out_shares:
             agg_share = vec_add(agg_share, out_share)
         return agg_share
 
     def unshard(self, _agg_param, agg_shares, num_measurements):
-        agg = self.flp.field.zeros(self.flp.OUTPUT_LEN)
+        agg = self.flp.field.zeros(
+            self.flp.OUTPUT_LEN)
         for agg_share in agg_shares:
             agg = vec_add(agg, agg_share)
         return self.flp.decode(agg, num_measurements)
@@ -471,7 +501,7 @@ class Pine(
             k_share,
             self.domain_separation_tag(USAGE_PROOF_SHARE),
             byte(self.PROOFS) + byte(agg_id),
-            self.flp.PROOF_LEN * self.PROOFS
+            self.flp_norm_equality.PROOF_LEN + self.flp.PROOF_LEN * self.PROOFS
         )
 
     def expand_input_share(
@@ -503,7 +533,7 @@ class Pine(
             k_prove,
             self.domain_separation_tag(USAGE_PROVE_RANDOMNESS),
             byte(self.PROOFS),
-            self.flp.PROVE_RAND_LEN * self.PROOFS
+            self.flp_norm_equality.PROVE_RAND_LEN + self.flp.PROVE_RAND_LEN * self.PROOFS
         )
 
     def query_rands(self,
@@ -517,6 +547,7 @@ class Pine(
             verify_key,
             self.domain_separation_tag(USAGE_QUERY_RANDOMNESS),
             byte(self.PROOFS) + nonce,
+            self.flp_norm_equality.QUERY_RAND_LEN +
             self.flp.QUERY_RAND_LEN * self.PROOFS
         )
 
@@ -551,13 +582,13 @@ class Pine(
         """
         leader_meas_share = encoded_measurement
         k_joint_rand_parts = []
-        for j in range(self.SHARES-1):
+        for j in range(self.SHARES - 1):
             helper_meas_share = self.helper_meas_share(
-                j+1, k_helper_meas_shares[j], len(encoded_measurement)
+                j + 1, k_helper_meas_shares[j], len(encoded_measurement)
             )
             leader_meas_share = vec_sub(leader_meas_share, helper_meas_share)
             k_joint_rand_parts.append(self.joint_rand_part(
-                j+1, k_helper_joint_rand_blinds[j], helper_meas_share, nonce,
+                j + 1, k_helper_joint_rand_blinds[j], helper_meas_share, nonce,
                 part_usage
             ))
         k_joint_rand_parts.insert(0, self.joint_rand_part(
@@ -624,13 +655,16 @@ class Pine(
             k_joint_rand_seed,
             self.domain_separation_tag(USAGE_JOINT_RANDOMNESS),
             byte(self.PROOFS),
+            self.flp_norm_equality.JOINT_RAND_LEN +
             self.flp.JOINT_RAND_LEN * self.PROOFS
         )
 
     # Methods for generating test vectors:
 
     def test_vec_set_type_param(self, test_vec):
-        params = self.flp.test_vec_set_type_param(test_vec)
+        params = self.flp_norm_equality.test_vec_set_type_param(
+            test_vec)
+        params += self.flp.test_vec_set_type_param(test_vec)
         test_vec["proofs"] = self.PROOFS
         return params + ["proofs"]
 
@@ -642,10 +676,11 @@ class Pine(
             k_vf_joint_rand_blind
         ) = input_share
         encoded = bytes()
-        if type(meas_share) == list and type(proofs_share) == list:  # leader
+
+        if isinstance(meas_share, type(proofs_share)) == list:  # leader
             encoded += self.flp.field.encode_vec(meas_share)
             encoded += self.flp.field.encode_vec(proofs_share)
-        elif type(meas_share) == bytes and type(proofs_share) == bytes:  # helper
+        elif isinstance(meas_share, type(proofs_share)) == bytes:  # helper
             encoded += meas_share
             encoded += proofs_share
         return encoded + k_wr_joint_rand_blind + k_vf_joint_rand_blind
@@ -674,6 +709,7 @@ class Pine128(Pine[Field128, XofTurboShake128]):
                  num_frac_bits: int,
                  dimension: int,
                  chunk_length: int,
+                 chunk_length_norm_equality,
                  num_shares: int,
                  alpha: float = ALPHA,
                  num_wr_checks: int = NUM_WR_CHECKS,
@@ -685,6 +721,7 @@ class Pine128(Pine[Field128, XofTurboShake128]):
             num_frac_bits=num_frac_bits,
             dimension=dimension,
             chunk_length=chunk_length,
+            chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
             num_proofs=1,
             alpha=alpha,
@@ -699,6 +736,7 @@ class Pine64(Pine[Field64, XofTurboShake128]):
                  num_frac_bits: int,
                  dimension: int,
                  chunk_length: int,
+                 chunk_length_norm_equality: int,
                  num_shares: int,
                  alpha: float = ALPHA,
                  num_wr_checks: int = NUM_WR_CHECKS,
@@ -710,6 +748,7 @@ class Pine64(Pine[Field64, XofTurboShake128]):
             num_frac_bits=num_frac_bits,
             dimension=dimension,
             chunk_length=chunk_length,
+            chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
             num_proofs=2,
             alpha=alpha,
