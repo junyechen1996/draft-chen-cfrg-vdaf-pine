@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-08T01:25:26.214976+00:00",
+  "timestamp": "2024-08-11T01:38:18.228355+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -10850,24 +10850,26 @@
       "id": "PR_kwDOJWdxls53B26p",
       "title": "Split squared norm equality check into a separate FLP",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/92",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "albertpl",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "This implements #53.",
       "createdAt": "2024-07-31T18:49:46Z",
-      "updatedAt": "2024-08-08T00:28:48Z",
+      "updatedAt": "2024-08-09T21:39:46Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "e7ff306f5cef9aa698fdf8e4f5c5b3626873edc5",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "albertpl/perform-normcheck-once",
-      "headRefOid": "cc7b647b6acf682110c78c0222f5adb831c7a37d",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "346826191b9169bd25372bcc66f43c434da1086d",
+      "closedAt": "2024-08-09T21:39:46Z",
+      "mergedAt": "2024-08-09T21:39:46Z",
+      "mergedBy": "albertpl",
+      "mergeCommit": {
+        "oid": "b7e986ebc97d806fb2c2f1362ede74bfff196486"
+      },
       "comments": [
         {
           "author": "albertpl",
@@ -11397,6 +11399,480 @@
               "body": "* I relocated all the evaluation sub-circuits.\r\n* But the encoding routines are shared by both circuits such that both can be used individually.\r\n* Also Most of parameters are shared by both too. One reason is that we initialize them together, with dependencies on each other. Two initialization of these parameters would be a little bit tricky? Lots of the parameters are used by the shared routines as well, e.g. unpack_encoded_measurement.",
               "createdAt": "2024-08-08T00:28:48Z",
               "updatedAt": "2024-08-08T00:28:48Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3Huh",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Looks good overall! Just some nit-picky stuff",
+          "createdAt": "2024-08-08T23:30:18Z",
+          "updatedAt": "2024-08-09T00:12:30Z",
+          "comments": [
+            {
+              "originalPosition": 24,
+              "body": "Thanks. I'll suggest where I think things can be split up more, if needed.",
+              "createdAt": "2024-08-08T23:30:18Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 40,
+              "body": "I don't think this is necessary to say: the API already says this is an abstract base class.",
+              "createdAt": "2024-08-08T23:30:58Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 267,
+              "body": "I believe `run_wr_checks()` and `encode_wr_checks()` are only relevant to `PineValid`: for `PineSquaredNormEqualityCheck` all we need is `encoded_gradient`, `sq_nrom_v_bits`, and `sq_norm_u_bits`, correct?",
+              "createdAt": "2024-08-08T23:56:07Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 291,
+              "body": "```suggestion\r\n    \"\"\"\r\n    PINE validation circuit that computes the squared L2-norm result\r\n```",
+              "createdAt": "2024-08-08T23:56:41Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 290,
+              "body": "```suggestion\r\nclass PineValidSquaredNormEqualityCheck(\r\n        PineValidBase[F]\r\n    ):\r\n```",
+              "createdAt": "2024-08-08T23:57:05Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 291,
+              "body": "```suggestion\r\n    \"\"\"\r\n    PINE validation circuit that computes the squared L2-norm result\r\n```",
+              "createdAt": "2024-08-08T23:57:07Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 322,
+              "body": "```suggestion\r\n```",
+              "createdAt": "2024-08-08T23:57:31Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 334,
+              "body": "Trailing whitespace (make sure there isn't anymore in this PR)",
+              "createdAt": "2024-08-08T23:57:58Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 324,
+              "body": "nit: I generally prefer including the parentheses when unpacking a struct\r\n```suggestion\r\n        (encoded_gradient, _bit_checked, _wr_check_results, sq_norm_v_bits, \\\r\n```",
+              "createdAt": "2024-08-08T23:58:44Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 327,
+              "body": "I think encapsulating `eval_norm_equality_check` was useful when we had three sub-circuits computing 5 results. Here I don't think it helps readability. I suggest inlining the code here.",
+              "createdAt": "2024-08-08T23:59:50Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 353,
+              "body": "```suggestion\r\n        PineValidBase[F]\r\n    ):\r\n    \"\"\"\r\n    Validity circuit for all other checks in PINE, including\r\n```",
+              "createdAt": "2024-08-09T00:00:19Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 353,
+              "body": "```suggestion\r\n    PineValidBase[F]\r\n):\r\n    \"\"\"Validity circuit for all checks for PINE except the squared norm quality check. This includes\r\n```",
+              "createdAt": "2024-08-09T00:00:55Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 102,
+              "body": "Weird may be preferable. We know that the encoding step is expensive, so we might save a lot on unit tests if we only encode once.\r\n\r\nCI takes something like 10 seconds, which is quite slow for unittests. I'm not sure though if this change is the reason.",
+              "createdAt": "2024-08-09T00:03:58Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "Idea: it might be nice to construct these FLPs once. Could we do something like this:\r\n```python\r\n(self.valid_squared_norm_equality, self.valid) = pine_flp.construct_circuits(field, l2_Norm_bound, ...)\r\n```",
+              "createdAt": "2024-08-09T00:06:10Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 49,
+              "body": "Do we actually need to store `valid_squared_norm_equality` in `self`?",
+              "createdAt": "2024-08-09T00:08:58Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            },
+            {
+              "originalPosition": 165,
+              "body": "This is visually hard to parse: the two lines look like different input parameters. Here and below.\r\n```suggestion\r\n            self.flp_squared_norm_equality.PROOF_LEN +\r\n                self.flp.PROOF_LEN * self.PROOFS\r\n```",
+              "createdAt": "2024-08-09T00:11:14Z",
+              "updatedAt": "2024-08-09T00:12:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3WEh",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T00:45:31Z",
+          "updatedAt": "2024-08-09T00:45:32Z",
+          "comments": [
+            {
+              "originalPosition": 102,
+              "body": "How much we can save here? `dimension=4`. I can reduce num_wr_check if that really matter",
+              "createdAt": "2024-08-09T00:45:31Z",
+              "updatedAt": "2024-08-09T00:45:32Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3WmF",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T00:47:11Z",
+          "updatedAt": "2024-08-09T00:47:11Z",
+          "comments": [
+            {
+              "originalPosition": 267,
+              "body": "We also need `unpack_encoded_measurement` which depends on lots of parameters. Unless we want to duplicate this in both `PineSquaredNormEqualityCheck` and `PineValid`. So lesser of two evils is to keep `unpack_encoded_measurement` in the base class. \r\n\r\nAlso moving all encoding routines to `PineValid` will render `PineSquaredNormEqualityCheck` unable to test by itself. So we always need to create `PineValid` to encode & then test `PineSquaredNormEqualityCheck`.\r\n",
+              "createdAt": "2024-08-09T00:47:11Z",
+              "updatedAt": "2024-08-09T00:49:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3juM",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T02:04:40Z",
+          "updatedAt": "2024-08-09T02:04:40Z",
+          "comments": [
+            {
+              "originalPosition": 49,
+              "body": "removed",
+              "createdAt": "2024-08-09T02:04:40Z",
+              "updatedAt": "2024-08-09T02:04:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3jwn",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T02:04:54Z",
+          "updatedAt": "2024-08-09T02:04:54Z",
+          "comments": [
+            {
+              "originalPosition": 41,
+              "body": "done",
+              "createdAt": "2024-08-09T02:04:54Z",
+              "updatedAt": "2024-08-09T02:04:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3kJi",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T02:07:24Z",
+          "updatedAt": "2024-08-09T02:07:24Z",
+          "comments": [
+            {
+              "originalPosition": 267,
+              "body": "I move all encoding functions to `PineValid`.",
+              "createdAt": "2024-08-09T02:07:24Z",
+              "updatedAt": "2024-08-09T02:07:24Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E3kUn",
+          "commit": {
+            "abbreviatedOid": "cfe821a"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T02:08:37Z",
+          "updatedAt": "2024-08-09T02:08:37Z",
+          "comments": [
+            {
+              "originalPosition": 102,
+              "body": "nvm. done.",
+              "createdAt": "2024-08-09T02:08:37Z",
+              "updatedAt": "2024-08-09T02:08:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E8u4Y",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T15:39:06Z",
+          "updatedAt": "2024-08-09T15:54:36Z",
+          "comments": [
+            {
+              "originalPosition": 216,
+              "body": "spelling and trailing whitespace\r\n```suggestion\r\n    Validity circuit for all checks for PINE except the squared norm quality\r\n    check. The result is only valid if the circuit\r\n    `PineValidSquaredNormEqualityCheck` is also valid.\r\n```",
+              "createdAt": "2024-08-09T15:39:06Z",
+              "updatedAt": "2024-08-09T15:54:36Z"
+            },
+            {
+              "originalPosition": 267,
+              "body": "Awesome, I think that makes more sense. ",
+              "createdAt": "2024-08-09T15:42:14Z",
+              "updatedAt": "2024-08-09T15:54:36Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "nit: call `construct_circuits()` and iterate over the outputs:\r\n```python\r\ncircuits = construct_circuits(BLAH)\r\nfor v in circuits:\r\n    BLAH\r\n```",
+              "createdAt": "2024-08-09T15:43:50Z",
+              "updatedAt": "2024-08-09T15:54:36Z"
+            },
+            {
+              "originalPosition": 13,
+              "body": "Make sure the code is consistent about \"squared norm equality\" versus \"norm equality\". Either is fine with me, but consistency is important for readability.",
+              "createdAt": "2024-08-09T15:45:02Z",
+              "updatedAt": "2024-08-09T15:54:36Z"
+            },
+            {
+              "originalPosition": 466,
+              "body": "Idea: We could move the code from `PineValiBase.__init__` here. Then all each circuit's constructor needs to do is copy the parameters it needs and construct the ones that are specific to it.",
+              "createdAt": "2024-08-09T15:51:14Z",
+              "updatedAt": "2024-08-09T15:54:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E845T",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T15:59:34Z",
+          "updatedAt": "2024-08-09T15:59:34Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "I stick with \"norm equality\".",
+              "createdAt": "2024-08-09T15:59:34Z",
+              "updatedAt": "2024-08-09T15:59:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E9D_M",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T16:21:08Z",
+          "updatedAt": "2024-08-09T16:21:08Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "Rename `PineValidSquaredNormEqualityCheck` to `PineValidNormEquality`. \r\nThe comments may still refer to \"squared norm check equality\", let me know you don't like this as well.",
+              "createdAt": "2024-08-09T16:21:08Z",
+              "updatedAt": "2024-08-09T16:21:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E9Pka",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T16:45:49Z",
+          "updatedAt": "2024-08-09T16:45:49Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "Comments are fine, thanks",
+              "createdAt": "2024-08-09T16:45:49Z",
+              "updatedAt": "2024-08-09T16:45:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E9bPC",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T17:16:02Z",
+          "updatedAt": "2024-08-09T17:16:03Z",
+          "comments": [
+            {
+              "originalPosition": 466,
+              "body": "Both critics share lots of parameters. Unless we want these two circuits to have different `MEAS_LEN`,  `PineValidNormEquality` has to carry `num_wr_checks`. So goes to other parameters.\r\n\r\nWhat parameters do you want to split out of base class?\r\n\r\n\r\nThe base class should initializer the shared parameters. Having some external method to do this work is not a good practice.\r\n\r\nAnd each constructor of the subclass already does \"construct the ones that are specific to it.\" as of now.",
+              "createdAt": "2024-08-09T17:16:02Z",
+              "updatedAt": "2024-08-09T17:16:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E91DO",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T18:13:21Z",
+          "updatedAt": "2024-08-09T18:13:21Z",
+          "comments": [
+            {
+              "originalPosition": 290,
+              "body": "I tried but the lint step automatically revert this change. Let me bypass the lint step.\r\nIf you have some lint config that can share, it would be great.",
+              "createdAt": "2024-08-09T18:13:21Z",
+              "updatedAt": "2024-08-09T18:13:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E91o3",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T18:15:01Z",
+          "updatedAt": "2024-08-09T18:15:01Z",
+          "comments": [
+            {
+              "originalPosition": 466,
+              "body": "Fair points. The thing that bothers me about this code is that we're doing the same computation twice, that is calling the base class constructor twice. Obviously performance doesn't matter for the reference code, it's just not very tidy. Feel free to disregard.",
+              "createdAt": "2024-08-09T18:15:01Z",
+              "updatedAt": "2024-08-09T18:15:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E93FX",
+          "commit": {
+            "abbreviatedOid": "1f3c0e0"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "LGTM modulo one byte of trailing whitespace",
+          "createdAt": "2024-08-09T18:19:12Z",
+          "updatedAt": "2024-08-09T18:19:51Z",
+          "comments": [
+            {
+              "originalPosition": 151,
+              "body": "trailing whitespace\r\n```suggestion\r\n        * The result is only valid if the other circuit\r\n```",
+              "createdAt": "2024-08-09T18:19:12Z",
+              "updatedAt": "2024-08-09T18:19:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E946x",
+          "commit": {
+            "abbreviatedOid": "b8ca084"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T18:23:06Z",
+          "updatedAt": "2024-08-09T18:23:06Z",
+          "comments": [
+            {
+              "originalPosition": 35,
+              "body": "done",
+              "createdAt": "2024-08-09T18:23:06Z",
+              "updatedAt": "2024-08-09T18:23:06Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E98ge",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T18:33:21Z",
+          "updatedAt": "2024-08-09T18:33:21Z",
+          "comments": [
+            {
+              "originalPosition": 290,
+              "body": "This does fail [autopep8 check](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/actions/runs/10323919100/job/28582293557?pr=92) the lint check. So I have to revert.\r\n\r\nN.B. this is automatically suggested by `autopep8 --diff --exit-code *.py tests/*.py`, as defined in CI.",
+              "createdAt": "2024-08-09T18:33:21Z",
+              "updatedAt": "2024-08-09T18:33:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6E-KC-",
+          "commit": {
+            "abbreviatedOid": "7af462f"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-09T19:12:02Z",
+          "updatedAt": "2024-08-09T19:12:02Z",
+          "comments": [
+            {
+              "originalPosition": 290,
+              "body": "Oh no, sorry about the conflicting feedback!",
+              "createdAt": "2024-08-09T19:12:02Z",
+              "updatedAt": "2024-08-09T19:12:02Z"
             }
           ]
         }
