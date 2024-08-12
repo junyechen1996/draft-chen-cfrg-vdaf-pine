@@ -11,7 +11,7 @@ TEST_VECTOR_PATH = os.environ.get('TEST_VECTOR_PATH',
 
 if __name__ == '__main__':
     num_frac_bits = 4
-    l2_norm_bound = encode_float(1.0, 2**num_frac_bits)
+    l2_norm_bound = encode_float(1.0, num_frac_bits)
     dimension = 20
     chunk_length = 150
     chunk_length_norm_equality = 4

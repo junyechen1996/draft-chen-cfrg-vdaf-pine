@@ -72,7 +72,7 @@ class TestPineVdafEndToEnd(TestVdaf):
 
     def setUp(self):
         self.num_frac_bits = 4
-        self.l2_norm_bound = encode_float(1.0, 2**self.num_frac_bits)
+        self.l2_norm_bound = encode_float(1.0, self.num_frac_bits)
         self.dimension = 20
         self.chunk_length_norm_equality = 4
         self.chunk_length = 150
