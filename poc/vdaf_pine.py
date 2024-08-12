@@ -97,7 +97,6 @@ class Pine(
     SHARES: int
 
     # Operational parameters for generating test vectors.
-    test_vec_name = "Pine"
     ID = 0xffff_ffff
 
     @abstractmethod
@@ -704,6 +703,8 @@ class Pine(
 
 
 class Pine128(Pine[Field128, XofTurboShake128]):
+    test_vec_name = "Pine128"
+
     def __init__(self,
                  l2_norm_bound: int,
                  num_frac_bits: int,
@@ -731,6 +732,8 @@ class Pine128(Pine[Field128, XofTurboShake128]):
 
 
 class Pine64(Pine[Field64, XofTurboShake128]):
+    test_vec_name = "Pine64"
+
     def __init__(self,
                  l2_norm_bound: int,
                  num_frac_bits: int,

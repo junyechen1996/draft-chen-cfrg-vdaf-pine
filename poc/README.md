@@ -19,11 +19,11 @@ Version 3.20.0 or later is required.
 ## Run unit tests
 
 ```
-make
+sage -python -m unittest
 ```
 
 ## Generating test vectors
 
 ```
-sh generate_test_vectors.sh
+sage -python gen_test_vec.py
 ```

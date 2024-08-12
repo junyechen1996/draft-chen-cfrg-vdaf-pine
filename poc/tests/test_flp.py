@@ -6,7 +6,8 @@ import unittest
 
 from vdaf_poc.common import gen_rand
 from vdaf_poc.field import Field64, Field128
-from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19, test_flp_bbcggi19
+from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19
+from vdaf_poc.test_utils import TestFlpBBCGGI19
 from vdaf_poc.xof import XofTurboShake128
 
 from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
@@ -229,7 +230,7 @@ class TestOperationalParameters(unittest.TestCase):
                     )
 
 
-class TestCircuit(unittest.TestCase):
+class TestCircuits(TestFlpBBCGGI19):
 
     def test_bit_chunks(self):
         """
@@ -280,7 +281,7 @@ class TestCircuit(unittest.TestCase):
             for valid in valids:
                 test_flp = FlpBBCGGI19(valid)
                 # Test PINE FLP with verification.
-                test_flp_bbcggi19(test_flp, [(meas, True)])
+                self.run_flp_test(test_flp, [(meas, True)])
 
 
 if __name__ == '__main__':
