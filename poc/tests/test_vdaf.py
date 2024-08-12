@@ -2,9 +2,9 @@
 
 import unittest
 
-from vdaf_poc.common import TEST_VECTOR, gen_rand
+from vdaf_poc.common import gen_rand
 from vdaf_poc.field import Field64, Field128
-from vdaf_poc.vdaf import test_vdaf
+from vdaf_poc.test_utils import TestVdaf
 from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_JOINT_RANDOMNESS, USAGE_MEAS_SHARE,
                                  USAGE_PROOF_SHARE, USAGE_PROVE_RANDOMNESS,
@@ -68,7 +68,7 @@ class TestShard(unittest.TestCase):
         )
 
 
-class TestPineVdafEndToEnd(unittest.TestCase):
+class TestPineVdafEndToEnd(TestVdaf):
 
     def setUp(self):
         self.num_frac_bits = 4
@@ -78,21 +78,38 @@ class TestPineVdafEndToEnd(unittest.TestCase):
         self.chunk_length = 150
         self.num_shares = 2
 
-    def run_pine_vdaf(self, pine):
-        measurement_1 = [0.0] * pine.valid.dimension
-        measurement_1[0] = 1.0
-        measurement_2 = [0.0] * pine.valid.dimension
-        measurement_2[1] = 1.0
-        expected_agg_result = [
-            x + y for (x, y) in zip(measurement_1, measurement_2)]
-        test_vdaf(
-            pine,
-            None,
-            [measurement_1, measurement_2],
-            expected_agg_result,
-            print_test_vec=TEST_VECTOR,
-            test_vec_instance=pine.valid.field.__name__
-        )
+        self.measurements = []
+        self.measurements.append([0.0] * self.dimension)
+        self.measurements.append([0.0] * self.dimension)
+        self.measurements[0][0] = 1.0
+        self.measurements[1][1] = 1.0
+        self.expected_agg_result = [
+            x + y for (x, y) in zip(self.measurements[0], self.measurements[1])
+        ]
+
+    def test_64(self):
+        pine = Pine64(self.l2_norm_bound,
+                      self.num_frac_bits,
+                      self.dimension,
+                      self.chunk_length,
+                      self.chunk_length_norm_equality,
+                      self.num_shares)
+        self.run_vdaf_test(pine,
+                           None,
+                           self.measurements,
+                           self.expected_agg_result)
+
+    def test_128(self):
+        pine = Pine128(self.l2_norm_bound,
+                       self.num_frac_bits,
+                       self.dimension,
+                       self.chunk_length,
+                       self.chunk_length_norm_equality,
+                       self.num_shares)
+        self.run_vdaf_test(pine,
+                           None,
+                           self.measurements,
+                           self.expected_agg_result)
 
     def test_fields(self):
         for PineType, FieldType in [(Pine64, Field64), (Pine128, Field128)]:
@@ -104,7 +121,6 @@ class TestPineVdafEndToEnd(unittest.TestCase):
                             num_shares=self.num_shares)
             self.assertEqual(pine.flp_norm_equality.field, FieldType)
             self.assertEqual(pine.flp.field, FieldType)
-            self.run_pine_vdaf(pine)
 
 
 if __name__ == '__main__':
