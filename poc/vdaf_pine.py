@@ -677,10 +677,10 @@ class Pine(
         ) = input_share
         encoded = bytes()
 
-        if isinstance(meas_share, type(proofs_share)) == list:  # leader
+        if type(meas_share) == list and type(proofs_share) == list:  # leader
             encoded += self.flp.field.encode_vec(meas_share)
             encoded += self.flp.field.encode_vec(proofs_share)
-        elif isinstance(meas_share, type(proofs_share)) == bytes:  # helper
+        elif type(meas_share) == bytes and type(proofs_share) == bytes:  # helper
             encoded += meas_share
             encoded += proofs_share
         return encoded + k_wr_joint_rand_blind + k_vf_joint_rand_blind
