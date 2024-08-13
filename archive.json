@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-11T01:38:18.228355+00:00",
+  "timestamp": "2024-08-13T01:34:03.882203+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -11877,6 +11877,32 @@
           ]
         }
       ]
+    },
+    {
+      "number": 93,
+      "id": "PR_kwDOJWdxls54KVPL",
+      "title": "Update code for generating test vectors",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/93",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The upstream repo now contains a tool for generating test vectors for a VDAF. It also includes some improvements to testing FLPs and VDAFs.",
+      "createdAt": "2024-08-12T22:31:25Z",
+      "updatedAt": "2024-08-12T22:59:44Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "b7e986ebc97d806fb2c2f1362ede74bfff196486",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/fix-test-vec",
+      "headRefOid": "b3eb6334b6094d7eb227178a3063be0ec9f9725f",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
