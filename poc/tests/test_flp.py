@@ -1,7 +1,6 @@
 """Unit tests for The PINE FLP."""
 
 import math
-import os
 import unittest
 
 from vdaf_poc.common import gen_rand
@@ -11,7 +10,7 @@ from vdaf_poc.test_utils import TestFlpBBCGGI19
 from vdaf_poc.xof import XofTurboShake128
 
 from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
-                      bit_chunks, construct_circuits, encode_float)
+                      construct_circuits, encode_float)
 
 
 class TestEncoding(unittest.TestCase):
@@ -231,24 +230,6 @@ class TestOperationalParameters(unittest.TestCase):
 
 
 class TestCircuits(TestFlpBBCGGI19):
-
-    def test_bit_chunks(self):
-        """
-        Test that chunking the buffer with `num_chunk_bits` bits at a time and
-        joining them back together outputs the original buffer.
-        """
-        buf = os.urandom(16)
-
-        # First, display `buf` as a string of bits in `bits_str`.
-        bits_str = "".join(map(lambda byte: "{0:08b}".format(byte), buf))
-        for num_chunk_bits in [1, 2, 4, 8]:
-            bit_chunks_str = "".join(map(
-                # Format each chunk as bits string, and zero fill the most
-                # significant bits.
-                lambda bit_chunk: format(bit_chunk, "b").zfill(num_chunk_bits),
-                bit_chunks(buf, num_chunk_bits)
-            ))
-            assert bits_str == bit_chunks_str
 
     def test_flp(self):
         """

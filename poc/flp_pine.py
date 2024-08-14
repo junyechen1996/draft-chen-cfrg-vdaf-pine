@@ -496,20 +496,22 @@ class PineValid(
         Implementation note: It may be useful to stream the XOF output a block
         a time rather than pre-compute the entire bufferr.
         """
-        xof_output = wr_joint_rand_xof.next(
-            chunk_count(4, self.num_wr_checks * self.dimension))
-
-        wr_check_results = [self.field(0)] * self.num_wr_checks
-        for i, rand_bits in enumerate(bit_chunks(xof_output, 2)):
-            wr_check_index = i // self.dimension
-            x = encoded_gradient[i % self.dimension]
-            if rand_bits == 0b00:
-                rand_field = -self.field(1)
-            elif rand_bits == 0b01 or rand_bits == 0b10:
-                rand_field = self.field(0)
-            else:
-                rand_field = self.field(1)
-            wr_check_results[wr_check_index] += rand_field * x
+        wr_check_results = []
+        for _ in range(self.num_wr_checks):
+            wr_check_result = self.field(0)
+            for j in range(0, self.dimension, 4):
+                b = wr_joint_rand_xof.next(1)[0]
+                for k in range(j, min(j+4, self.dimension)):
+                    rand_bits = b & 0b11
+                    if rand_bits == 0b00:
+                        rand_field = -self.field(1)
+                    elif rand_bits == 0b01 or rand_bits == 0b10:
+                        rand_field = self.field(0)
+                    else:
+                        rand_field = self.field(1)
+                    wr_check_result += rand_field * encoded_gradient[k]
+                    b >>= 2
+            wr_check_results.append(wr_check_result)
         return wr_check_results
 
     def encode_wr_checks(self,
@@ -598,19 +600,6 @@ class PineValid(
 
         test_vec.update(params)
         return list(params.keys())
-
-
-def bit_chunks(buf: bytes, num_chunk_bits: int):
-    """
-    Output the bit chunks, at `num_chunk_bits` bits at a time, from `buf`.
-    """
-    assert (8 % num_chunk_bits == 0 and
-            0 < num_chunk_bits and num_chunk_bits <= 8)
-    # Mask to extract the least significant `num_chunk_bits` bits.
-    mask = (1 << num_chunk_bits) - 1
-    for byte in buf:
-        for chunk_start in reversed(range(0, 8, num_chunk_bits)):
-            yield (byte >> chunk_start) & mask
 
 
 def range_check(dot_prod: F,
