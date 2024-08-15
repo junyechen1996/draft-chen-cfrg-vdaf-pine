@@ -8,7 +8,7 @@ from typing import TypeVar
 # Access poc folder in submoduled VDAF draft.
 from vdaf_poc.common import front, next_power_of_2
 from vdaf_poc.field import FftField, Field
-from vdaf_poc.flp_bbcggi19 import Mul, ParallelSum, Valid
+from vdaf_poc.flp_bbcggi19 import Mul, ParallelSum, PolyEval, Valid
 from vdaf_poc.xof import Xof
 
 F = TypeVar("F", bound=FftField)
@@ -130,9 +130,7 @@ class PineValidBase(
         # checks.
         self.MEAS_LEN = dimension + self.bit_checked_len + num_wr_checks
         self.OUTPUT_LEN = dimension
-
         self.chunk_length = chunk_length
-        self.GADGETS = [ParallelSum(Mul(), self.chunk_length)]
 
     @abstractmethod
     def eval(self,
@@ -177,20 +175,20 @@ class PineValidBase(
         return (encoded_gradient, bit_checked, wr_check_results,
                 sq_norm_v_bits, sq_norm_u_bits, wr_check_v_bits, wr_check_g)
 
-    def parallel_sum(self, mul_inputs: list[F]) -> F:
+    def parallel_sum(self, inputs: list[F]) -> F:
         """
-        Split `mul_inputs` into chunks, call the gadget on each chunk, and
+        Split `inputs` into chunks, call the gadget on each chunk, and
         return the sum of the results. If there is a partial leftover, then it
         is padded with zeros.
         """
         s = self.field(0)
-        while len(mul_inputs) >= 2 * self.chunk_length:
-            (chunk, mul_inputs) = front(2 * self.chunk_length, mul_inputs)
+        while len(inputs) >= self.GADGETS[0].ARITY:
+            (chunk, inputs) = front(self.GADGETS[0].ARITY, inputs)
             s += self.GADGETS[0].eval(self.field, chunk)
-        if len(mul_inputs) > 0:
-            chunk = self.field.zeros(2 * self.chunk_length)
-            for i in range(len(mul_inputs)):
-                chunk[i] = mul_inputs[i]
+        if len(inputs) > 0:
+            chunk = self.field.zeros(self.GADGETS[0].ARITY)
+            for i in range(len(inputs)):
+                chunk[i] = inputs[i]
             s += self.GADGETS[0].eval(self.field, chunk)
         return s
 
@@ -252,6 +250,7 @@ class PineValidNormEquality(
                          num_wr_successes)
         self.JOINT_RAND_LEN = 0
         self.GADGET_CALLS = [chunk_count(self.chunk_length, dimension)]
+        self.GADGETS = [ParallelSum(PolyEval([0, 0, 1]), self.chunk_length)]
 
     def eval(self,
              meas: list[F],
@@ -268,13 +267,8 @@ class PineValidNormEquality(
                                  sq_norm_v_bits: list[F]) -> F:
         """Check that the computed squared L2-norm result matches the value
         claimed by the Client. """
-        # Compute the squared norm.
-        mul_inputs = []
-        for val in encoded_gradient:
-            mul_inputs += [val, val]
-        computed_sq_norm = self.parallel_sum(mul_inputs)
+        computed_sq_norm = self.parallel_sum(encoded_gradient)
         sq_norm_v = self.field.decode_from_bit_vector(sq_norm_v_bits)
-
         return sq_norm_v - computed_sq_norm
 
     def test_vec_set_type_param(self, test_vec):
@@ -322,6 +316,7 @@ class PineValid(
             chunk_count(self.chunk_length, self.bit_checked_len) +
             chunk_count(self.chunk_length, num_wr_checks)
         ]
+        self.GADGETS = [ParallelSum(Mul(), self.chunk_length)]
 
     def eval(self,
              meas: list[F],
