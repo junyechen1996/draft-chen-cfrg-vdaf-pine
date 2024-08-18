@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-15T01:21:21.761476+00:00",
+  "timestamp": "2024-08-18T01:36:40.948441+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12018,7 +12018,7 @@
       "labels": [],
       "body": "Each wraparound check result is computed by taking the dot product of the encoded gradient and a random vector. To generate the vectors, we iterate over the output of an XOF two bits at a time. This minimizes the amount of XOF output we need to generate, but keeping track of where we are in the bit slice costs a fair bit of bit twiddling under the hood.\r\n\r\nThis computation requires iterating over the encoded gradient for each wraparound tests. We can avoid some bit twiddling if we can avoid splitting bytes of XOF output across iterations.\r\n\r\nDivide the gradient into chunks of at most four elements, and for each chunk, consume a byte of XOF output (8 bits per byte, 2 bits per element). This strategy wastes a few bits per test if the gradient length is not a power of four. Overall we end up generating\r\n\r\n```\r\nchunk_count(4, dimension) * NUM_WR_CHECKS\r\n```\r\n\r\nbytes of XOF output instead of\r\n\r\n```\r\nchunk_count(4, dimension * NUM_WR_CHECKS)\r\n```\r\n\r\nHowever, this trade-off appears to be worth it: In Daphne's benchmarks, this saves 17% on encode time.\r\n\r\nThis is a breaking change because it changes the order in which we consume the output of the XOF.",
       "createdAt": "2024-08-14T23:48:48Z",
-      "updatedAt": "2024-08-15T00:12:56Z",
+      "updatedAt": "2024-08-17T18:54:13Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "214dfb85f9114a0ef7b5e5ea074fa4c1df81fa00",
@@ -12030,7 +12030,168 @@
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6FlptZ",
+          "commit": {
+            "abbreviatedOid": "c77135d"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "Thanks for the investigation. I have one suggestion, and also would like Albert to take a look on this one to see if we see some similar improvement in Swift.",
+          "createdAt": "2024-08-15T20:10:06Z",
+          "updatedAt": "2024-08-15T20:10:58Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "Will accessing `encoded_gradient` (which is a large array) in each wraparound check have cache performance hit? Is there any performance benefit of keeping dimension as the outer loop?",
+              "createdAt": "2024-08-15T20:10:06Z",
+              "updatedAt": "2024-08-15T20:10:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6FmOad",
+          "commit": {
+            "abbreviatedOid": "c77135d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-15T21:36:18Z",
+          "updatedAt": "2024-08-15T21:36:18Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "It's worth investigating! My intuition is that since we're writing to wr_check_result, but reading from encoded_gradient, it's better to keep wr_check_result in cache longer.",
+              "createdAt": "2024-08-15T21:36:18Z",
+              "updatedAt": "2024-08-15T21:36:18Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6FmS7y",
+          "commit": {
+            "abbreviatedOid": "c77135d"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-15T21:46:53Z",
+          "updatedAt": "2024-08-15T21:46:53Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "I could be wrong though, @albertpl should try both.",
+              "createdAt": "2024-08-15T21:46:53Z",
+              "updatedAt": "2024-08-15T21:46:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Fws5w",
+          "commit": {
+            "abbreviatedOid": "c77135d"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-17T18:54:05Z",
+          "updatedAt": "2024-08-17T18:54:13Z",
+          "comments": [
+            {
+              "originalPosition": 31,
+              "body": "My experiments is consistent with what @cjpatton said, although it is not significant (~3%). Didn't dig too much into this. But I agree with @cjpatton's intuition, i.e. we need to allocate `wr_check_results` first and deal with more miss for it. ",
+              "createdAt": "2024-08-17T18:54:06Z",
+              "updatedAt": "2024-08-17T18:54:13Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 97,
+      "id": "PR_kwDOJWdxls54emgS",
+      "title": "Use squaring gadget to compute the squared norm",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/97",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Based on #96 (merge that first).\r\n\r\nThe `PineValidNormEquality` circuit uses the `Mul` gadget to square each element of the encoded gradient, i.e., `Mul(x, x) = x^2`. We could instead use `PolyEval` to square each `x`, which reduces the arity of gadget by a factor of 2. This pays off especially when we use `ParallelSum`, as the arity counts against the size of the proof and verifier.\r\n\r\nIn Daphne's benchmarks, this improves prove time 14% and query time by 50% after re-tuning the chunk length so that the proof and verifier are as large as before. (We see a more modest improvement with a smaller chunk length.) This equates in a 3% improvement in shard time and a 5% improvement in prep time.",
+      "createdAt": "2024-08-15T15:13:25Z",
+      "updatedAt": "2024-08-17T20:01:57Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "cjpatton/opt-bit-fiddling",
+      "baseRefOid": "c77135de18e5ca2d9ddda3e8e8459c04cd9ac301",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/opt-square-gadget",
+      "headRefOid": "d3b9d2dc3eb543f4dc0246d8e5d4c960722284fc",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6FkzGs",
+          "commit": {
+            "abbreviatedOid": "a13ae3e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-15T18:00:58Z",
+          "updatedAt": "2024-08-15T18:02:03Z",
+          "comments": [
+            {
+              "originalPosition": 59,
+              "body": "I think we can combine the functionality into `parallel_sum`, parameterized by `gadget.arity`, so we can put the right amount of inputs into the chunk? Something like:\r\n\r\n```\r\n        g = self.GADGETS[0]\r\n        s = self.field(0)\r\n        while len(inputs) >=  g.ARITY * self.chunk_length:\r\n            (chunk, inputs) = front(g.ARITY * self.chunk_length, inputs)\r\n            s += g.eval(self.field, chunk)\r\n        if len(inputs) > 0:\r\n            chunk = self.field.zeros(g.ARITY * self.chunk_length)\r\n            for i in range(len(inputs)):\r\n                chunk[i] = mul_inputs[i]\r\n            s += g.eval(self.field, chunk)\r\n        return s\r\n```\r\n\r\nwhere `inputs` is `mul_inputs` for `Mul` gadget, and is `encoded_gradient` for `PolyEval` gadget.",
+              "createdAt": "2024-08-15T18:00:58Z",
+              "updatedAt": "2024-08-15T18:02:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6FmSzf",
+          "commit": {
+            "abbreviatedOid": "a13ae3e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-15T21:46:27Z",
+          "updatedAt": "2024-08-15T21:46:27Z",
+          "comments": [
+            {
+              "originalPosition": 59,
+              "body": "Good idea, done.",
+              "createdAt": "2024-08-15T21:46:27Z",
+              "updatedAt": "2024-08-15T21:46:27Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Fwug5",
+          "commit": {
+            "abbreviatedOid": "d3b9d2d"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Great work!\r\nThis cut down the number of wire polynomials by half! So ~ half the FFT operations.",
+          "createdAt": "2024-08-17T20:01:01Z",
+          "updatedAt": "2024-08-17T20:01:57Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
