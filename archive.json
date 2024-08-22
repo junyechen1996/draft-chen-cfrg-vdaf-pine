@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-20T01:25:09.747623+00:00",
+  "timestamp": "2024-08-22T01:33:47.980177+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -781,6 +781,22 @@
       "body": "Currently\r\n\r\n1. The main circuit checks if the squared norm claimed by the client is in range and whether the wraparound checks succeeded\r\n2. The other circuit checks if the gradient's squared norm is equal to the value claimed by the client\r\n\r\nThis split makes sense from a performance stand point because the main circuit does all the bit checks and the other circuit does not require joint randomness. However a more natural split of functionality would be:\r\n\r\n1. The first circuit that checks if the squared norm is equal to the claimed value and the claimed value is in range\r\n2. The second circuit that checks the wraparound test results\r\n\r\nAs of VDAF draft 10, the circuit output is a vector and we do the reduction in the query algorithm itself. This means that joint randomness would still not be required for the first circuit. However, the range check for the claimed squared norm requires bit checks, though significantly fewer than in the second circuit.",
       "createdAt": "2024-08-13T20:22:10Z",
       "updatedAt": "2024-08-13T20:22:10Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 98,
+      "id": "I_kwDOJWdxls6TngrQ",
+      "title": "Double the length of the joint randomness seed",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/98",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "See https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/319#issuecomment-2299836818.",
+      "createdAt": "2024-08-20T22:02:47Z",
+      "updatedAt": "2024-08-20T22:03:01Z",
       "closedAt": null,
       "comments": []
     }
