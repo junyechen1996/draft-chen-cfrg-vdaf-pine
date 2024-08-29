@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-27T01:34:25.142774+00:00",
+  "timestamp": "2024-08-29T01:35:53.927231+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -789,15 +789,15 @@
       "id": "I_kwDOJWdxls6TngrQ",
       "title": "Double the length of the joint randomness seed",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/98",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "See https://github.com/cfrg/draft-irtf-cfrg-vdaf/issues/319#issuecomment-2299836818.",
       "createdAt": "2024-08-20T22:02:47Z",
-      "updatedAt": "2024-08-20T22:03:01Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-27T18:51:38Z",
+      "closedAt": "2024-08-27T18:51:38Z",
       "comments": []
     }
   ],
@@ -12218,6 +12218,79 @@
           "createdAt": "2024-08-17T20:01:01Z",
           "updatedAt": "2024-08-17T20:01:57Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 99,
+      "id": "PR_kwDOJWdxls55kPIL",
+      "title": "Generate more test vectors",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/99",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Test dimension not a even number, and num_wr_checks not an even number",
+      "createdAt": "2024-08-27T12:29:39Z",
+      "updatedAt": "2024-08-27T22:01:50Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "1f83eb71ad66f128387008f1b21727270c019715",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/more-test-vec",
+      "headRefOid": "5aa1ad51a07482470470e59e9639477e99155640",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6G-iKm",
+          "commit": {
+            "abbreviatedOid": "5aa1ad5"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-27T21:56:36Z",
+          "updatedAt": "2024-08-27T22:01:10Z",
+          "comments": [
+            {
+              "originalPosition": 26,
+              "body": "It might be more useful to test a lower success threshold\r\n```suggestion\r\n        (19, 75, 50)\r\n```",
+              "createdAt": "2024-08-27T21:56:36Z",
+              "updatedAt": "2024-08-27T22:01:10Z"
+            },
+            {
+              "originalPosition": 11,
+              "body": "Let's also test different numbers of fractional bits.",
+              "createdAt": "2024-08-27T22:01:02Z",
+              "updatedAt": "2024-08-27T22:01:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6G-jgI",
+          "commit": {
+            "abbreviatedOid": "5aa1ad5"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-27T22:01:47Z",
+          "updatedAt": "2024-08-27T22:01:50Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "Let's also add a dimension that's more realistic, say ~250?",
+              "createdAt": "2024-08-27T22:01:47Z",
+              "updatedAt": "2024-08-27T22:01:50Z"
+            }
+          ]
         }
       ]
     }
