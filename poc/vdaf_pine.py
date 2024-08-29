@@ -128,7 +128,7 @@ class Pine(
         self.flp = FlpBBCGGI19(self.valid)
         self.xof = xof
         self.PROOFS = num_proofs
-        self.MEAS_LEN = self.flp.MEAS_LEN - NUM_WR_CHECKS
+        self.MEAS_LEN = self.flp.MEAS_LEN - num_wr_checks
         self.VERIFY_KEY_SIZE = self.xof.SEED_SIZE
         # The size of randomness is the seed size times the sum of
         # the following:
