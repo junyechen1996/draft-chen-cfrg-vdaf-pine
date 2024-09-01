@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-29T01:35:53.927231+00:00",
+  "timestamp": "2024-09-01T01:49:24.803329+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12226,24 +12226,26 @@
       "id": "PR_kwDOJWdxls55kPIL",
       "title": "Generate more test vectors",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/99",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Test dimension not a even number, and num_wr_checks not an even number",
       "createdAt": "2024-08-27T12:29:39Z",
-      "updatedAt": "2024-08-27T22:01:50Z",
+      "updatedAt": "2024-08-29T20:27:29Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "1f83eb71ad66f128387008f1b21727270c019715",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/more-test-vec",
-      "headRefOid": "5aa1ad51a07482470470e59e9639477e99155640",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "7ec264947ca0b50c262e47c2e5c5ca7e9229ccda",
+      "closedAt": "2024-08-29T20:27:27Z",
+      "mergedAt": "2024-08-29T20:27:27Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "010a5eb688d094c3729a5897ab692d3ce6d9c606"
+      },
       "comments": [],
       "reviews": [
         {
@@ -12291,6 +12293,19 @@
               "updatedAt": "2024-08-27T22:01:50Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6HSrQh",
+          "commit": {
+            "abbreviatedOid": "7ec2649"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-29T18:44:37Z",
+          "updatedAt": "2024-08-29T18:44:37Z",
+          "comments": []
         }
       ]
     }
