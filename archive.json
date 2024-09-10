@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-08T01:43:05.380878+00:00",
+  "timestamp": "2024-09-10T01:38:18.467592+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12321,7 +12321,7 @@
       "labels": [],
       "body": "",
       "createdAt": "2024-09-06T03:00:54Z",
-      "updatedAt": "2024-09-06T08:18:21Z",
+      "updatedAt": "2024-09-09T23:25:07Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "010a5eb688d094c3729a5897ab692d3ce6d9c606",
@@ -12333,7 +12333,28 @@
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6Ij3ui",
+          "commit": {
+            "abbreviatedOid": "23047e6"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Looks good to me. I'd suggest adding a unit test to exercise multiple squared norm equality proofs, if we go with 1 proof for Field64.",
+          "createdAt": "2024-09-09T23:22:18Z",
+          "updatedAt": "2024-09-09T23:25:07Z",
+          "comments": [
+            {
+              "originalPosition": 176,
+              "body": "What's the motivation for this change? `1` may be a reasonable default given that this part isn't subject to offline attacks.",
+              "createdAt": "2024-09-09T23:22:18Z",
+              "updatedAt": "2024-09-09T23:25:07Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
