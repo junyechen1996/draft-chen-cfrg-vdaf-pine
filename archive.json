@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-10T01:38:18.467592+00:00",
+  "timestamp": "2024-09-12T01:37:16.066437+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12321,13 +12321,13 @@
       "labels": [],
       "body": "",
       "createdAt": "2024-09-06T03:00:54Z",
-      "updatedAt": "2024-09-09T23:25:07Z",
+      "updatedAt": "2024-09-10T21:37:45Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "010a5eb688d094c3729a5897ab692d3ce6d9c606",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/norm-check-multiproof",
-      "headRefOid": "23047e694eddc1ca35777fa7bd79c51e80f5ca37",
+      "headRefOid": "b0b178ee5558f1e121d91fb9d103fa30458fe33b",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -12353,6 +12353,79 @@
               "updatedAt": "2024-09-09T23:25:07Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6IruyJ",
+          "commit": {
+            "abbreviatedOid": "23047e6"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-09-10T17:07:37Z",
+          "updatedAt": "2024-09-10T17:07:42Z",
+          "comments": [
+            {
+              "originalPosition": 176,
+              "body": "I'm actually trying to test the case where `num_proofs_norm_equality > 1`. Maybe I can just an instance in the tests directly.",
+              "createdAt": "2024-09-10T17:07:37Z",
+              "updatedAt": "2024-09-10T17:07:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Irx7_",
+          "commit": {
+            "abbreviatedOid": "23047e6"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-09-10T17:10:44Z",
+          "updatedAt": "2024-09-10T17:10:44Z",
+          "comments": [
+            {
+              "originalPosition": 176,
+              "body": "That would be better.",
+              "createdAt": "2024-09-10T17:10:44Z",
+              "updatedAt": "2024-09-10T17:10:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6ItMA1",
+          "commit": {
+            "abbreviatedOid": "b0b178e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-09-10T19:10:37Z",
+          "updatedAt": "2024-09-10T19:12:36Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "nit: I don't think it's necessary to define a sub-class. For this test you could just call `Pine()` I think.",
+              "createdAt": "2024-09-10T19:10:37Z",
+              "updatedAt": "2024-09-10T19:12:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6IuQGs",
+          "commit": {
+            "abbreviatedOid": "b0b178e"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-09-10T21:37:45Z",
+          "updatedAt": "2024-09-10T21:37:45Z",
+          "comments": []
         }
       ]
     }
