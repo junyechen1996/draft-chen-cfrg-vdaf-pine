@@ -1,8 +1,8 @@
 from sage.all import GF
-from vdaf_poc.field import FftField
+from vdaf_poc.field import NttField
 
 
-class Field32(FftField):
+class Field32(NttField):
     """The finite field GF(4293918721)."""
 
     MODULUS = 4293918721

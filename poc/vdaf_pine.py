@@ -5,7 +5,7 @@ from typing import Generic, TypeAlias, TypeVar, Union, cast
 
 from vdaf_poc.common import (byte, concat, front, to_be_bytes, vec_add,
                              vec_sub, zeros)
-from vdaf_poc.field import FftField, Field64, Field128
+from vdaf_poc.field import Field64, Field128, NttField
 from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19
 from vdaf_poc.vdaf import Vdaf
 from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
@@ -19,7 +19,7 @@ from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
                       construct_circuits)
 from xof_hmac_sha256_aes128 import XofHmacSha256Aes128
 
-F = TypeVar("F", bound=FftField)
+F = TypeVar("F", bound=NttField)
 X = TypeVar("X", bound=Xof)
 
 # Additional usage passed to domain separation tag for PINE VDAF, make sure
