@@ -28,11 +28,10 @@ jobs:
         apt update
         apt install -y git
 
-      # TODO Point to tag draft-irtf-cfrg-vdaf-11 when it's available.
     - name: Install dependencies
       run: |
         sage -pip install mypy
-        sage -pip install git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@9d6e51a46ea60a5e466ba9b3f21b5fac35629d11#subdirectory=poc
+        sage -pip install git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@draft-irtf-cfrg-vdaf-11#subdirectory=poc
 
     - name: Run tests
       working-directory: poc
