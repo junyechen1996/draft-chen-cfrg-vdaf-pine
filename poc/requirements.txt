@@ -1,0 +1,5 @@
+mypy
+pycryptodomex
+
+# TODO Point to tag draft-irtf-cfrg-vdaf-11 when it's available.
+git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@9d6e51a46ea60a5e466ba9b3f21b5fac35629d11#subdirectory=poc

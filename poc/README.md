@@ -7,11 +7,10 @@ This directory contains SageMath implementations of PINE VDAF.
 This code is compatible with SageMath version 9.6. To install Sage,
 follow [Sage's installation guide](https://doc.sagemath.org/html/en/installation/index.html).
 
-In order to run the code you will need to install
-[PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/index.html).
+Install dependency requirements:
 
 ```
-sage --pip install pycryptodomex
+sage -pip install -r requirements.txt
 ```
 
 Version 3.20.0 or later is required.
