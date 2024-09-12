@@ -9,9 +9,10 @@ from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_JOINT_RANDOMNESS, USAGE_MEAS_SHARE,
                                  USAGE_PROOF_SHARE, USAGE_PROVE_RANDOMNESS,
                                  USAGE_QUERY_RANDOMNESS)
+from vdaf_poc.xof import XofTurboShake128
 
 from flp_pine import encode_float
-from vdaf_pine import Pine64, Pine128
+from vdaf_pine import Pine, Pine64, Pine128
 
 
 class TestDomainSeparationTag(unittest.TestCase):
@@ -64,7 +65,8 @@ class TestShard(unittest.TestCase):
         self.assertEqual(len(meas_share), pine.MEAS_LEN)
         self.assertEqual(
             len(proofs_share),
-            pine.flp_norm_equality.PROOF_LEN + pine.flp.PROOF_LEN * pine.PROOFS
+            pine.flp_norm_equality.PROOF_LEN * pine.PROOFS_NORM_EQUALITY +
+            pine.flp.PROOF_LEN * pine.PROOFS
         )
 
 
@@ -121,6 +123,33 @@ class TestPineVdafEndToEnd(TestVdaf):
                             num_shares=self.num_shares)
             self.assertEqual(pine.flp_norm_equality.field, FieldType)
             self.assertEqual(pine.flp.field, FieldType)
+
+    def test_params_combo(self):
+        for (num_wr_checks,
+             num_wr_successes,
+             num_proofs,
+             num_proofs_norm_equality) in [
+                 (75, 75, 4, 2),
+                 (75, 50, 2, 1)
+        ]:
+            pine = Pine(
+                Field64,
+                XofTurboShake128,
+                l2_norm_bound=self.l2_norm_bound,
+                num_frac_bits=self.num_frac_bits,
+                dimension=self.dimension,
+                chunk_length=self.chunk_length,
+                chunk_length_norm_equality=self.chunk_length_norm_equality,
+                num_shares=self.num_shares,
+                num_proofs=num_proofs,
+                num_proofs_norm_equality=num_proofs_norm_equality,
+                num_wr_checks=num_wr_checks,
+                num_wr_successes=num_wr_successes
+            )
+            self.run_vdaf_test(pine,
+                               None,
+                               self.measurements,
+                               self.expected_agg_result)
 
 
 if __name__ == '__main__':

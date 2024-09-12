@@ -1,7 +1,6 @@
 """PINE VDAF. """
 
 import os
-from abc import abstractmethod
 from typing import Generic, TypeAlias, TypeVar, Union, cast
 
 from vdaf_poc.common import (byte, concat, front, to_be_bytes, vec_add,
@@ -92,6 +91,7 @@ class Pine(
     flp: FlpBBCGGI19[list[float], list[float], F]
     xof: type[X]
     PROOFS: int
+    PROOFS_NORM_EQUALITY: int
     MEAS_LEN: int
     RAND_SIZE: int
     SHARES: int
@@ -99,7 +99,6 @@ class Pine(
     # Operational parameters for generating test vectors.
     ID = 0xffff_ffff
 
-    @abstractmethod
     def __init__(self,
                  field: type[F],
                  xof: type[X],
@@ -110,6 +109,7 @@ class Pine(
                  chunk_length_norm_equality: int,
                  num_shares: int,
                  num_proofs: int,
+                 num_proofs_norm_equality: int,
                  alpha: float = ALPHA,
                  num_wr_checks: int = NUM_WR_CHECKS,
                  num_wr_successes: int = NUM_WR_SUCCESSES):
@@ -128,6 +128,7 @@ class Pine(
         self.flp = FlpBBCGGI19(self.valid)
         self.xof = xof
         self.PROOFS = num_proofs
+        self.PROOFS_NORM_EQUALITY = num_proofs_norm_equality
         self.MEAS_LEN = self.flp.MEAS_LEN - num_wr_checks
         self.VERIFY_KEY_SIZE = self.xof.SEED_SIZE
         # The size of randomness is the seed size times the sum of
@@ -240,11 +241,13 @@ class Pine(
         prove_rands = self.prove_rands(k_prove)
         leader_proofs_share = []
 
-        # Always produce 1 proof for flp_norm_equality
-        (prove_rand, prove_rands) = \
-            front(self.flp_norm_equality.PROVE_RAND_LEN, prove_rands)
-        leader_proofs_share += self.flp_norm_equality.prove(
-            meas, prove_rand, [])
+        # Proofs for norm equality check.
+        for _ in range(self.PROOFS_NORM_EQUALITY):
+            (prove_rand, prove_rands) = \
+                front(self.flp_norm_equality.PROVE_RAND_LEN, prove_rands)
+            leader_proofs_share += self.flp_norm_equality.prove(
+                meas, prove_rand, [])
+        # Proofs for all other checks.
         for _ in range(self.PROOFS):
             (prove_rand, prove_rands) = \
                 front(self.flp.PROVE_RAND_LEN, prove_rands)
@@ -350,15 +353,18 @@ class Pine(
         flp_meas_share = meas_share + wr_check_results
         query_rands = self.query_rands(verify_key, nonce)
         verifiers_share = []
-        (proof_share, proofs_share) = front(
-            self.flp_norm_equality.PROOF_LEN, proofs_share)
-        (query_rand, query_rands) = \
-            front(self.flp_norm_equality.QUERY_RAND_LEN, query_rands)
-        verifiers_share += self.flp_norm_equality.query(flp_meas_share,
-                                                        proof_share,
-                                                        query_rand,
-                                                        [],
-                                                        self.SHARES)
+        # Query the proofs for norm equality check.
+        for _ in range(self.PROOFS_NORM_EQUALITY):
+            (proof_share, proofs_share) = front(
+                self.flp_norm_equality.PROOF_LEN, proofs_share)
+            (query_rand, query_rands) = \
+                front(self.flp_norm_equality.QUERY_RAND_LEN, query_rands)
+            verifiers_share += self.flp_norm_equality.query(flp_meas_share,
+                                                            proof_share,
+                                                            query_rand,
+                                                            [],
+                                                            self.SHARES)
+        # Query the proofs for all other checks.
         for _ in range(self.PROOFS):
             (proof_share, proofs_share) = front(
                 self.flp.PROOF_LEN, proofs_share)
@@ -395,7 +401,8 @@ class Pine(
                             prep_shares: list[PinePrepShare[F]]):
         # Unshard the verifier shares into the verifier message.
         verifiers = self.flp.field.zeros(
-            self.flp_norm_equality.VERIFIER_LEN + self.flp.VERIFIER_LEN * self.PROOFS)
+            self.flp_norm_equality.VERIFIER_LEN * self.PROOFS_NORM_EQUALITY +
+            self.flp.VERIFIER_LEN * self.PROOFS)
         k_wr_joint_rand_parts = []
         k_vf_joint_rand_parts = []
         for (verifiers_share,
@@ -405,19 +412,20 @@ class Pine(
             k_wr_joint_rand_parts.append(k_wr_joint_rand_part)
             k_vf_joint_rand_parts.append(k_vf_joint_rand_part)
 
-        # Verify that each proof is well-formed and input is valid2.
-        (verifier, verifiers) = front(
-            self.flp_norm_equality.VERIFIER_LEN, verifiers)
-        if not self.flp_norm_equality.decide(verifier):
-            # Proof verifier check failed.
-            raise ValueError("Decision function failed after combining all "
-                             "verifier shares.")
+        # Verify that each proof is well-formed and input is valid.
+        for _ in range(self.PROOFS_NORM_EQUALITY):
+            (verifier, verifiers) = front(
+                self.flp_norm_equality.VERIFIER_LEN, verifiers)
+            if not self.flp_norm_equality.decide(verifier):
+                # Proof verifier check failed.
+                raise ValueError("Decision function for norm equality check "
+                                 "failed after combining all verifier shares.")
         for _ in range(self.PROOFS):
             (verifier, verifiers) = front(self.flp.VERIFIER_LEN, verifiers)
             if not self.flp.decide(verifier):
                 # Proof verifier check failed.
-                raise ValueError("Decision function failed after combining all "
-                                 "verifier shares.")
+                raise ValueError("Decision function for other checks failed "
+                                 "after combining all verifier shares.")
         # Sanity check:
         assert len(verifiers) == 0
 
@@ -499,8 +507,9 @@ class Pine(
             self.flp.field,
             k_share,
             self.domain_separation_tag(USAGE_PROOF_SHARE),
-            byte(self.PROOFS) + byte(agg_id),
-            self.flp_norm_equality.PROOF_LEN + self.flp.PROOF_LEN * self.PROOFS
+            byte(self.PROOFS_NORM_EQUALITY) + byte(self.PROOFS) + byte(agg_id),
+            self.flp_norm_equality.PROOF_LEN * self.PROOFS_NORM_EQUALITY +
+            self.flp.PROOF_LEN * self.PROOFS
         )
 
     def expand_input_share(
@@ -531,8 +540,9 @@ class Pine(
             self.flp.field,
             k_prove,
             self.domain_separation_tag(USAGE_PROVE_RANDOMNESS),
-            byte(self.PROOFS),
-            self.flp_norm_equality.PROVE_RAND_LEN + self.flp.PROVE_RAND_LEN * self.PROOFS
+            byte(self.PROOFS_NORM_EQUALITY) + byte(self.PROOFS),
+            self.flp_norm_equality.PROVE_RAND_LEN * self.PROOFS_NORM_EQUALITY +
+            self.flp.PROVE_RAND_LEN * self.PROOFS
         )
 
     def query_rands(self,
@@ -545,8 +555,8 @@ class Pine(
             self.flp.field,
             verify_key,
             self.domain_separation_tag(USAGE_QUERY_RANDOMNESS),
-            byte(self.PROOFS) + nonce,
-            self.flp_norm_equality.QUERY_RAND_LEN +
+            byte(self.PROOFS_NORM_EQUALITY) + byte(self.PROOFS) + nonce,
+            self.flp_norm_equality.QUERY_RAND_LEN * self.PROOFS_NORM_EQUALITY +
             self.flp.QUERY_RAND_LEN * self.PROOFS
         )
 
@@ -654,7 +664,6 @@ class Pine(
             k_joint_rand_seed,
             self.domain_separation_tag(USAGE_JOINT_RANDOMNESS),
             byte(self.PROOFS),
-            self.flp_norm_equality.JOINT_RAND_LEN +
             self.flp.JOINT_RAND_LEN * self.PROOFS
         )
 
@@ -665,7 +674,8 @@ class Pine(
             test_vec)
         params += self.flp.test_vec_set_type_param(test_vec)
         test_vec["proofs"] = self.PROOFS
-        return params + ["proofs"]
+        test_vec["proofs_norm_equality"] = self.PROOFS_NORM_EQUALITY
+        return params + ["proofs", "proofs_norm_equality"]
 
     def test_vec_encode_input_share(self, input_share):
         (
@@ -725,6 +735,7 @@ class Pine128(Pine[Field128, XofTurboShake128]):
             chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
             num_proofs=1,
+            num_proofs_norm_equality=1,
             alpha=alpha,
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes
@@ -754,6 +765,7 @@ class Pine64(Pine[Field64, XofTurboShake128]):
             chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
             num_proofs=2,
+            num_proofs_norm_equality=1,
             alpha=alpha,
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes
