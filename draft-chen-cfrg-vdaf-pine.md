@@ -130,7 +130,7 @@ distribute the aggregation step across multiple servers such that no server
 sees any gradient in the clear.
 
 With a Verifiable Distributed Aggregation Function
-{{!VDAF=I-D.draft-irtf-cfrg-vdaf-08}}, this is achieved by having each user
+{{!VDAF=I-D.draft-irtf-cfrg-vdaf-11}}, this is achieved by having each user
 shard their gradient into a number of secret shares, one for each aggregation
 server. Each server aggregates their shares locally, then combines their share
 of the aggregate with the other servers to get the aggregate result.
