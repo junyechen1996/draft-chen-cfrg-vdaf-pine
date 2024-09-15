@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-12T01:37:16.066437+00:00",
+  "timestamp": "2024-09-15T01:46:43.900250+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12314,24 +12314,26 @@
       "id": "PR_kwDOJWdxls56nHHj",
       "title": "Multiproof for norm equality check",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/100",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2024-09-06T03:00:54Z",
-      "updatedAt": "2024-09-10T21:37:45Z",
+      "updatedAt": "2024-09-12T12:57:44Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "010a5eb688d094c3729a5897ab692d3ce6d9c606",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/norm-check-multiproof",
-      "headRefOid": "b0b178ee5558f1e121d91fb9d103fa30458fe33b",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "d74b565ad94db071fd80f0d3fae62c733293c0f3",
+      "closedAt": "2024-09-12T12:57:42Z",
+      "mergedAt": "2024-09-12T12:57:41Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "4f24d761484c701f9a4309800378ca5e0f583123"
+      },
       "comments": [],
       "reviews": [
         {
@@ -12425,6 +12427,188 @@
           "body": "",
           "createdAt": "2024-09-10T21:37:45Z",
           "updatedAt": "2024-09-10T21:37:45Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls6JGmgW",
+          "commit": {
+            "abbreviatedOid": "b0b178e"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-09-12T12:50:26Z",
+          "updatedAt": "2024-09-12T12:50:27Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "Good call. I have to remove the `@abstractmethod` decoration on `__init__` for this to work.",
+              "createdAt": "2024-09-12T12:50:26Z",
+              "updatedAt": "2024-09-12T12:50:27Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 101,
+      "id": "PR_kwDOJWdxls57TTFO",
+      "title": "Generate test vectors for XofHmacSha256Aes128 and Field32",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/101",
+      "state": "MERGED",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-09-12T13:03:07Z",
+      "updatedAt": "2024-09-13T17:13:11Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "4f24d761484c701f9a4309800378ca5e0f583123",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/xof-hmac-sha256-aes128-test-vec",
+      "headRefOid": "5b48cf13091e862fc63a63afc526a2b41e853c82",
+      "closedAt": "2024-09-13T13:56:09Z",
+      "mergedAt": "2024-09-13T13:56:08Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "cc656f88bac62f891eb0930cca4e5186a4b023b5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6JH1Ws",
+          "commit": {
+            "abbreviatedOid": "28042a8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Looks good to me!",
+          "createdAt": "2024-09-12T14:39:18Z",
+          "updatedAt": "2024-09-12T14:53:25Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "Do we need this? If so, can you add a brief explanation to the commit message?",
+              "createdAt": "2024-09-12T14:39:18Z",
+              "updatedAt": "2024-09-12T14:53:25Z"
+            },
+            {
+              "originalPosition": 42,
+              "body": "Suggestion: From the point of view of the API, it's a good idea to provide safe defaults wherever we can and not let the user override them. We think 4 proofs is probably too low for Field32. Thus a \"safer\" API for `Pine32HmacSha256Aes128` would not let the user do this.\r\n\r\nThat said, I understand the motivation for generating test vectors with fewer proofs. An alternative would be invoke the constructor for `Pine` instead and manually specify the field and XOF.",
+              "createdAt": "2024-09-12T14:52:08Z",
+              "updatedAt": "2024-09-12T14:53:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6JHL1A",
+          "commit": {
+            "abbreviatedOid": "3da5b43"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-09-12T13:41:14Z",
+          "updatedAt": "2024-09-13T12:34:14Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "Ah forgot to post my review: If I don't add this, I get the following error:\r\n\r\n```\r\nfield32.py:1: error: Skipping analyzing \"sage.all\": module is installed, but missing library stubs or py.typed marker  [import-untyped]\r\n```",
+              "createdAt": "2024-09-13T12:20:49Z",
+              "updatedAt": "2024-09-13T12:34:14Z"
+            },
+            {
+              "originalPosition": 42,
+              "body": "Ok. I removed `num_proofs` from `Pine32HmacSha256Aes128`, initially I was following what we allowed in taskprov. And I will use `Pine` to create custom `Pine32HmacSha256Aes128`.",
+              "createdAt": "2024-09-13T12:34:06Z",
+              "updatedAt": "2024-09-13T12:34:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6JRuG3",
+          "commit": {
+            "abbreviatedOid": "5b48cf1"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-09-13T13:19:46Z",
+          "updatedAt": "2024-09-13T13:19:46Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOJWdxls6JTwk4",
+          "commit": {
+            "abbreviatedOid": "5b48cf1"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-09-13T17:13:03Z",
+          "updatedAt": "2024-09-13T17:13:11Z",
+          "comments": [
+            {
+              "originalPosition": 101,
+              "body": "We probably want to add XOF type into the test parameter as well?\r\n\r\nSince this is closed, let me open another PR.\r\n\r\n(I misread, no overlap of test vectors)",
+              "createdAt": "2024-09-13T17:13:03Z",
+              "updatedAt": "2024-09-13T17:16:51Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 102,
+      "id": "PR_kwDOJWdxls57Uk-_",
+      "title": "Bump to draft-irtf-cfrg-vdaf-11",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/102",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Based on #101 (merge that first).",
+      "createdAt": "2024-09-12T15:26:19Z",
+      "updatedAt": "2024-09-13T14:52:50Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "cc656f88bac62f891eb0930cca4e5186a4b023b5",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "cjpatton/vdaf-draft-11",
+      "headRefOid": "4ca0a419e936094ea237ea71514423cfa9c385d2",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@junyechen1996 note that I also update the reference in the doc.",
+          "createdAt": "2024-09-13T14:52:49Z",
+          "updatedAt": "2024-09-13T14:52:49Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6JRMVZ",
+          "commit": {
+            "abbreviatedOid": "7d56bc1"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-09-13T12:24:17Z",
+          "updatedAt": "2024-09-13T12:24:17Z",
           "comments": []
         }
       ]
