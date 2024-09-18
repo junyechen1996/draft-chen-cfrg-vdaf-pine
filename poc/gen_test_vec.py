@@ -1,13 +1,10 @@
 import os
 
-from vdaf_poc.field import Field64
 from vdaf_poc.test_utils import gen_test_vec_for_vdaf
 
-from field32 import Field32
 from flp_pine import NUM_WR_CHECKS, NUM_WR_SUCCESSES, encode_float
-from vdaf_pine import (Pine, Pine32HmacSha256Aes128, Pine64,
-                       Pine64HmacSha256Aes128, Pine128)
-from xof_hmac_sha256_aes128 import XofHmacSha256Aes128
+from vdaf_pine import (Pine32HmacSha256Aes128, Pine64, Pine64HmacSha256Aes128,
+                       Pine128)
 
 VERSION = int(open('VERSION').read())
 TEST_VECTOR_PATH = os.environ.get('TEST_VECTOR_PATH',
@@ -85,7 +82,27 @@ if __name__ == '__main__':
             pine32_hmac_sha256_aes128,
             None,
             measurements,
-            i,
+            2 * i,
+        )
+
+        pine32_custom = Pine32HmacSha256Aes128(
+            l2_norm_bound,
+            num_frac_bits,
+            dimension,
+            chunk_length,
+            chunk_length_norm_equality,
+            num_shares,
+            num_proofs=4,
+            num_proofs_norm_equality=2,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes,
+        )
+        gen_test_vec_for_vdaf(
+            TEST_VECTOR_PATH,
+            pine32_custom,
+            None,
+            measurements,
+            2 * i + 1,
         )
 
         pine64_hmac_sha256_aes128 = Pine64HmacSha256Aes128(
@@ -103,37 +120,10 @@ if __name__ == '__main__':
             pine64_hmac_sha256_aes128,
             None,
             measurements,
-            i,
-        )
-
-        # Custom type with Field32 and XofHmacSha256Aes128.
-        pine32_custom = Pine(
-            Field32,
-            XofHmacSha256Aes128,
-            l2_norm_bound,
-            num_frac_bits,
-            dimension,
-            chunk_length,
-            chunk_length_norm_equality,
-            num_shares,
-            num_proofs=4,
-            num_proofs_norm_equality=2,
-            num_wr_checks=num_wr_checks,
-            num_wr_successes=num_wr_successes,
-            vdaf_id=Pine32HmacSha256Aes128.ID,
-        )
-        gen_test_vec_for_vdaf(
-            TEST_VECTOR_PATH,
-            pine32_custom,
-            None,
-            measurements,
             2 * i,
         )
 
-        # Custom type with Field64 and XofHmacSha256Aes128.
-        pine64_custom = Pine(
-            Field64,
-            XofHmacSha256Aes128,
+        pine64_custom = Pine64HmacSha256Aes128(
             l2_norm_bound,
             num_frac_bits,
             dimension,
@@ -144,7 +134,6 @@ if __name__ == '__main__':
             num_proofs_norm_equality=1,
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes,
-            vdaf_id=Pine64HmacSha256Aes128.ID,
         )
         gen_test_vec_for_vdaf(
             TEST_VECTOR_PATH,
