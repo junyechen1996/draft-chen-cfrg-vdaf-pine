@@ -5,8 +5,8 @@
 Crypto Forum                                                     J. Chen
 Internet-Draft                                                Apple Inc.
 Intended status: Informational                                 C. Patton
-Expires: 17 March 2025                                        Cloudflare
-                                                       13 September 2024
+Expires: 22 March 2025                                        Cloudflare
+                                                       18 September 2024
 
 
             Private Inexpensive Norm Enforcement (PINE) VDAF
@@ -51,7 +51,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 17 March 2025.
+   This Internet-Draft will expire on 22 March 2025.
 
 Copyright Notice
 
@@ -726,9 +726,9 @@ Table of Contents
 
    [VDAF]     Barnes, R., Cook, D., Patton, C., and P. Schoppmann,
               "Verifiable Distributed Aggregation Functions", Work in
-              Progress, Internet-Draft, draft-irtf-cfrg-vdaf-08, 20
-              November 2023, <https://datatracker.ietf.org/doc/html/
-              draft-irtf-cfrg-vdaf-08>.
+              Progress, Internet-Draft, draft-irtf-cfrg-vdaf-11, 22
+              August 2024, <https://datatracker.ietf.org/doc/html/draft-
+              irtf-cfrg-vdaf-11>.
 
 10.2.  Informative References
 
