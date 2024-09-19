@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-17T01:16:05.031399+00:00",
+  "timestamp": "2024-09-19T01:39:31.664721+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12570,24 +12570,26 @@
       "id": "PR_kwDOJWdxls57Uk-_",
       "title": "Bump to draft-irtf-cfrg-vdaf-11",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/102",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Based on #101 (merge that first).",
       "createdAt": "2024-09-12T15:26:19Z",
-      "updatedAt": "2024-09-13T14:52:50Z",
+      "updatedAt": "2024-09-17T19:30:28Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "cc656f88bac62f891eb0930cca4e5186a4b023b5",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "cjpatton/vdaf-draft-11",
       "headRefOid": "4ca0a419e936094ea237ea71514423cfa9c385d2",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-09-17T19:30:27Z",
+      "mergedAt": "2024-09-17T19:30:27Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "aa1f01e9606951033c60c9fc362556f44fd90ad1"
+      },
       "comments": [
         {
           "author": "cjpatton",
@@ -12609,6 +12611,46 @@
           "body": "",
           "createdAt": "2024-09-13T12:24:17Z",
           "updatedAt": "2024-09-13T12:24:17Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 103,
+      "id": "PR_kwDOJWdxls574TzD",
+      "title": "Add non-standard XOF name into test vector file name",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/103",
+      "state": "OPEN",
+      "author": "junyechen1996",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Addresses comment https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/101#discussion_r1759217115. Can cut draft-01 after this PR.",
+      "createdAt": "2024-09-18T10:22:44Z",
+      "updatedAt": "2024-09-18T18:48:43Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "aa1f01e9606951033c60c9fc362556f44fd90ad1",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "junyec/xof-hmac-sha256-aes128-test-vec",
+      "headRefOid": "2bd4e0ac023bc1f365257b30b2901fde55538668",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6J5VhQ",
+          "commit": {
+            "abbreviatedOid": "2bd4e0a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-09-18T18:48:43Z",
+          "updatedAt": "2024-09-18T18:48:43Z",
           "comments": []
         }
       ]
