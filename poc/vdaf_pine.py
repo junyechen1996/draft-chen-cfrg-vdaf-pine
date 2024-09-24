@@ -788,6 +788,8 @@ class Pine64HmacSha256Aes128(Pine[Field64, XofHmacSha256Aes128]):
                  chunk_length: int,
                  chunk_length_norm_equality: int,
                  num_shares: int,
+                 num_proofs: int = 2,
+                 num_proofs_norm_equality: int = 1,
                  num_wr_checks: int = NUM_WR_CHECKS,
                  num_wr_successes: int = NUM_WR_SUCCESSES):
         return super().__init__(
@@ -799,8 +801,8 @@ class Pine64HmacSha256Aes128(Pine[Field64, XofHmacSha256Aes128]):
             chunk_length=chunk_length,
             chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
-            num_proofs=2,
-            num_proofs_norm_equality=1,
+            num_proofs=num_proofs,
+            num_proofs_norm_equality=num_proofs_norm_equality,
             alpha=ALPHA,
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes,
@@ -819,6 +821,8 @@ class Pine32HmacSha256Aes128(Pine[Field32, XofHmacSha256Aes128]):
                  chunk_length: int,
                  chunk_length_norm_equality: int,
                  num_shares: int,
+                 num_proofs: int = 5,
+                 num_proofs_norm_equality: int = 1,
                  num_wr_checks: int = NUM_WR_CHECKS,
                  num_wr_successes: int = NUM_WR_SUCCESSES):
         return super().__init__(
@@ -830,8 +834,8 @@ class Pine32HmacSha256Aes128(Pine[Field32, XofHmacSha256Aes128]):
             chunk_length=chunk_length,
             chunk_length_norm_equality=chunk_length_norm_equality,
             num_shares=num_shares,
-            num_proofs=5,
-            num_proofs_norm_equality=1,
+            num_proofs=num_proofs,
+            num_proofs_norm_equality=num_proofs_norm_equality,
             alpha=ALPHA,
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes,
