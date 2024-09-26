@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-24T01:42:10.014498+00:00",
+  "timestamp": "2024-09-26T01:41:15.808383+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12620,24 +12620,26 @@
       "id": "PR_kwDOJWdxls574TzD",
       "title": "Add non-standard XOF name into test vector file name",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/103",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "junyechen1996",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Addresses comment https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/101#discussion_r1759217115. Can cut draft-01 after this PR.",
       "createdAt": "2024-09-18T10:22:44Z",
-      "updatedAt": "2024-09-18T18:48:43Z",
+      "updatedAt": "2024-09-24T12:46:14Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "aa1f01e9606951033c60c9fc362556f44fd90ad1",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "junyec/xof-hmac-sha256-aes128-test-vec",
       "headRefOid": "2bd4e0ac023bc1f365257b30b2901fde55538668",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-09-24T12:46:11Z",
+      "mergedAt": "2024-09-24T12:46:11Z",
+      "mergedBy": "junyechen1996",
+      "mergeCommit": {
+        "oid": "3acb5034116e9637adee045347687e1bf3f6916b"
+      },
       "comments": [],
       "reviews": [
         {
