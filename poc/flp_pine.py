@@ -616,7 +616,7 @@ def chunk_count(chunk_length, length):
 
 
 def encode_float(x: float, num_frac_bits: int) -> int:
-    return math.floor(x * 2**num_frac_bits)
+    return round(x * 2**num_frac_bits)
 
 
 def construct_circuits(
