@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-10-03T01:42:07.350418+00:00",
+  "timestamp": "2024-10-06T01:48:15.126191+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -47,6 +47,11 @@
       "name": "wontfix",
       "description": "This will not be worked on",
       "color": "ffffff"
+    },
+    {
+      "name": "wire breaking",
+      "description": "",
+      "color": "EAA892"
     }
   ],
   "issues": [
@@ -12653,6 +12658,63 @@
           "body": "",
           "createdAt": "2024-09-18T18:48:43Z",
           "updatedAt": "2024-09-18T18:48:43Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 104,
+      "id": "PR_kwDOJWdxls59iMLr",
+      "title": "switch rounding mode to \"round to nearest, ties to even\"",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/104",
+      "state": "OPEN",
+      "author": "albertpl",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [
+        "wire breaking"
+      ],
+      "body": "# Why\r\n\r\nCurrently we use round to $-\\infty $ and this can introduce more rounding error than the IEEE 754 default rounding mode, i.e. \"round to nearest, ties to even\".  e.g.\r\n\r\ninput =-0.0001 \r\n\r\ncurrent: output=-0.0001220703125, relative error = 0.22\r\nnew=-9.1552734375e-05, relative error = 0.084\r\n\r\n( this is taken from one of the test cases)\r\n\r\n# What\r\n\r\nSwitch to \"round to nearest, ties to even\" mode\r\n\r\n\r\n# Discussion\r\n\r\nTest vector is actually not affected since we use either 0.0 or 1.0 as inputs, which convert to same integer with both modes.\r\n",
+      "createdAt": "2024-10-03T17:59:29Z",
+      "updatedAt": "2024-10-03T20:46:38Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "3acb5034116e9637adee045347687e1bf3f6916b",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "albertpl/rounding-to-nearest",
+      "headRefOid": "715113e5012847c4b364f427c6a98ab6bb1c23aa",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> Works for me!\r\n\r\n@cjpatton why this is \"wire breaking\"? The float-to-int conversion shouldn't cause any changes on servers side, right?\r\nEven the test vectors are not affected.",
+          "createdAt": "2024-10-03T20:29:06Z",
+          "updatedAt": "2024-10-03T20:29:49Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> > Works for me!\r\n> \r\n> @cjpatton why this is \"wire breaking\"? The float-to-int conversion shouldn't cause any changes on servers side, right? Even the test vectors are not affected.\r\n\r\nIt's a good question. Certainly it doesn't change the aggreagtors' computations, but it does change the aggregate result ever so slightly. I also think that there measurements for which we could generate test vectors that would change as a result of this change in how things are encoded.\r\n\r\nI think if we're being conservative, we should consider this to be a breaking change, at least from the spec's perspective. If you and Junye feel differently however, I don't mind being overruled. I don't think the stakes are very high, given that PINE isn't deployed yet.",
+          "createdAt": "2024-10-03T20:46:36Z",
+          "updatedAt": "2024-10-03T20:46:36Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6L2-j3",
+          "commit": {
+            "abbreviatedOid": "715113e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Works for me!",
+          "createdAt": "2024-10-03T18:41:36Z",
+          "updatedAt": "2024-10-03T18:41:36Z",
           "comments": []
         }
       ]
