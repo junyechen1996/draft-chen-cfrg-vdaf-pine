@@ -148,6 +148,7 @@ class Pine(
         self.SHARES = num_shares
 
     def shard(self,
+              _ctx: bytes,
               measurement: list[float],
               nonce: bytes,
               rand: bytes
@@ -304,6 +305,7 @@ class Pine(
 
     def prep_init(self,
                   verify_key: bytes,
+                  _ctx: bytes,
                   agg_id: int,
                   _agg_param: None,
                   nonce: bytes,
@@ -402,7 +404,9 @@ class Pine(
             )
         )
 
-    def prep_shares_to_prep(self, _agg_param: None,
+    def prep_shares_to_prep(self,
+                            _ctx: bytes,
+                            _agg_param: None,
                             prep_shares: list[PinePrepShare[F]]):
         # Unshard the verifier shares into the verifier message.
         verifiers = self.flp.field.zeros(
@@ -445,7 +449,9 @@ class Pine(
         )
         return (k_wr_joint_rand_seed, k_vf_joint_rand_seed)
 
-    def prep_next(self, prep_state: PinePrepState[F], prep_msg: bytes):
+    def prep_next(self,
+                  _ctx: bytes,
+                  prep_state: PinePrepState[F], prep_msg: bytes):
         # Joint randomness seeds sent by the Leader.
         (k_wr_joint_rand_seed, k_vf_joint_rand_seed) = prep_msg
         (

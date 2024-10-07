@@ -45,6 +45,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine64,
             None,
+            b'XXX',
             measurements,
             i,
         )
@@ -63,6 +64,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine128,
             None,
+            b'XXX',
             measurements,
             i,
         )
@@ -81,6 +83,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine32_hmac_sha256_aes128,
             None,
+            b'XXX',
             measurements,
             2 * i,
         )
@@ -101,6 +104,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine32_custom,
             None,
+            b'XXX',
             measurements,
             2 * i + 1,
         )
@@ -119,6 +123,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine64_hmac_sha256_aes128,
             None,
+            b'XXX',
             measurements,
             2 * i,
         )
@@ -139,6 +144,7 @@ if __name__ == '__main__':
             TEST_VECTOR_PATH,
             pine64_custom,
             None,
+            b'XXX',
             measurements,
             2 * i + 1,
         )

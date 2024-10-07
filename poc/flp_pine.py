@@ -71,7 +71,7 @@ class PineValidBase(
         # squared norm must be in range `[0, sq_norm_bound]`, so this is the
         # number of bits needed to encode `sq_norm_bound`.
         self.num_bits_for_sq_norm = \
-            self.sq_norm_bound.as_unsigned().bit_length()
+            int(self.sq_norm_bound.as_unsigned()).bit_length()
 
         # Wraparound check bound, equal to the smallest power of 2 larger than
         # or equal to `ceil(alpha * l2_norm_bound) + 1`. Using a power of 2
@@ -616,7 +616,7 @@ def chunk_count(chunk_length, length):
 
 
 def encode_float(x: float, num_frac_bits: int) -> int:
-    return math.floor(x * 2**num_frac_bits)
+    return int(math.floor(x * 2**num_frac_bits))
 
 
 def construct_circuits(

@@ -46,7 +46,7 @@ class TestShard(unittest.TestCase):
         measurement = [0.0] * pine.valid.dimension
         nonce = gen_rand(pine.NONCE_SIZE)
         rand = gen_rand(pine.RAND_SIZE)
-        (public_share, input_shares) = pine.shard(measurement, nonce, rand)
+        (public_share, input_shares) = pine.shard(b'XXX', measurement, nonce, rand)
         self.assertTrue(public_share is not None)
         self.assertTrue(input_shares is not None)
         self.assertEqual(len(input_shares), pine.SHARES)
