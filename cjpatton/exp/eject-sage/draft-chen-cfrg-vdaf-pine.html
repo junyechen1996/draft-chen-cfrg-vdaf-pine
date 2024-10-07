@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Private Inexpensive Norm Enforcement (PINE) VDAF</title>
+<meta content="Junye Chen" name="author">
+<meta content="Christopher Patton" name="author">
+<meta content="
+       This document describes PINE, a Verifiable Distributed Aggregation Function
+(VDAF) for secure aggregation of high-dimensional, real-valued vectors with
+bounded L2-norm. PINE is intended to facilitate private and robust federated
+machine learning. 
+    " name="description">
+<meta content="xml2rfc 3.23.2" name="generator">
+<meta content="next generation" name="keyword">
+<meta content="unicorn" name="keyword">
+<meta content="sparkling distributed ledger" name="keyword">
+<meta content="draft-chen-cfrg-vdaf-pine-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.23.2
+    Python 3.12.6
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.1
+    intervaltree 3.1.0
+    Jinja2 3.1.4
+    lxml 4.9.4
+    platformdirs 4.3.6
+    pycountry 22.3.5
+    PyYAML 6.0.1
+    requests 2.32.3
+    setuptools 70.3.0
+    wcwidth 0.2.13
+-->
+<link href="draft-chen-cfrg-vdaf-pine.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Cabin Condensed", sans-serif;
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+}
+:is(ol, ul) :is(ol, ul) {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  line-height: 1;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+}
+dl.olPercent {
+  --indent: 5ch;
+}
+dl > dt {
+  float: left;
+  margin-right: 2ch;
+  min-width: 8ch;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+dl.olPercent > dt {
+  min-width: calc(var(--indent) - 2ch);
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+}
+:is(dl.compact, .dlCompact) > dd > :is(:first-child, .break:first-child + *) {
+  margin-top: 0;
+}
+:is(dl.compact, .dlCompact) > dd > :is(:last-child) {
+  margin-bottom: 0;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    overflow-x: auto;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+}
+a.pilcrow[href] { color: var(--pilcrow-weak); }
+a.pilcrow[href]:hover { text-decoration: none; }
+@media not print {
+  :hover > a.pilcrow {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+}
+#identifiers dt {
+  width: var(--identifier-width);
+  min-width: var(--identifier-width);
+  clear: left;
+  float: left;
+  text-align: right;
+  margin-right: 1ch;
+}
+#identifiers dd {
+  margin: 0;
+  margin-left: calc(1em + var(--identifier-width)) !important;
+  min-width: 5em;
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+#toc nav ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+#toc nav li {
+  line-height: 1.3em;
+  margin: 2px 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+#toc a.xref {
+  white-space: normal;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 10ch;
+  margin-right: 1.5ch;
+}
+.references dt:target::before {
+  content: "⇒";
+  width: 15px;
+  margin: 0 10px 0 -25px;
+}
+.references dd {
+  margin-left: 12ch !important;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc.active {
+      opacity: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 8px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active nav {
+    display: block;
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin-top: 2px;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  #toc nav > ul  {
+    margin-bottom: 2em;
+  }
+  #toc ul {
+    margin: 0 0 0 4px;
+    font-size: var(--small-font-size);
+  }
+  #toc ul :is(p, li) {
+    margin: 2px 0;
+    line-height: 22px;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+  .toplink {
+    display: none;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Changes introduced to fix issues found during implementation */
+
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin: 8px 0.5em 0;
+}
+
+/* Provide styling for table cell text alignment */
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 20em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([fill="white"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">Private Inexpensive Norm Enforcement (PI</td>
+<td class="right">October 2024</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Chen &amp; Patton</td>
+<td class="center">Expires 10 April 2025</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Crypto Forum</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-chen-cfrg-vdaf-pine-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2024-10-07" class="published">7 October 2024</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2025-04-10">10 April 2025</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">J. Chen</div>
+<div class="org">Apple Inc.</div>
+</div>
+<div class="author">
+      <div class="author-name">C. Patton</div>
+<div class="org">Cloudflare</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Private Inexpensive Norm Enforcement (PINE) VDAF</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document describes PINE, a Verifiable Distributed Aggregation Function
+(VDAF) for secure aggregation of high-dimensional, real-valued vectors with
+bounded L2-norm. PINE is intended to facilitate private and robust federated
+machine learning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://junyechen1996.github.io/draft-chen-cfrg-vdaf-pine/draft-chen-cfrg-vdaf-pine.html">https://junyechen1996.github.io/draft-chen-cfrg-vdaf-pine/draft-chen-cfrg-vdaf-pine.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-chen-cfrg-vdaf-pine/">https://datatracker.ietf.org/doc/draft-chen-cfrg-vdaf-pine/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Crypto Forum Research Group mailing list (<span><a href="mailto:cfrg@ietf.org">mailto:cfrg@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/search/?email_list=cfrg">https://mailarchive.ietf.org/arch/search/?email_list=cfrg</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/cfrg/">https://www.ietf.org/mailman/listinfo/cfrg/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine">https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 10 April 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2024 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-pine-overview" class="internal xref">PINE Overview</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-the-pine-proof-system" class="internal xref">The PINE Proof System</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-measurement-encoding" class="internal xref">Measurement Encoding</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.1">
+                    <p id="section-toc.1-1.4.2.1.2.1.1"><a href="#section-4.1.1" class="auto internal xref">4.1.1</a>.  <a href="#name-encoding-range-checked-resu" class="internal xref">Encoding Range-Checked Results</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.2">
+                    <p id="section-toc.1-1.4.2.1.2.2.1"><a href="#section-4.1.2" class="auto internal xref">4.1.2</a>.  <a href="#name-encoding-gradient-and-l2-no" class="internal xref">Encoding Gradient and L2-Norm Check</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.3">
+                    <p id="section-toc.1-1.4.2.1.2.3.1"><a href="#section-4.1.3" class="auto internal xref">4.1.3</a>.  <a href="#name-running-the-wraparound-chec" class="internal xref">Running the Wraparound Checks</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.4">
+                    <p id="section-toc.1-1.4.2.1.2.4.1"><a href="#section-4.1.4" class="auto internal xref">4.1.4</a>.  <a href="#name-encoding-the-range-checked-w" class="internal xref">Encoding the Range-Checked, Wraparound Check Results</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-the-flp-circuit" class="internal xref">The FLP Circuit</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.1">
+                    <p id="section-toc.1-1.4.2.2.2.1.1"><a href="#section-4.2.1" class="auto internal xref">4.2.1</a>.  <a href="#name-range-check" class="internal xref">Range Check</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.2">
+                    <p id="section-toc.1-1.4.2.2.2.2.1"><a href="#section-4.2.2" class="auto internal xref">4.2.2</a>.  <a href="#name-bit-check" class="internal xref">Bit Check</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.3">
+                    <p id="section-toc.1-1.4.2.2.2.3.1"><a href="#section-4.2.3" class="auto internal xref">4.2.3</a>.  <a href="#name-l2-norm-check" class="internal xref">L2 Norm Check</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.4">
+                    <p id="section-toc.1-1.4.2.2.2.4.1"><a href="#section-4.2.4" class="auto internal xref">4.2.4</a>.  <a href="#name-wraparound-check" class="internal xref">Wraparound Check</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.5">
+                    <p id="section-toc.1-1.4.2.2.2.5.1"><a href="#section-4.2.5" class="auto internal xref">4.2.5</a>.  <a href="#name-putting-all-checks-together" class="internal xref">Putting All Checks Together</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-the-pine-vdaf" class="internal xref">The PINE VDAF</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-sharding" class="internal xref">Sharding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-preparation" class="internal xref">Preparation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-aggregation" class="internal xref">Aggregation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-unsharding" class="internal xref">Unsharding</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-variants" class="internal xref">Variants</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-pine-auxiliary-functions" class="internal xref">PINE Auxiliary Functions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">The goal of federated machine learning <span>[<a href="#MR17" class="cite xref">MR17</a>]</span> is to enable training of
+machine learning models from data stored on users' devices. The bulk of the
+computation is carried out on-device: each user trains the model on its data
+locally, then sends a model update to a central server. These model updates are
+commonly referred to as "gradients" <span>[<a href="#Lem12" class="cite xref">Lem12</a>]</span>. The server aggregates the
+gradients, applies them to the central model, and sends the updated model to
+the users to repeat the process.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<span id="name-federated-learning"></span><div id="plain-fl">
+<figure id="figure-1">
+        <div class="alignLeft art-text artwork" id="section-1-2.1">
+<pre>
+   data
+     |
+     v
++---------+               gradients                   +--------+
+| Clients |-+   -----------------------------------&gt;  | Server |
++---------+ |-+                                       +--------+
+  +---------+ |                                            |
+    +---------+                                            |
+     ^                                                     |
+     |                  updated model                      |
+     +-----------------------------------------------------+
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-federated-learning" class="selfRef">Federated learning</a>
+        </figcaption></figure>
+</div>
+<p id="section-1-3">Federated learning improves user privacy by ensuring the training data never
+leaves users' devices. However, it requires computing an aggregate of the
+gradients sent from devices, which may still reveal a significant amount of
+information about the underlying data. One way to mitigate this risk is to
+distribute the aggregation step across multiple servers such that no server
+sees any gradient in the clear.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">With a Verifiable Distributed Aggregation Function
+<span>[<a href="#VDAF" class="cite xref">VDAF</a>]</span>, this is achieved by having each user
+shard their gradient into a number of secret shares, one for each aggregation
+server. Each server aggregates their shares locally, then combines their share
+of the aggregate with the other servers to get the aggregate result.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<span id="name-federated-learning-with-a-v"></span><div id="distributed-fl">
+<figure id="figure-2">
+        <div class="alignLeft art-text artwork" id="section-1-5.1">
+<pre>
+   data
+     |
+     v        gradient                    aggregate
++---------+   shares    +-------------+   shares     +-----------+
+| Clients |-+   ----&gt;   | Aggregators |-+   -----&gt;   | Collector |
++---------+ |-+         +-------------+ |            +-----------+
+  +---------+ |           +-------------+                  |
+    +---------+                                            |
+     ^                                                     |
+     |                  updated model                      |
+     +-----------------------------------------------------+
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-federated-learning-with-a-v" class="selfRef">Federated learning with a VDAF</a>
+        </figcaption></figure>
+</div>
+<p id="section-1-6">Along with keeping the gradients private, it is desirable to ensure
+robustness of the overall computation by preventing clients from "poisoning"
+the aggregate and corrupting the trained machine learning model. A client's
+gradient is typically expressed as a vector of real numbers. A common goal is
+to ensure each gradient has a bounded "L2-norm" (sometimes called Euclidean
+norm): the square root of the sum of the squares of each entry of the input
+vector. Bounding the L2 norm is used in federated learning to limit the
+contribution of each client to the aggregate, without over constraining the
+distribution of inputs. [CP: Add a relevant reference.]<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">In theory, Prio3 (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be adapted to support this
+functionality, but for high-dimensional data, the concrete cost in terms of
+runtime and communication would be prohibitively high. The basic idea is
+simple. An FLP ("Fully Linear Proof", see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) could be
+used to compute the L2 norm of the secret shared gradient and check that the
+result is in the desired range, all without learning the gradient or its norm.
+This computation, on its own, can be done efficiently: the challenge lies in
+ensuring that the computation itself was carried out correctly, while properly
+accounting for the relevant mathematical details of the proof system and the
+range of possible inputs.<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-8">This document describes PINE ("Private Inexpensive Norm Enforcement"), a VDAF
+for secure aggregation of gradients with bounded L2-norm <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>. Its design
+is based largely on Prio3 in that the norm is computed and verified using
+an FLP. However, PINE uses a new technique for verifying the correctness of
+the norm computation that is incompatible with Prio3.<a href="#section-1-8" class="pilcrow">¶</a></p>
+<p id="section-1-9">We give an overview of this technique in <a href="#overview" class="auto internal xref">Section 3</a>. In <a href="#flp" class="auto internal xref">Section 4</a> we specify an
+FLP circuit and accompanying encoding scheme for computing and verifying the L2
+norm of each gradient. Finally, in <a href="#vdaf" class="auto internal xref">Section 5</a> we specify the complete
+multi-party, 1-round VDAF.<a href="#section-1-9" class="pilcrow">¶</a></p>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-1-10.1">
+          <p id="section-1-10.1.1">NOTE As of this draft, the algorithms are not yet fully specified. We are
+still working out some of the minor details. In the meantime, please refer to
+the reference code on which the spec will be based:
+https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/tree/main/poc<a href="#section-1-10.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses the same parameters and conventions specified for:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-2-3.1">
+          <p id="section-2-3.1.1">Clients, Aggregators, and Collectors from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-5" class="relref">Section 5</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-3.2">
+          <p id="section-2-3.2.1">Finite fields from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-6.1" class="relref">Section 6.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>. All fields in this document have
+prime order.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-3.3">
+          <p id="section-2-3.3.1">XOFs ("eXtendable Output Functions") from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-6.2" class="relref">Section 6.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-2-3.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-2-4">A floating point number, denoted <code>float</code>, is a IEEE-754 compatible float64 value
+<span>[<a href="#IEEE754-2019" class="cite xref">IEEE754-2019</a>]</span>.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-5">A "gradient" is a vector of floating point numbers. Each coordinate of this
+vector is called an "entry". The "L2 norm", or simply "norm", of a gradient is
+the square root of the sum of the squares of its entries.<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">The "dot product" of two vectors is to compute the sum of element-wise
+multiplications of the two vectors.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">The user-specified parameters to initialize PINE are defined in
+<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-2-7" class="pilcrow">¶</a></p>
+<span id="name-user-parameters-for-pine"></span><div id="pine-user-param">
+<table class="center" id="table-1">
+        <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-user-parameters-for-pine" class="selfRef">User parameters for PINE.</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+            <th class="text-left" rowspan="1" colspan="1">Type</th>
+            <th class="text-left" rowspan="1" colspan="1">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>l2_norm_bound</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>float</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">The L2 norm upper bound (inclusive).</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>dimension</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Dimension of each gradient.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>num_frac_bits</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">The number of bits of precision to use when encoding each gradient entry into the field.</td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+</section>
+</div>
+<div id="overview">
+<section id="section-3">
+      <h2 id="name-pine-overview">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pine-overview" class="section-name selfRef">PINE Overview</a>
+      </h2>
+<p id="section-3-1">This section provides an overview of the main technical contribution of
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> that forms the basis of PINE. To motivate their idea, let us first
+say how Prio3 from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7" class="relref">Section 7</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span> would be used to aggregate vectors
+with bounded L2 norm.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Prio3 uses an FLP ("Fully Linear Proof"; see <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) to
+verify properties of a secret shared measurement without revealing the
+measurement to the Aggregators. The property to be verified is expressed as an
+arithmetic circuit over a finite field (<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3.2" class="relref">Section 7.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>). Let <code>q</code>
+denote the field modulus.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">In our case, the circuit would take (a share of) the gradient as input, compute
+the squared L2-norm (the sum of the squares of the entries of the gradient),
+and check that the result is in the desired range. Note that we do not compute
+the exact norm: it is mathematically equivalent to compute the squared norm and
+check that it is smaller than the square of the bound.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">Crucially, arithmetic in this computation is modulo <code>q</code>. This means that, for a
+given gradient, the norm may have a different result when computed in our
+finite field than in the ring of integers. For example, suppose our bound is
+<code>10</code>: the gradient <code>[99, 0, 7]</code> has squared L2-norm of <code>9850</code> over the integers
+(out of range), but only <code>6</code> modulo <code>q = 23</code> (in range). This circuit would
+therefore deem the gradient valid, when in fact it is invalid.<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">Thus the central challenge of adapting FLPs to this problem is to prevent the
+norm computation from "wrapping around" the field modulus.<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">One way to achieve this is to ensure that each gradient entry is in a range
+that ensures the norm is sufficiently small. However, this approach has high
+communication cost (roughly <code>num_frac_bits * dimension</code> field elements per
+entry), which becomes prohibitive for high-dimensional data.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">PINE uses a different strategy: rather than prevent wraparounds, we can try to
+detect whether a wraparound has occurred.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8"><span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> devises a probabilistic test for this purpose. A random vector over
+the field is generated (via a procedure described in <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>) where
+each entry is sampled independently from a particular probability distribution.
+To test for wraparound, compute the dot product of this vector and the
+gradient, and check if the result is in a specific range determined by
+parameters in <a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-3-8" class="pilcrow">¶</a></p>
+<p id="section-3-9">If the norm wraps around the field modulus, then the dot product is likely to
+be large. In fact, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> show that this test correctly detects wraparounds
+with probability <code>1/2</code>. To decrease the false negative probability (that is,
+the probability of misclassifying an invalid gradient as valid), we simply
+repeat this test a number of times, each time with a vector sampled from the
+same distribution.<a href="#section-3-9" class="pilcrow">¶</a></p>
+<p id="section-3-10">However, <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span> also show that each wraparound test has a non-zero false
+positive probability (the probability of misclassifying a valid gradient as
+invalid). We refer to this probability as the "zero-knowledge error", or in
+short, "ZK error". This creates a problem for privacy, as the Aggregators learn
+information about a valid gradient they were not meant to learn: whether its
+dot product with a known vector is in a particular range. [CP: We need a more
+intuitive explanation of the information that's leaked.] The parameters of PINE
+are chosen carefully in order to ensure this leakage is negligible.<a href="#section-3-10" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="flp">
+<section id="section-4">
+      <h2 id="name-the-pine-proof-system">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-the-pine-proof-system" class="section-name selfRef">The PINE Proof System</a>
+      </h2>
+<p id="section-4-1">This section specifies a randomized encoding of gradients and FLP circuit
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3" class="relref">Section 7.3</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>) for checking that (1) the gradient's
+squared L2-norm falls in the desired range and (2) the squared L2-norm does
+not wrap around the field modulus. We specify the encoding and validity
+circuit in a class <code>PineValid</code>.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">The encoding algorithm takes as input the gradient and an XOF seed used to
+derive the random vectors for the wraparound tests. The seed must be known
+both to the Client and the Aggregators: <a href="#vdaf" class="auto internal xref">Section 5</a> describes how the seed is
+derived from shares of the gradient.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3">Operational parameters for the proof system are summarized below in
+<a href="#pine-flp-param" class="auto internal xref">Table 2</a>.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<span id="name-operational-parameters-of-t"></span><div id="pine-flp-param">
+<table class="center" id="table-2">
+        <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-operational-parameters-of-t" class="selfRef">Operational parameters of the PINE FLP.</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+            <th class="text-left" rowspan="1" colspan="1">Type</th>
+            <th class="text-left" rowspan="1" colspan="1">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">alpha</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>float</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">Parameter in wraparound check that determines the ZK error. The higher <code>alpha</code> is, the lower ZK error is.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">num_wr_checks</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Number of wraparound checks to run.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">num_wr_successes</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Minimum number of wraparound checks that a Client must pass.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">sq_norm_bound</td>
+            <td class="text-left" rowspan="1" colspan="1">Field</td>
+            <td class="text-left" rowspan="1" colspan="1">The square of <code>l2_norm_bound</code> encoded into a field element.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">wr_check_bound</td>
+            <td class="text-left" rowspan="1" colspan="1">Field</td>
+            <td class="text-left" rowspan="1" colspan="1">The bound of the range check for each wraparound check.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">num_bits_for_sq_norm</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Number of bits to encode the squared L2-norm.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">num_bits_for_wr_check</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Number of bits to encode the range check in each wraparound check.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">bit_checked_len</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Number of field elements in the encoded measurement that are expected to be bits.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">chunk_length</td>
+            <td class="text-left" rowspan="1" colspan="1">int</td>
+            <td class="text-left" rowspan="1" colspan="1">Parameter of the FLP.</td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+<div id="measurement-encoding">
+<section id="section-4.1">
+        <h3 id="name-measurement-encoding">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-measurement-encoding" class="section-name selfRef">Measurement Encoding</a>
+        </h3>
+<p id="section-4.1-1">The measurement encoding is done in two stages:
+* <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.2</a> involves encoding floating point numbers in the
+  Client gradient into field elements <a href="#float-to-field" class="auto internal xref">Section 4.1.2.1</a>, and encoding the
+  results for L2-norm check <a href="#l2-norm-check" class="auto internal xref">Section 4.1.2.2</a>, by computing the bit
+  representation of the squared L2-norm, modulo <code>q</code>, of the encoded gradient.
+  The result of this step allows Aggregators to check the squared L2-norm of
+  the Client's gradient, modulo <code>q</code>, falls in the desired range of <code>[0,
+  sq_norm_bound]</code>.
+* <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a> involves encoding the results of running wraparound checks
+  <a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>, based on the encoded gradient from the previous step, and
+  the random vectors derived from a short, random seed using an XOF. The result
+  of this step, along with the encoded gradient and the random vector that the
+  Aggregators derive on their own, allow the Aggregators to run wraparound
+  checks on their own.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<div id="encode-range-check">
+<section id="section-4.1.1">
+          <h4 id="name-encoding-range-checked-resu">
+<a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-encoding-range-checked-resu" class="section-name selfRef">Encoding Range-Checked Results</a>
+          </h4>
+<p id="section-4.1.1-1">Encoding range-checked results is a common subroutine during measurement
+encoding. The goal is to allow the Client to prove a <code>value</code> is in the desired
+range of <code>[B1, B2]</code>, over the field modulus <code>q</code> (see Figure 1 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>).
+The Client computes the "<code>v</code> bits", the bit representation of <code>value - B1</code>
+(modulo <code>q</code>), and the "<code>u</code> bits", the bit representation of <code>B2 - value</code>
+(modulo <code>q</code>). The number of bits for the <code>v</code> and <code>u</code> bits is
+<code>ceil(log2(B2 - B1 + 1))</code>.<a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1.1-2">As an optimization for communication cost per Remark 3.2 in <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>, the
+Client can skip sending the <code>u</code> bits if <code>B2 - B1 + 1</code> (modulo <code>q</code>) is a power of
+<code>2</code>. This is because the available <code>v</code> bits can naturally bound <code>value - B1</code> to
+be <code>B2 - B1</code>.<a href="#section-4.1.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encode-gradient-and-norm">
+<section id="section-4.1.2">
+          <h4 id="name-encoding-gradient-and-l2-no">
+<a href="#section-4.1.2" class="section-number selfRef">4.1.2. </a><a href="#name-encoding-gradient-and-l2-no" class="section-name selfRef">Encoding Gradient and L2-Norm Check</a>
+          </h4>
+<p id="section-4.1.2-1">We define a function <code>PineValid.encode_gradient_and_norm(self,
+measurement: list[float]) -&gt; list[Field]</code> that implements this encoding step.<a href="#section-4.1.2-1" class="pilcrow">¶</a></p>
+<div id="float-to-field">
+<section id="section-4.1.2.1">
+            <h5 id="name-encoding-of-floating-point-">
+<a href="#section-4.1.2.1" class="section-number selfRef">4.1.2.1. </a><a href="#name-encoding-of-floating-point-" class="section-name selfRef">Encoding of Floating Point Numbers into Field Elements</a>
+            </h5>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.1.2.1-1.1">
+                <p id="section-4.1.2.1-1.1.1">TODO Specify how floating point numbers are represented as field elements.<a href="#section-4.1.2.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</section>
+</div>
+<div id="l2-norm-check">
+<section id="section-4.1.2.2">
+            <h5 id="name-encoding-the-range-checked-">
+<a href="#section-4.1.2.2" class="section-number selfRef">4.1.2.2. </a><a href="#name-encoding-the-range-checked-" class="section-name selfRef">Encoding the Range-Checked, Squared Norm</a>
+            </h5>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.1.2.2-1.1">
+                <p id="section-4.1.2.2-1.1.1">TODO Specify how the Client encodes the norm such that the Aggregators can
+check that it is in the desired range.<a href="#section-4.1.2.2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.1.2.2-2.1">
+                <p id="section-4.1.2.2-2.1.1">TODO Put full implementation of <code>encode_gradient_and_norm()</code> here.<a href="#section-4.1.2.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="run-wr-check">
+<section id="section-4.1.3">
+          <h4 id="name-running-the-wraparound-chec">
+<a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-running-the-wraparound-chec" class="section-name selfRef">Running the Wraparound Checks</a>
+          </h4>
+<p id="section-4.1.3-1">Given the encoded gradient from <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.2</a> and the XOF to
+generate the random vectors, the Client needs to run the wraparound check
+<code>num_wr_checks</code> times. Each wraparound check works as follows.<a href="#section-4.1.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.1.3-2">The Client generates a random vector with the same dimension as the gradient's
+dimension. Each entry of the random vector is a field element of <code>1</code> with
+probability <code>1/4</code>, or <code>0</code> with probability <code>1/2</code>, or <code>q-1</code> with probability
+<code>1/4</code>, over the field modulus <code>q</code>. The Client samples each entry by sampling
+from the XOF output stream two bits at a time:
+* If the bits are <code>00</code>, set the entry to be <code>q-1</code>.
+* If the bits are <code>01</code> or <code>10</code>, set the entry to be <code>0</code>.
+* If the bits are <code>11</code>, set the entry to be <code>1</code>.<a href="#section-4.1.3-2" class="pilcrow">¶</a></p>
+<p id="section-4.1.3-3">Finally, the Client computes the dot product of the encoded gradient and the
+random vector, modulo <code>q</code>.<a href="#section-4.1.3-3" class="pilcrow">¶</a></p>
+<p id="section-4.1.3-4">Note the Client does not send this dot product to the Aggregators. The
+Aggregators will compute the dot product themselves, based on the encoded
+gradient and the random vector derived on their own.<a href="#section-4.1.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encode-wr-check">
+<section id="section-4.1.4">
+          <h4 id="name-encoding-the-range-checked-w">
+<a href="#section-4.1.4" class="section-number selfRef">4.1.4. </a><a href="#name-encoding-the-range-checked-w" class="section-name selfRef">Encoding the Range-Checked, Wraparound Check Results</a>
+          </h4>
+<p id="section-4.1.4-1">We define a function <code>PineValid.encode_wr_checks(self,
+encoded_gradient: list[Field], wr_joint_rand_xof: Xof) -&gt;
+tuple[list[Field], list[Field]]</code> that implements this encoding step. It returns
+the tuple of range-checked, wraparound check results that will be sent to the
+Aggregators, and the wraparound check results (i.e., the dot products from
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>) that will be passed as inputs to the FLP circuit.<a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.1.4-2">The Client obtains the wraparound check results, as described in
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>. For each check, the Client runs the range check on the result
+to see if it is in the range of <code>[-wr_check_bound + 1, wr_check_bound]</code>. Note we
+choose <code>wr_check_bound</code>, such that <code>wr_check_bound</code> is a power of 2, so the
+Client does not have to send the <code>u</code> bits in range check. The Client also keeps
+track of a success bit <code>wr_check_g</code>, which is a <code>1</code> if the wraparound check
+result is in range, and <code>0</code> otherwise.<a href="#section-4.1.4-2" class="pilcrow">¶</a></p>
+<p id="section-4.1.4-3">The Client counts how many wraparound checks it has passed. If it has passed
+fewer than <code>num_wr_successes</code> of them, it should retry, by using a new XOF
+seed to re-generate the random vectors and re-run wraparound checks
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a>.<a href="#section-4.1.4-3" class="pilcrow">¶</a></p>
+<p id="section-4.1.4-4">The range-checked results and the success bits are sent to the Aggregators, and
+the wraparound check results are passed to the FLP circuit.<a href="#section-4.1.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="the-flp-circuit">
+<section id="section-4.2">
+        <h3 id="name-the-flp-circuit">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-the-flp-circuit" class="section-name selfRef">The FLP Circuit</a>
+        </h3>
+<p id="section-4.2-1">Evaluation of the validity circuit begins by unpacking the encoded measurement
+into the following components:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2-2.1">
+            <p id="section-4.2-2.1.1">The first <code>dimension</code> entries are the <code>encoded_gradient</code>, the field elements
+encoded from the floating point numbers.<a href="#section-4.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.2-2.2">
+            <p id="section-4.2-2.2.1">The next <code>bit_checked_len</code> entries are expected to be bits, and should contain
+the bits for the range-checked L2-norm, the bits for the range-checked
+wraparound check results, and the success bits in wraparound checks.<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.2-2.3">
+            <p id="section-4.2-2.3.1">The last <code>num_wr_checks</code> are the wraparound check results, i.e., the dot
+products of the encoded gradient and the random vectors.<a href="#section-4.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.2-3">It also unpacks the "joint randomness" that is shared between the Client and
+Aggregators, to compute random linear combinations of all the checks:<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2-4.1">
+            <p id="section-4.2-4.1.1">The first joint randomness field element is to reduce over the bit checks at
+all bit entries.<a href="#section-4.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.2-4.2">
+            <p id="section-4.2-4.2.1">The second joint randomness field element is to reduce over all the quadratic
+checks in wraparound check.<a href="#section-4.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.2-4.3">
+            <p id="section-4.2-4.3.1">The last joint randomness field element is to reduce over all the checks,
+which include the reduced bit check result, the L2 norm equality check, the
+L2 norm range check, the reduced quadratic checks in wraparound check, and
+the success count check for wraparound check.<a href="#section-4.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.2-5">In the subsections below, we outline the various checks computed by the validity
+circuit, which includes the bit check on all the bit entries
+<a href="#valid-bit-check" class="auto internal xref">Section 4.2.2</a>, the L2 norm check <a href="#valid-norm-check" class="auto internal xref">Section 4.2.3</a>, and the wraparound
+check <a href="#valid-wr-check" class="auto internal xref">Section 4.2.4</a>. Some of the auxiliary functions in these checks are
+defined in <a href="#pine-auxiliary" class="auto internal xref">Section 7</a>.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<div id="valid-range-check">
+<section id="section-4.2.1">
+          <h4 id="name-range-check">
+<a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-range-check" class="section-name selfRef">Range Check</a>
+          </h4>
+<p id="section-4.2.1-1">In order to verify the range-checked results reported by the Client as described
+in <a href="#encode-range-check" class="auto internal xref">Section 4.1.1</a>, the Aggregators will verify (1) <code>v</code> bits and <code>u</code> bits
+are indeed composed of bits, as described in <a href="#valid-bit-check" class="auto internal xref">Section 4.2.2</a>, and (2) the
+verify the decoded value from the <code>v</code> bits, and the decoded value from the <code>u</code>
+bits sum up to <code>B2 - B1</code> (modulo <code>q</code>).<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.2.1-2">If the Client skips sending the <code>u</code> bits as an optimization mentioned in
+<a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>, then the Aggregators only need to verify the decoded value
+from the <code>v</code> bits is equal to <code>B2 - B1</code> (modulo <code>q</code>).<a href="#section-4.2.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="valid-bit-check">
+<section id="section-4.2.2">
+          <h4 id="name-bit-check">
+<a href="#section-4.2.2" class="section-number selfRef">4.2.2. </a><a href="#name-bit-check" class="section-name selfRef">Bit Check</a>
+          </h4>
+<p id="section-4.2.2-1">The purpose of bit check on a field element is to prevent any computation
+involving the field element from going out of range. For example, if we were
+to compute the squared L2-norm from the bit representation claimed by the
+Client, bit check ensures the decoded value from the bit representation is
+at most <code>2^(num_bits_for_norm) - 1</code>.<a href="#section-4.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2.2-2">To run bit check on an array of field elements <code>bit_checked</code>, we use a
+similar approach as <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3.1.1" class="relref">Section 7.3.1.1</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, by constructing a polynomial
+from a random linear combination of the polynomial <code>x(x-1)</code> evaluated at each
+element of <code>bit_checked</code>. We then evaluate the polynomial at a random point
+<code>r_bit_check</code>, i.e., the joint randomness for bit check:<a href="#section-4.2.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.2.2-3">
+<pre>
+f(r_bit_check) = bit_checked[0] * (bit_checked[0] - 1) + \
+  r_bit_check * bit_checked[1] * (bit_checked[1] - 1) + \
+  r_bit_check^2 * bit_checked[2] * (bit_checked[2] - 1) + ...
+</pre><a href="#section-4.2.2-3" class="pilcrow">¶</a>
+</div>
+<p id="section-4.2.2-4">If one of the entries in <code>bit_checked</code> is not a bit, then <code>f(r_bit_check)</code> is
+non-zero with high probability.<a href="#section-4.2.2-4" class="pilcrow">¶</a></p>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.2.2-5.1">
+              <p id="section-4.2.2-5.1.1">TODO Put <code>PineValid.eval_bit_check()</code> implementation here.<a href="#section-4.2.2-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="valid-norm-check">
+<section id="section-4.2.3">
+          <h4 id="name-l2-norm-check">
+<a href="#section-4.2.3" class="section-number selfRef">4.2.3. </a><a href="#name-l2-norm-check" class="section-name selfRef">L2 Norm Check</a>
+          </h4>
+<p id="section-4.2.3-1">The purpose of L2 norm check is to check the squared L2-norm of the encoded
+gradient is in the range of <code>[0, sq_norm_bound]</code>.<a href="#section-4.2.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.2.3-2">The validity circuit verifies two properties of the L2 norm reported by the
+Client:<a href="#section-4.2.3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2.3-3.1">
+              <p id="section-4.2.3-3.1.1">Equality check: The squared norm computed from the encoded gradient is equal
+to the bit representation reported by the Client. For this, the Aggregators
+compute their shares of the squared norm from their shares of the encoded
+gradient, and also decode their shares of the bit representation of the
+squared norm (as defined above in <a href="#valid-bit-check" class="auto internal xref">Section 4.2.2</a>), and check that the
+values are equal.<a href="#section-4.2.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.2.3-3.2">
+              <p id="section-4.2.3-3.2.1">Range check: The squared norm reported by the Client is in the desired range
+<code>[0, sq_norm_bound]</code>. For this, the Aggregators run the range check described
+in <a href="#valid-range-check" class="auto internal xref">Section 4.2.1</a>.<a href="#section-4.2.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.2.3-4.1">
+              <p id="section-4.2.3-4.1.1">TODO Put <code>PineValid.eval_norm_check()</code> implementation here.<a href="#section-4.2.3-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="valid-wr-check">
+<section id="section-4.2.4">
+          <h4 id="name-wraparound-check">
+<a href="#section-4.2.4" class="section-number selfRef">4.2.4. </a><a href="#name-wraparound-check" class="section-name selfRef">Wraparound Check</a>
+          </h4>
+<p id="section-4.2.4-1">The purpose of wraparound check is to check the squared L2-norm of the encoded
+Client gradient hasn't overflown the field modulus <code>q</code>.<a href="#section-4.2.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.2.4-2">The validity circuit verifies two properties for wraparound checks:<a href="#section-4.2.4-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2.4-3.1">
+              <p id="section-4.2.4-3.1.1">Quadratic check (See bullet point 3 in Figure 2 of <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>): Recall in
+<a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>, the Client keeps track of a success bit for each
+wraparound check, i.e., whether it has passed that check. For each check, the
+Aggregators then verify a quadratic constraint that, either the success bit is
+a <code>0</code> (i.e., the Client has failed that check), or the success bit is a <code>1</code>,
+and the range-checked result reported by the Client is correct, based on the
+wraparound check result (i.e., the dot product) computed by the Aggregators
+from the encoded gradient and the random vector. For this, the Aggregators
+multiply their shares of the success bit, and the difference of the
+range-checked result reported by the Client, and that computed by the
+Aggregators. We then construct a polynomial from a random linear combination
+of the quadratic check at each wraparound check, and evaluate it at a random
+point <code>r_wr_check</code>, the joint randomness.<a href="#section-4.2.4-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.2.4-3.2">
+              <p id="section-4.2.4-3.2.1">Success count check: The number of successful wraparound checks, by summing
+the success bits, is equal to the constant <code>num_wr_successes</code>. For this, the
+Aggregators sum their shares of the success bits for all wraparound checks.<a href="#section-4.2.4-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.2.4-4.1">
+              <p id="section-4.2.4-4.1.1">TODO Put <code>PineValid.eval_wr_check()</code> implementation here.<a href="#section-4.2.4-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="putting-all-checks-together">
+<section id="section-4.2.5">
+          <h4 id="name-putting-all-checks-together">
+<a href="#section-4.2.5" class="section-number selfRef">4.2.5. </a><a href="#name-putting-all-checks-together" class="section-name selfRef">Putting All Checks Together</a>
+          </h4>
+<p id="section-4.2.5-1">Finally, we will construct a polynomial from a random linear combination of all
+the checks from <code>PineValid.eval_bit_checks()</code>, <code>PineValid.eval_norm_check()</code>,
+and <code>PineValid.eval_wr_check()</code>, and evaluate it at the final joint randomness
+<code>r_final</code>. The full implementation of <code>PineValid.eval()</code> is as follows:<a href="#section-4.2.5-1" class="pilcrow">¶</a></p>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-4.2.5-2.1">
+              <p id="section-4.2.5-2.1.1">TODO Specify the implementation of <code>Valid</code> from <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.3.2" class="relref">Section 7.3.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-4.2.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="vdaf">
+<section id="section-5">
+      <h2 id="name-the-pine-vdaf">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-the-pine-vdaf" class="section-name selfRef">The PINE VDAF</a>
+      </h2>
+<p id="section-5-1">This section describes PINE VDAF for <span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>, a one-round VDAF with no
+aggregation parameter. It takes a set of Client gradients expressed as vectors
+of floating point values, and computes an element-wise summation of valid
+gradients with bounded L2-norm configured by the user parameters in
+<a href="#pine-user-param" class="auto internal xref">Table 1</a>. The VDAF largely uses the encoding and validation schemes
+in <a href="#flp" class="auto internal xref">Section 4</a>, and also specifies how the joint randomness shared between the
+Client and Aggregators is derived. There are two kinds of joint randomness used:<a href="#section-5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5-2.1">
+          <p id="section-5-2.1.1">"Verification joint randomness": These are the field elements used by the
+Client and Aggregators to evaluate the FLP circuit. The verification joint
+randomness is derived similar to the joint randomness in Prio3
+<span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.2.1.2" class="relref">Section 7.2.1.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>: the XOF is applied to each secret share of the
+encoded measurement to derive the "part"; and the parts are hashed together,
+using the XOF once more, to get the seed for deriving the joint randomness
+itself.<a href="#section-5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-2.2">
+          <p id="section-5-2.2.1">"Wraparound joint randomness": This is used to generate the random vectors in
+the wraparound checks that both the Clients and Aggregators need to derive on
+their own. It is generated in much the same way as the verification joint
+randomness, except that only the gradient and the range-checked norm are used
+to derive the parts.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-5-3">In order for the Client to shard its gradient into input shares for the
+Aggregators, the Client first encodes its gradient into field elements, and
+encodes the range-checked L2-norm, according to <a href="#encode-gradient-and-norm" class="auto internal xref">Section 4.1.2</a>.
+Next, it derives the wraparound joint randomness for the wraparound checks as
+described above, and uses that to encode the range-checked, wraparound check
+results as described in <a href="#encode-wr-check" class="auto internal xref">Section 4.1.4</a>}. The encoded gradient,
+range-checked norm, and range-checked wraparound check results will be
+secret-shared to (1) be sent as input shares for the Aggregators, and (2) derive
+the verification joint randomness as described above. The Client then generates
+the proof with the FLP and secret shares it. The secret-shared proof, along with
+the input shares, and the joint randomness parts for both wraparound and
+verification joint randomness, are sent to the Aggregators.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-5-4">Then the Aggregators carry out a multi-party computation to obtain the output
+shares (the secret shares of the encoded Client gradient), and also reject
+Client gradients that have invalid L2-norm. Each Aggregator first needs to
+derive wraparound and verification joint randomness. Similar to Prio3
+preparation <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.2.2" class="relref">Section 7.2.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, the Aggregator does not derive every
+joint randomness part like the Client does. It only derives the joint
+randomness part from its secret share via the XOF, and applies its part and
+and other Aggregators' parts sent by the Client to the XOF to obtain the joint
+randomness seed. Then each Aggregator runs the wraparound checks
+<a href="#run-wr-check" class="auto internal xref">Section 4.1.3</a> with its share of encoded gradient and the wraparound joint
+randomness, and queries the FLP with its input share, proof share, the
+wraparound check results, and the verification joint randomness. All Aggregators
+then exchange the results from the FLP and decide whether to accept that Client
+gradient.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5">Next, each Aggregator sums up their shares of the encoded gradients and sends
+the aggregate share to the Collector. Finally, the Collector sums up the
+aggregate shares to obtain the aggregate result, and decodes it into an array
+of floating point values.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<p id="section-5-6">Like Prio3 <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-7.1.2" class="relref">Section 7.1.2</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>, PINE supports generation and verification
+of multiple FLPs. The goal is to improve robustness of PINE (Corollary 3.13 in
+<span>[<a href="#ROCT23" class="cite xref">ROCT23</a>]</span>) by generating multiple unique proofs from the Client, and
+only accepting the Client gradient if all proofs have been verified by the
+Aggregators. The benefit is that one can improve the communication cost between
+Clients and Aggregators, by instantiating PINE FLP with a smaller field, but
+repeating the proof generation (<code>Flp.prove</code>) and validation (<code>Flp.query</code>)
+multiple times.<a href="#section-5-6" class="pilcrow">¶</a></p>
+<p id="section-5-7">The remainder of this section is structured as follows. We will specify the
+exact algorithms for Client sharding <a href="#sharding" class="auto internal xref">Section 5.1</a>, Aggregator preparation
+<a href="#preparation" class="auto internal xref">Section 5.2</a> and aggregation <a href="#aggregation" class="auto internal xref">Section 5.3</a>, and Collector unsharding
+<a href="#unsharding" class="auto internal xref">Section 5.4</a>.<a href="#section-5-7" class="pilcrow">¶</a></p>
+<div id="sharding">
+<section id="section-5.1">
+        <h3 id="name-sharding">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-sharding" class="section-name selfRef">Sharding</a>
+        </h3>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-5.1-1.1">
+            <p id="section-5.1-1.1.1">TODO Specify the implementation of <code>Vdaf.shard()</code>.<a href="#section-5.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="preparation">
+<section id="section-5.2">
+        <h3 id="name-preparation">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-preparation" class="section-name selfRef">Preparation</a>
+        </h3>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-5.2-1.1">
+            <p id="section-5.2-1.1.1">TODO Specify the implementations of <code>Vdaf.prep_init()</code>,
+<code>.prep_shares_to_prep()</code>, and <code>.prep_next()</code>.<a href="#section-5.2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="aggregation">
+<section id="section-5.3">
+        <h3 id="name-aggregation">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-aggregation" class="section-name selfRef">Aggregation</a>
+        </h3>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-5.3-1.1">
+            <p id="section-5.3-1.1.1">TODO Specify the implementation of <code>Vdaf.aggregate()</code>.<a href="#section-5.3-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="unsharding">
+<section id="section-5.4">
+        <h3 id="name-unsharding">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-unsharding" class="section-name selfRef">Unsharding</a>
+        </h3>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-5.4-1.1">
+            <p id="section-5.4-1.1.1">TODO Specify the implementation of <code>Vdaf.unshard()</code>.<a href="#section-5.4-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="variants">
+<section id="section-6">
+      <h2 id="name-variants">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-variants" class="section-name selfRef">Variants</a>
+      </h2>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-6-1.1">
+          <p id="section-6-1.1.1">TODO Specify concrete parameterizations of VDAFs, including the choice of
+field, number of proofs, and valid ranges for the parameters in
+<a href="#pine-user-param" class="auto internal xref">Table 1</a>.<a href="#section-6-1.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="pine-auxiliary">
+<section id="section-7">
+      <h2 id="name-pine-auxiliary-functions">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-pine-auxiliary-functions" class="section-name selfRef">PINE Auxiliary Functions</a>
+      </h2>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-7-1.1">
+          <p id="section-7-1.1.1">TODO Put all auxiliary functions here, including <code>range_check()</code>,
+<code>parallel_sum()</code>.<a href="#section-7-1.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-8">
+      <h2 id="name-security-considerations">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-8-1">Our security considerations for PINE are the same as those for Prio3 described
+in <span><a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11#section-9" class="relref">Section 9</a> of [<a href="#VDAF" class="cite xref">VDAF</a>]</span>.<a href="#section-8-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-9">
+      <h2 id="name-iana-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-9-1.1">
+          <p id="section-9-1.1.1">TODO Ask IANA to allocate an algorithm ID from the VDAF algorithm ID registry.<a href="#section-9-1.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-10">
+      <h2 id="name-references">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-10.1">
+        <h3 id="name-normative-references">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="VDAF">[VDAF]</dt>
+      <dd>
+<span class="refAuthor">Barnes, R.</span>, <span class="refAuthor">Cook, D.</span>, <span class="refAuthor">Patton, C.</span>, and <span class="refAuthor">P. Schoppmann</span>, <span class="refTitle">"Verifiable Distributed Aggregation Functions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-vdaf-11</span>, <time datetime="2024-08-22" class="refDate">22 August 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-11</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-10.2">
+        <h3 id="name-informative-references">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="BBCGGI19">[BBCGGI19]</dt>
+        <dd>
+<span class="refAuthor">Boneh, D.</span>, <span class="refAuthor">Boyle, E.</span>, <span class="refAuthor">Corrigan-Gibbs, H.</span>, <span class="refAuthor">Gilboa, N.</span>, and <span class="refAuthor">Y. Ishai</span>, <span class="refTitle">"Zero-Knowledge Proofs on Secret-Shared Data via Fully Linear PCPs"</span>, <span class="seriesInfo">CRYPTO 2019 </span>, <time datetime="2019" class="refDate">2019</time>, <span>&lt;<a href="https://ia.cr/2019/188">https://ia.cr/2019/188</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="IEEE754-2019">[IEEE754-2019]</dt>
+        <dd>
+<span class="refTitle">"IEEE Standard for Floating-Point Arithmetic"</span>, <time datetime="2019" class="refDate">2019</time>, <span>&lt;<a href="https://ieeexplore.ieee.org/document/8766229">https://ieeexplore.ieee.org/document/8766229</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Lem12">[Lem12]</dt>
+        <dd>
+<span class="refAuthor">Lemaréchal, C.</span>, <span class="refTitle">"Cauchy and the gradient method"</span>, <time datetime="2012" class="refDate">2012</time>, <span>&lt;<a href="https://www.elibm.org/article/10011456">https://www.elibm.org/article/10011456</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MR17">[MR17]</dt>
+        <dd>
+<span class="refAuthor">McMahan, B.</span> and <span class="refAuthor">D. Ramage</span>, <span class="refTitle">"Federated Learning: Collaborative Machine Learning without Centralized Training Data"</span>, <time datetime="2017" class="refDate">2017</time>, <span>&lt;<a href="https://ai.googleblog.com/2017/04/federated-learning-collaborative.html">https://ai.googleblog.com/2017/04/federated-learning-collaborative.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ROCT23">[ROCT23]</dt>
+        <dd>
+<span class="refAuthor">Rothblum, G. N.</span>, <span class="refAuthor">Omri, E.</span>, <span class="refAuthor">Chen, J.</span>, and <span class="refAuthor">K. Talwar</span>, <span class="refTitle">"PINE: Efficient Norm-Bound Verification for Secret-Shared Vectors"</span>, <time datetime="2023" class="refDate">2023</time>, <span>&lt;<a href="https://arxiv.org/abs/2311.10237">https://arxiv.org/abs/2311.10237</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Tal22">[Tal22]</dt>
+      <dd>
+<span class="refAuthor">Talwar, K.</span>, <span class="refTitle">"Differential Secrecy for Distributed Data and Applications to Robust Differentially Secure Vector Summation"</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://arxiv.org/abs/2202.10618">https://arxiv.org/abs/2202.10618</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1">Guy Rothblum
+Apple Inc.
+gn_rothblum@apple.com<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">Kunal Talwar
+Apple Inc.
+ktalwar@apple.com<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Junye Chen</span></div>
+<div dir="auto" class="left"><span class="org">Apple Inc.</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:junyec@apple.com" class="email">junyec@apple.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Christopher Patton</span></div>
+<div dir="auto" class="left"><span class="org">Cloudflare</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:chrispatton+ietf@gmail.com" class="email">chrispatton+ietf@gmail.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
