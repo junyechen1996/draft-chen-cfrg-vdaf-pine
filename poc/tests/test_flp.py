@@ -28,7 +28,7 @@ class TestEncoding(unittest.TestCase):
             },
             {
                 "input": -0.0001,
-                "expected_result": -0.0001220703125,
+                "expected_result": -9.1552734375e-05,
             },
             {
                 "input": -0.0,
@@ -44,7 +44,7 @@ class TestEncoding(unittest.TestCase):
             },
             {
                 "input": 0.1,
-                "expected_result": 0.0999755859375,
+                "expected_result": 0.100006103515625,
             },
             {
                 "input": 0.5,
