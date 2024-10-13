@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-10-10T01:41:45.363631+00:00",
+  "timestamp": "2024-10-13T01:47:49.868915+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12676,7 +12676,7 @@
       ],
       "body": "# Why\r\n\r\nCurrently we use round to $-\\infty $ and this can introduce more rounding error than the IEEE 754 default rounding mode, i.e. \"round to nearest, ties to even\".  e.g.\r\n\r\ninput =-0.0001 \r\n\r\ncurrent: output=-0.0001220703125, relative error = 0.22\r\nnew=-9.1552734375e-05, relative error = 0.084\r\n\r\n( this is taken from one of the test cases)\r\n\r\n# What\r\n\r\nSwitch to \"round to nearest, ties to even\" mode\r\n\r\n\r\n# Discussion\r\n\r\nTest vector is actually not affected since we use either 0.0 or 1.0 as inputs, which convert to same integer with both modes.\r\n",
       "createdAt": "2024-10-03T17:59:29Z",
-      "updatedAt": "2024-10-08T15:35:44Z",
+      "updatedAt": "2024-10-12T22:57:53Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "3acb5034116e9637adee045347687e1bf3f6916b",
