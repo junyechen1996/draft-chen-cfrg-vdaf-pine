@@ -3,8 +3,8 @@ import os
 from vdaf_poc.test_utils import gen_test_vec_for_vdaf
 
 from flp_pine import NUM_WR_CHECKS, NUM_WR_SUCCESSES, encode_float
-from vdaf_pine import (Pine32HmacSha256Aes128, Pine64, Pine64HmacSha256Aes128,
-                       Pine128)
+from vdaf_pine import (Pine32HmacSha256Aes128, Pine40HmacSha256Aes128, Pine64,
+                       Pine64HmacSha256Aes128, Pine128)
 
 VERSION = int(open('VERSION').read())
 TEST_VECTOR_PATH = os.environ.get('TEST_VECTOR_PATH',
@@ -100,6 +100,44 @@ if __name__ == '__main__':
         gen_test_vec_for_vdaf(
             TEST_VECTOR_PATH,
             pine32_custom,
+            None,
+            measurements,
+            2 * i + 1,
+        )
+
+        pine40_hmac_sha256_aes128 = Pine40HmacSha256Aes128(
+            l2_norm_bound,
+            num_frac_bits,
+            dimension,
+            chunk_length,
+            chunk_length_norm_equality,
+            num_shares,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes,
+        )
+        gen_test_vec_for_vdaf(
+            TEST_VECTOR_PATH,
+            pine40_hmac_sha256_aes128,
+            None,
+            measurements,
+            2 * i,
+        )
+
+        pine40_custom = Pine40HmacSha256Aes128(
+            l2_norm_bound,
+            num_frac_bits,
+            dimension,
+            chunk_length,
+            chunk_length_norm_equality,
+            num_shares,
+            num_proofs=4,
+            num_proofs_norm_equality=2,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes,
+        )
+        gen_test_vec_for_vdaf(
+            TEST_VECTOR_PATH,
+            pine40_custom,
             None,
             measurements,
             2 * i + 1,

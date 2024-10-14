@@ -14,7 +14,7 @@ from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_QUERY_RANDOMNESS)
 from vdaf_poc.xof import Xof, XofTurboShake128
 
-from field32 import Field32
+from field import Field32, Field40
 from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
                       construct_circuits)
 from xof_hmac_sha256_aes128 import XofHmacSha256Aes128
@@ -840,4 +840,39 @@ class Pine32HmacSha256Aes128(Pine[Field32, XofHmacSha256Aes128]):
             num_wr_checks=num_wr_checks,
             num_wr_successes=num_wr_successes,
             vdaf_id=self.ID
+        )
+
+
+class Pine40HmacSha256Aes128(Pine[Field40, XofHmacSha256Aes128]):
+    test_vec_name = "Pine40HmacSha256Aes128"
+    ID = 0xFFFF1006
+
+    def __init__(
+        self,
+        l2_norm_bound: int,
+        num_frac_bits: int,
+        dimension: int,
+        chunk_length: int,
+        chunk_length_norm_equality: int,
+        num_shares: int,
+        num_proofs: int = 4,
+        num_proofs_norm_equality: int = 1,
+        num_wr_checks: int = NUM_WR_CHECKS,
+        num_wr_successes: int = NUM_WR_SUCCESSES,
+    ):
+        return super().__init__(
+            Field40,
+            XofHmacSha256Aes128,
+            l2_norm_bound=l2_norm_bound,
+            num_frac_bits=num_frac_bits,
+            dimension=dimension,
+            chunk_length=chunk_length,
+            chunk_length_norm_equality=chunk_length_norm_equality,
+            num_shares=num_shares,
+            num_proofs=num_proofs,
+            num_proofs_norm_equality=num_proofs_norm_equality,
+            alpha=ALPHA,
+            num_wr_checks=num_wr_checks,
+            num_wr_successes=num_wr_successes,
+            vdaf_id=self.ID,
         )
