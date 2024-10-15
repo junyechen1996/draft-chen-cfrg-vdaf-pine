@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-10-13T01:47:49.868915+00:00",
+  "timestamp": "2024-10-15T01:43:28.050021+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12718,6 +12718,61 @@
           "createdAt": "2024-10-03T18:41:36Z",
           "updatedAt": "2024-10-03T18:41:36Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 105,
+      "id": "PR_kwDOJWdxls5-kwOB",
+      "title": "Add new variant Pine40HmacSha256Aes128 and new field Field40",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/105",
+      "state": "OPEN",
+      "author": "albertpl",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-10-14T17:30:27Z",
+      "updatedAt": "2024-10-15T00:33:46Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "9eb2c22e3fa05511ca40e2dde588a29f35eaed30",
+      "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "albertpl/field40",
+      "headRefOid": "b7860b3c817176b92fd33c00debc76b21697ff2a",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "body": "And would like @cjpatton to take a look at the field parameters.",
+          "createdAt": "2024-10-15T00:33:45Z",
+          "updatedAt": "2024-10-15T00:33:45Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6NIxl-",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "junyechen1996",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "T",
+          "createdAt": "2024-10-15T00:33:20Z",
+          "updatedAt": "2024-10-15T00:33:23Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "nit (no strong opinion): perhaps we put it in the same file as `Field32`, just name it `field.py`, or `pine_field.py`, and have both Field32 and Field40 there.",
+              "createdAt": "2024-10-15T00:33:20Z",
+              "updatedAt": "2024-10-15T00:33:23Z"
+            }
+          ]
         }
       ]
     }
