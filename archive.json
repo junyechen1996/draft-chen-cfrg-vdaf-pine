@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-10-15T01:43:28.050021+00:00",
+  "timestamp": "2024-10-17T01:42:17.463768+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -803,6 +803,22 @@
       "createdAt": "2024-08-20T22:02:47Z",
       "updatedAt": "2024-08-27T18:51:38Z",
       "closedAt": "2024-08-27T18:51:38Z",
+      "comments": []
+    },
+    {
+      "number": 106,
+      "id": "I_kwDOJWdxls6aUDrr",
+      "title": "Upgrade to latest draft-irtf-cfrg-vdaf",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/issues/106",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "* draft-irtf-cfrg-vdaf-12 introduces an API breaking change: the addition of the context string.\r\n* draft-irtf-cfrg-vdaf-13 (WIP as of 2024/10/16) introduces an API breaking change to aggregation.\r\n\r\nThere are also some improvements to the reference code in draft-irtf-cfrf-vdaf-13 that we can take advantage of, namely dropping sage as a dependency. (Note that polynomial interpolation will be twice as slow after upgrade, regardless of whether we drop sage.)",
+      "createdAt": "2024-10-15T14:24:39Z",
+      "updatedAt": "2024-10-15T14:24:39Z",
+      "closedAt": null,
       "comments": []
     }
   ],
