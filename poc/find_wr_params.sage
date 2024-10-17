@@ -21,9 +21,8 @@
 # Then given each set of wraparound check parameters and user parameters,
 # compute the number of proofs needed to achieve the target FLP soundness error.
 
-dir_name = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(dir_name, "draft-irtf-cfrg-vdaf", "poc"))
-from field import Field, Field128, Field64
+from vdaf_poc.field import Field, Field128, Field64
+from field import Field32, Field40
 from flp_pine import PineValid
 from sage.all import GF
 
@@ -77,8 +76,8 @@ def flp_sound(valid: PineValid):
     #   in wraparound check:
     #   https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/blob/21c43447f9b3ed283cc44500001ab4e9411a72c7/poc/flp_pine.py#L212-L215
     num_constraints = valid.bit_checked_len + valid.num_wr_checks + 4
-    return gadget_calls * 2 / (valid.Field.MODULUS - gadget_calls) + \
-           num_constraints / valid.Field.MODULUS
+    return gadget_calls * 2 / (valid.field.MODULUS - gadget_calls) + \
+           num_constraints / valid.field.MODULUS
 
 def overhead(pine_valid):
     '''
@@ -185,10 +184,12 @@ def search_wr_params(target_soundness_bits,
                     # we can try using a even smaller alpha, (2) `mid_alpha` is
                     # too large for this field size, so we need to reduce alpha.
                     try:
-                        pine_valid = PineValid.with_field(field)(
+                        pine_valid = PineValid(
+                            field,
                             l2_norm_bound,
                             num_frac_bits,
                             dimension,
+                            chunk_length=int(sqrt(dimension)),
                             num_wr_checks = num_wr_checks,
                             num_wr_successes = num_wr_successes,
                             alpha = mid_alpha
@@ -204,11 +205,13 @@ def search_wr_params(target_soundness_bits,
                 # `num_wr_successes`.
                 continue
 
-            pine_valid = PineValid.with_field(field)(
+            pine_valid = PineValid(
+                field,
                 l2_norm_bound = l2_norm_bound,
                 num_frac_bits = num_frac_bits,
                 # Doesn't change parameters in wraparound checks.
                 dimension = dimension,
+                chunk_length = int(sqrt(dimension)),
                 alpha = alpha,
                 num_wr_checks = num_wr_checks,
                 num_wr_successes = num_wr_successes
@@ -317,10 +320,12 @@ def search_vdaf_params(target_soundness_bits, wr_and_user_params):
          num_frac_bits,
          dimension,
          field) in wr_and_user_params:
-        valid = PineValid.with_field(field)(
+        valid = PineValid(
+            field,
             l2_norm_bound = l2_norm_bound,
             num_frac_bits = num_frac_bits,
             dimension = dimension,
+            chunk_length = int(sqrt(dimension)),
             alpha = alpha,
             num_wr_checks = num_wr_checks,
             num_wr_successes = num_wr_successes
@@ -390,26 +395,6 @@ def display_vdaf_params(vdaf_params):
         printed_output += "\n"
     print(printed_output)
 
-
-class Field32(Field):
-    """A fake 32-bit finite field. """
-
-    # Taken from https://github.com/divviup/libprio-rs/blob/bc8c3ec5feed9c6f68f113d148eff2788354d346/src/fp.rs#L346
-    MODULUS = 4293918721
-    ENCODED_SIZE = 4
-
-    # Operational parameters
-    gf = GF(MODULUS)
-
-class Field40(Field):
-    """A fake 40-bit finite field. """
-
-    MODULUS = (2^40).previous_prime()  # May not be FFT-friendly.
-    ENCODED_SIZE = 5
-
-    # Operational parameters
-    gf = GF(MODULUS)
-
 class Field48(Field):
     """A fake 48-bit finite field. """
 
@@ -448,10 +433,15 @@ for field in [Field32, Field40, Field48, Field56, Field64, Field128]:
             # initialize `PineValid`, with the smallest `alpha` possible
             # (`alpha` will be checked later when we search for wraparound
             # check parameters).
-            valid = PineValid.with_field(field)(l2_norm_bound,
-                                                num_frac_bits,
-                                                dimension,
-                                                alpha = compute_min_alpha())
+            encoded_norm_bound = int(l2_norm_bound * (2 ^ num_frac_bits))
+            valid = PineValid(
+                field, 
+                encoded_norm_bound, 
+                num_frac_bits, 
+                dimension, 
+                chunk_length = int(sqrt(dimension)),
+                alpha = compute_min_alpha()
+                )
         except Exception as e:
             print("Failed to initialize PineValid with l2_norm_bound = {}, "
                   "num_frac_bits = {}, dimension = {}, field = {}, "
@@ -463,8 +453,6 @@ for field in [Field32, Field40, Field48, Field56, Field64, Field128]:
                   str(e)))
             continue
 
-        encoded_norm_bound = \
-            valid.encode_f64_into_field(l2_norm_bound).as_unsigned()
         # We reserve the first half of the field size for positive
         # floating point values, so require the field size to be 2 times
         # the number of clients, times the encoded norm bound.
@@ -476,7 +464,7 @@ for field in [Field32, Field40, Field48, Field56, Field64, Field128]:
                   l2_norm_bound,
                   num_frac_bits))
             continue
-        user_params.append((l2_norm_bound, num_frac_bits, dimension, field))
+        user_params.append((encoded_norm_bound, num_frac_bits, dimension, field))
 
 # In order to achieve the target soundness and ZK error, compute the operational
 # parameters (wraparound check parameters, number of proofs) for the
