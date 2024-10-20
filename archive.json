@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-10-17T01:42:17.463768+00:00",
+  "timestamp": "2024-10-20T01:49:40.326269+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -12742,24 +12742,26 @@
       "id": "PR_kwDOJWdxls5-kwOB",
       "title": "Add new variant Pine40HmacSha256Aes128 and new field Field40",
       "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/105",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "albertpl",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2024-10-14T17:30:27Z",
-      "updatedAt": "2024-10-15T00:33:46Z",
+      "updatedAt": "2024-10-17T20:40:46Z",
       "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "baseRefName": "main",
       "baseRefOid": "9eb2c22e3fa05511ca40e2dde588a29f35eaed30",
       "headRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
       "headRefName": "albertpl/field40",
-      "headRefOid": "b7860b3c817176b92fd33c00debc76b21697ff2a",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "95012616ee29db62005db3c2147a8762d585cba2",
+      "closedAt": "2024-10-17T20:40:46Z",
+      "mergedAt": "2024-10-17T20:40:46Z",
+      "mergedBy": "albertpl",
+      "mergeCommit": {
+        "oid": "1cd0a0b64d0cd2d681a664d5ddabdc1d28c7bcf3"
+      },
       "comments": [
         {
           "author": "junyechen1996",
@@ -12767,6 +12769,20 @@
           "body": "And would like @cjpatton to take a look at the field parameters.",
           "createdAt": "2024-10-15T00:33:45Z",
           "updatedAt": "2024-10-15T00:33:45Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Actually, one comment about the modulus: It's about twice as far away from 2^40 as the Field64 modulus is from 2^64:\r\n\r\n```\r\nsage: ((2^64-(2**32 * 4294967295 + 1))/(2^64)).n()\r\n2.32830643599660e-10\r\nsage: ((2^40-(2^20 * 1048555 + 1))/(2^40)).n()\r\n0.0000200271597350365\r\n```\r\n\r\nThis means that, whilst generating field elements from a XOF, we're twice as likely to reject for Field40 as for Field64. This isn't a problem per se, but it means the code will be slightly less efficient. If we could get closer to 2^40 it would be nice.",
+          "createdAt": "2024-10-17T17:30:11Z",
+          "updatedAt": "2024-10-17T17:30:11Z"
+        },
+        {
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> Actually, one comment about the modulus: It's about twice as far away from 2^40 as the Field64 modulus is from 2^64:\r\n> \r\n> ```\r\n> sage: ((2^64-(2**32 * 4294967295 + 1))/(2^64)).n()\r\n> 2.32830643599660e-10\r\n> sage: ((2^40-(2^20 * 1048555 + 1))/(2^40)).n()\r\n> 0.0000200271597350365\r\n> ```\r\n> \r\n> This means that, whilst generating field elements from a XOF, we're twice as likely to reject for Field40 as for Field64. This isn't a problem per se, but it means the code will be slightly less efficient. If we could get closer to 2^40 it would be nice.\r\n\r\nFWIW, it is the best prime we can find that satisfies the criteria \r\nAnd it is better than Field32\r\n```\r\nsage: ((2^32-(2**20 * 4095 + 1))/(2^32)).n()\r\n0.000244140392169356\r\n```",
+          "createdAt": "2024-10-17T17:45:36Z",
+          "updatedAt": "2024-10-17T17:45:36Z"
         }
       ],
       "reviews": [
@@ -12789,6 +12805,201 @@
               "updatedAt": "2024-10-15T00:33:23Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnAZK",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "The parameters look good to me! There are a few things I'd like you to check, plus some nits.",
+          "createdAt": "2024-10-17T17:09:14Z",
+          "updatedAt": "2024-10-17T17:23:04Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "Agreed.",
+              "createdAt": "2024-10-17T17:09:14Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 14,
+              "body": "What does `pow(7, q, p)` mean?",
+              "createdAt": "2024-10-17T17:11:47Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "I think we should add the unit tests from the base draft to make sure our fields are well-formed: https://github.com/cfrg/draft-irtf-cfrg-vdaf/blob/main/poc/tests/test_field.py#L52\r\n\r\nIdeally we would refactor the upstream code so that the test harness is in `vdaf_poc.test_utils`. However that won't help us here because we can't upgrade to the latest draft yet. (We're VDAF-08 compatible, not yet VDAF-12 compatible).\r\n\r\nFor now, I'd suggest copying the test harness into our repo.",
+              "createdAt": "2024-10-17T17:18:19Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "Why are we changing this file? It looks like it was just out of date, and we're just dusting it off? \r\n\r\nCould you document the changes in the commit message?",
+              "createdAt": "2024-10-17T17:19:17Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "@junyechen1996 I'd suggest confirming that the numbers this script produces don't change.",
+              "createdAt": "2024-10-17T17:20:33Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "How did you choose these?",
+              "createdAt": "2024-10-17T17:21:37Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            },
+            {
+              "originalPosition": 27,
+              "body": "How did you choose these?",
+              "createdAt": "2024-10-17T17:22:06Z",
+              "updatedAt": "2024-10-17T17:23:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnMiv",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:34:34Z",
+          "updatedAt": "2024-10-17T17:34:34Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "That seems to a structure of current generator, e.g. \r\nField64, \r\n```\r\n Modulus = 2^32 * 4294967295 + 1\r\n Generator  = 7^4294967295\r\n```\r\nhttps://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf-12#name-parameters\r\n\r\nI verified that this is a valid generator for Field40 as well, i.e. \r\n```\r\nq = 5 * 43 * 4877\r\nlog_of_order = 20\r\nn = 1 << log_of_order\r\np = q * n + 1 \r\n\r\ng = pow(7, q, p)\r\nassert pow(g, n, p) == 1\r\nassert pow(g, (1 << (log_of_order - 1)), p) == p - 1\r\n```\r\n`pow(g, (1 << (log_of_order - 1)), p) == p - 1` means it is not 1 and since all log_of_order only has one prime factor `2`, it is sufficent to verify that this to assure that there doesn't exist any other `t < n` s.t. `pow(g, t, p) == 1`. So g is has the order of n.",
+              "createdAt": "2024-10-17T17:34:34Z",
+              "updatedAt": "2024-10-17T17:34:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnNva",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:37:21Z",
+          "updatedAt": "2024-10-17T17:37:22Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "I already copied `test_field.py`. Pls take a look at [this](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/105/files#diff-b0570971b5e6f269779ba233aecbd4437b731d1e7360e8a17e7bad6c5d158af8)",
+              "createdAt": "2024-10-17T17:37:21Z",
+              "updatedAt": "2024-10-17T17:37:22Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnOMn",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:38:25Z",
+          "updatedAt": "2024-10-17T17:38:25Z",
+          "comments": [
+            {
+              "originalPosition": 27,
+              "body": "`num_proofs` is chosen from running the script [poc/find_wr_params.sage](https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/105/files/b7860b3c817176b92fd33c00debc76b21697ff2a#diff-df465b6a42e5628b0ad4fce73aa2e6fa5c635509f89a12dc07dc8d2857d98731)\r\n\r\n`num_proofs_norm_equality=1` as we did for Field32.",
+              "createdAt": "2024-10-17T17:38:25Z",
+              "updatedAt": "2024-10-17T17:38:46Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnOk4",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:39:17Z",
+          "updatedAt": "2024-10-17T17:39:17Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "ah, so `pow(7, g, p)` means $7^q \\mod p$?  I was just unfamiliar with the notation. Thanks for clarifying.",
+              "createdAt": "2024-10-17T17:39:17Z",
+              "updatedAt": "2024-10-17T17:39:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnO-8",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:40:13Z",
+          "updatedAt": "2024-10-17T17:40:39Z",
+          "comments": [
+            {
+              "originalPosition": 8,
+              "body": "Make a note here that this is copied from github.com/cfrg/draft-irtf-cfrg-vdaf and eventually we should refactor so that we use code from there.",
+              "createdAt": "2024-10-17T17:40:13Z",
+              "updatedAt": "2024-10-17T17:40:39Z"
+            },
+            {
+              "originalPosition": 1,
+              "body": "I see it now, looks good!",
+              "createdAt": "2024-10-17T17:40:34Z",
+              "updatedAt": "2024-10-17T17:40:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6NnSt9",
+          "commit": {
+            "abbreviatedOid": "b7860b3"
+          },
+          "author": "albertpl",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-10-17T17:47:50Z",
+          "updatedAt": "2024-10-17T17:47:50Z",
+          "comments": [
+            {
+              "originalPosition": 1,
+              "body": "We need to run this script to select `num_proofs`. Yes, it is out of date and we cannot run as it is.",
+              "createdAt": "2024-10-17T17:47:50Z",
+              "updatedAt": "2024-10-17T17:47:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJWdxls6Nokjz",
+          "commit": {
+            "abbreviatedOid": "9501261"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-10-17T20:27:19Z",
+          "updatedAt": "2024-10-17T20:27:19Z",
+          "comments": []
         }
       ]
     }
