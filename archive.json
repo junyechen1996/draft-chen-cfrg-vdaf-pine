@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-01-30T01:38:38.071130+00:00",
+  "timestamp": "2025-02-06T01:41:52.195254+00:00",
   "repo": "junyechen1996/draft-chen-cfrg-vdaf-pine",
   "labels": [
     {
@@ -13001,6 +13001,56 @@
           "body": "",
           "createdAt": "2024-10-17T20:27:19Z",
           "updatedAt": "2024-10-17T20:27:19Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 107,
+      "id": "PR_kwDOJWdxls6KA6hN",
+      "title": "Update GitHub Actions workflows",
+      "url": "https://github.com/junyechen1996/draft-chen-cfrg-vdaf-pine/pull/107",
+      "state": "MERGED",
+      "author": "divergentdave",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This is the result of running `make update-workflows`. The `actions/upload-artifact@v3` action is no longer functional, see https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/.",
+      "createdAt": "2025-02-04T15:18:41Z",
+      "updatedAt": "2025-02-04T15:52:39Z",
+      "baseRepository": "junyechen1996/draft-chen-cfrg-vdaf-pine",
+      "baseRefName": "main",
+      "baseRefOid": "1cd0a0b64d0cd2d681a664d5ddabdc1d28c7bcf3",
+      "headRepository": "divergentdave/draft-chen-cfrg-vdaf-pine",
+      "headRefName": "david/workflows",
+      "headRefOid": "576cdc79a956cf7b88f6b281ea8eaa1d1c01bc7c",
+      "closedAt": "2025-02-04T15:46:36Z",
+      "mergedAt": "2025-02-04T15:46:36Z",
+      "mergedBy": "cjpatton",
+      "mergeCommit": {
+        "oid": "4d11ac826606cf8b08e4b34f815ad14ba7397593"
+      },
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks @divergentdave. FYI I tested cutting and the new workflow seems to work as expected: https://www.ietf.org/archive/id/draft-chen-cfrg-vdaf-pine-02.html\r\n",
+          "createdAt": "2025-02-04T15:52:37Z",
+          "updatedAt": "2025-02-04T15:52:37Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJWdxls6akm3R",
+          "commit": {
+            "abbreviatedOid": "576cdc7"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2025-02-04T15:46:28Z",
+          "updatedAt": "2025-02-04T15:46:28Z",
           "comments": []
         }
       ]
