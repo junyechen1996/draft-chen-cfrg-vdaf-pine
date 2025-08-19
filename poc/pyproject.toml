@@ -1,0 +1,15 @@
+requires = ["setuptools >= 61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vdaf_pine_poc"
+description = "Reference implementation of draft-chen-cfrg-vdaf-pine"
+readme = "README.md"
+version = "0.0.1"
+dependencies = [
+    "pycryptodomex >= 3.20.0",
+    "vdaf_poc @ git+https://github.com/cfrg/draft-irtf-cfrg-vdaf@draft-irtf-cfrg-vdaf-11#subdirectory=poc"
+]
+
+[tool.setuptools.packages]
+find = { include = ["vdaf_pine_poc*"] }

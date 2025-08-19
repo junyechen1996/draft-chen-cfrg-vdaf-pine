@@ -11,8 +11,8 @@ from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_QUERY_RANDOMNESS)
 from vdaf_poc.xof import XofTurboShake128
 
-from flp_pine import encode_float
-from vdaf_pine import Pine, Pine64, Pine128
+from vdaf_pine_poc.flp_pine import encode_float
+from vdaf_pine_poc.vdaf_pine import Pine, Pine64, Pine128
 
 
 class TestDomainSeparationTag(unittest.TestCase):

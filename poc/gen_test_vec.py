@@ -2,11 +2,12 @@ import os
 
 from vdaf_poc.test_utils import gen_test_vec_for_vdaf
 
-from flp_pine import NUM_WR_CHECKS, NUM_WR_SUCCESSES, encode_float
-from vdaf_pine import (Pine32HmacSha256Aes128, Pine40HmacSha256Aes128, Pine64,
-                       Pine64HmacSha256Aes128, Pine128)
+from vdaf_pine_poc.flp_pine import NUM_WR_CHECKS, NUM_WR_SUCCESSES, encode_float
+from vdaf_pine_poc.vdaf_pine import (Pine32HmacSha256Aes128, Pine40HmacSha256Aes128,
+                                     Pine64, Pine64HmacSha256Aes128, Pine128)
 
-VERSION = int(open('VERSION').read())
+dir_name = os.path.dirname(os.path.abspath(__file__))
+VERSION = int(open(os.path.join(dir_name, 'vdaf_pine_poc/VERSION')).read())
 TEST_VECTOR_PATH = os.environ.get('TEST_VECTOR_PATH',
                                   'test_vec/{:02}'.format(VERSION))
 

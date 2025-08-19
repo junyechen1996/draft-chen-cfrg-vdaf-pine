@@ -22,8 +22,8 @@
 # compute the number of proofs needed to achieve the target FLP soundness error.
 
 from vdaf_poc.field import Field, Field128, Field64
-from field import Field32, Field40
-from flp_pine import PineValid
+from vdaf_pine_poc.field import Field32, Field40
+from vdaf_pine_poc.flp_pine import PineValid
 from sage.all import GF
 
 def Bin(succ, total, prob):

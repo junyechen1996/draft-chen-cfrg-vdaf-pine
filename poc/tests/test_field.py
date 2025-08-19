@@ -2,7 +2,7 @@ import unittest
 
 from vdaf_poc.field import NttField
 
-from field import Field32, Field40
+from vdaf_pine_poc.field import Field32, Field40
 
 
 # This is copied from

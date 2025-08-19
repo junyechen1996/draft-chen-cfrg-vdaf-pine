@@ -21,3 +21,6 @@ report.xml
 /versioned/
 /.vscode/
 !requirements.txt
+.DS_Store
+__pycache__
+*.egg-info

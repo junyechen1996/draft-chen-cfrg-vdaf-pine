@@ -5,7 +5,6 @@ import sys
 from abc import ABCMeta, abstractmethod
 from typing import TypeVar
 
-# Access poc folder in submoduled VDAF draft.
 from vdaf_poc.common import front, next_power_of_2
 from vdaf_poc.field import Field, NttField
 from vdaf_poc.flp_bbcggi19 import Mul, ParallelSum, PolyEval, Valid

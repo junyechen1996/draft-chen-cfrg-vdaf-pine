@@ -14,10 +14,10 @@ from vdaf_poc.vdaf_prio3 import (USAGE_JOINT_RAND_PART, USAGE_JOINT_RAND_SEED,
                                  USAGE_QUERY_RANDOMNESS)
 from vdaf_poc.xof import Xof, XofTurboShake128
 
-from field import Field32, Field40
-from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
-                      construct_circuits)
-from xof_hmac_sha256_aes128 import XofHmacSha256Aes128
+from vdaf_pine_poc.field import Field32, Field40
+from vdaf_pine_poc.flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES,
+                                    PineValid, construct_circuits)
+from vdaf_pine_poc.xof_hmac_sha256_aes128 import XofHmacSha256Aes128
 
 F = TypeVar("F", bound=NttField)
 X = TypeVar("X", bound=Xof)

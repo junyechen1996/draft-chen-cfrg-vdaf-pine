@@ -9,8 +9,8 @@ from vdaf_poc.flp_bbcggi19 import FlpBBCGGI19
 from vdaf_poc.test_utils import TestFlpBBCGGI19
 from vdaf_poc.xof import XofTurboShake128
 
-from flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES, PineValid,
-                      construct_circuits, encode_float)
+from vdaf_pine_poc.flp_pine import (ALPHA, NUM_WR_CHECKS, NUM_WR_SUCCESSES,
+                                    PineValid, construct_circuits, encode_float)
 
 
 class TestEncoding(unittest.TestCase):
