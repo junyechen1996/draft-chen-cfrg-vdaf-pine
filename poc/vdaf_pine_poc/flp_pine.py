@@ -446,22 +446,19 @@ class PineValid(
             wr_success_count - self.field(self.num_wr_successes) * shares_inv
         )
 
-    def encode_gradient_and_norm(self, measurement: list[float]) -> list[F]:
-        """
-        Encode the gradient and the range-checked, squared L2-norm.
-        """
+    def encode_gradient(self, measurement: list[float]) -> list[F]:
+        """Encode the gradient into a list of field elements. """
         if len(measurement) != self.dimension:
             raise ValueError("Unexpected gradient dimension.")
-        encoded_gradient = [
-            self.encode_float_into_field(x) for x in measurement]
+        return [self.encode_float_into_field(x) for x in measurement]
 
-        # Encode results for range check of the squared L2-norm.
+    def encode_norm(self, encoded_gradient: list[F]) -> list[F]:
+        """Encode the range-checked, squared L2-norm. """
         sq_norm = sum((x**2 for x in encoded_gradient), self.field(0))
         (_, sq_norm_v, sq_norm_u) = range_check(
             sq_norm, self.field(0), self.sq_norm_bound,
         )
-        return encoded_gradient + \
-            self.field.encode_into_bit_vector(
+        return self.field.encode_into_bit_vector(
                 sq_norm_v.as_unsigned(),
                 self.num_bits_for_sq_norm,
             ) + \
@@ -469,6 +466,11 @@ class PineValid(
                 sq_norm_u.as_unsigned(),
                 self.num_bits_for_sq_norm,
             )
+
+    def encode_gradient_and_norm(self, measurement: list[float]) -> list[F]:
+        """Encode the gradient, and the range-checked, squared L2-norm. """
+        encoded_gradient = self.encode_gradient(measurement)
+        return encoded_gradient + self.encode_norm(encoded_gradient)
 
     def run_wr_checks(self, encoded_gradient: list[F], wr_joint_rand_xof: Xof) -> list[F]:
         """
